@@ -1,0 +1,151 @@
+# Job Wizard 🧙‍♂️
+
+A powerful web application that generates personalized cover letters from job descriptions using AI. Simply paste a job URL, upload your photo, and get a professionally formatted PDF cover letter.
+
+## Features
+
+- 🔗 **Job Description Parsing**: Automatically extracts job details from URLs
+- 🤖 **AI-Powered Generation**: Uses Ollama LLM to create personalized cover letters
+- 📄 **PDF Export**: Professional PDF format with embedded photo
+- 🎨 **Modern UI**: Beautiful, responsive SvelteKit interface
+- 🐳 **Docker Ready**: Complete multi-service architecture
+
+## Architecture
+
+```
+┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+│  SvelteKit  │─────▶│   FastAPI   │─────▶│   Ollama    │
+│  Frontend   │      │   Backend   │      │     LLM     │
+└─────────────┘      └─────────────┘      └─────────────┘
+                            │
+                            ▼
+                     ┌─────────────┐
+                     │ PostgreSQL  │
+                     │  Database   │
+                     └─────────────┘
+```
+
+## Tech Stack
+
+- **Backend**: FastAPI + Python 3.11 + uv (dependency management)
+- **Frontend**: SvelteKit + TailwindCSS
+- **LLM**: Ollama (llama3.2:1b)
+- **Database**: PostgreSQL 16
+- **Orchestration**: Docker Compose
+
+## Prerequisites
+
+- Docker & Docker Compose
+- Git
+
+## Quick Start
+
+1. **Clone and setup**
+   ```bash
+   git clone <your-repo-url>
+   cd job_wizard
+   cp .env.example .env
+   ```
+
+2. **Start all services**
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Pull the LLM model** (first time only)
+   ```bash
+   docker-compose exec ollama ollama pull llama3.2:1b
+   ```
+
+4. **Access the application**
+   - Frontend: http://localhost:5173
+   - Backend API: http://localhost:8000
+   - API Docs: http://localhost:8000/docs
+
+## Usage
+
+1. Open http://localhost:5173 in your browser
+2. Paste a job description URL (LinkedIn, Indeed, etc.)
+3. Upload your professional photo
+4. Click "Generate Cover Letter"
+5. Review the AI-generated content
+6. Download your PDF
+
+## Development
+
+### Backend Development
+
+```bash
+cd backend
+
+# Install dependencies with uv
+uv sync
+
+# Run tests
+uv run pytest
+
+# Run locally (without Docker)
+uv run uvicorn app.main:app --reload
+```
+
+### Frontend Development
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Run dev server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## Project Structure
+
+```
+job_wizard/
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── routes.py
+│   │   ├── services/
+│   │   │   ├── job_parser.py
+│   │   │   ├── llm_service.py
+│   │   │   └── pdf_service.py
+│   │   └── main.py
+│   ├── pyproject.toml
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   │   ├── routes/
+│   │   │   └── +page.svelte
+│   │   └── lib/
+│   │       └── api.ts
+│   ├── package.json
+│   └── Dockerfile
+└── docker-compose.yml
+```
+
+## Environment Variables
+
+See `.env.example` for all configuration options.
+
+## Troubleshooting
+
+**Ollama model not found?**
+```bash
+docker-compose exec ollama ollama pull llama3.2:1b
+```
+
+**Port conflicts?**
+Edit `.env` to change default ports.
+
+**Frontend can't connect to backend?**
+Check CORS settings in `.env` and ensure `VITE_API_URL` is correct.
+
+## License
+
+MIT
