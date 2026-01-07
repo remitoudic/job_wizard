@@ -1,5 +1,25 @@
 # Job Wizard 🧙‍♂️
 
+Quick start (auto-detect local vs remote)
+----------------------------------------
+
+Use the provided wrapper to auto-detect whether you're starting on your remote server (default IP 147.93.111.113) or locally. The script exports the correct `VITE_API_URL` and `CORS_ORIGINS` for `docker-compose` and then starts the stack.
+
+Run:
+
+```bash
+chmod +x scripts/docker-up.sh
+./scripts/docker-up.sh
+```
+
+If your remote machine uses a different public IP, override it like:
+
+```bash
+REMOTE_IP=1.2.3.4 ./scripts/docker-up.sh
+```
+
+# Job Wizard 🧙‍♂️
+
 A powerful web application that generates personalized cover letters from job descriptions using AI. Simply paste a job URL, upload your photo, and get a professionally formatted PDF cover letter.
 
 ## Features
