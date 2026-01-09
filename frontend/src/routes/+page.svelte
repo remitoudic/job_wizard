@@ -17,7 +17,7 @@
 	let error = '';
 	let step = 1; // 1: Input, 2: Review, 3: Result
 	
-	async function handleParseJob() {
+	async function handleParseJob(advance = true) {
 		if (!jobUrl) {
 			error = 'Please enter a job URL';
 			return;
@@ -28,7 +28,7 @@
 		
 		try {
 			jobData = await parseJobUrl(jobUrl);
-			step = 2;
+			if (advance) step = 2;
 		} catch (e: any) {
 			error = e.message || 'Failed to parse job URL';
 		} finally {
@@ -183,6 +183,33 @@
 						<p class="text-sm text-gray-500 mt-2">
 							Paste a job posting URL from LinkedIn, Indeed, or other job boards
 						</p>
+
+						<div class="mt-3 flex space-x-3">
+							<button
+								on:click={() => handleParseJob(false)}
+								disabled={loading || !jobUrl}
+								class="btn btn-outline"
+							>
+								{loading ? 'Parsing...' : 'Parse Job Ad'}
+							</button>
+							<button
+								on:click={() => handleParseJob(true)}
+								disabled={loading || !jobUrl}
+								class="btn btn-primary"
+							>
+								{loading ? 'Parsing...' : 'Continue →'}
+							</button>
+						</div>
+
+						{#if jobData}
+							<div class="mt-4 p-3 border rounded bg-gray-50">
+								<div class="text-sm text-gray-500">Parsed preview</div>
+								<div class="mt-2">
+									<div class="font-medium text-gray-800">{jobData.title}</div>
+									<div class="text-sm text-gray-600">{jobData.company}</div>
+								</div>
+							</div>
+						{/if}
 					</div>
 
 					<div>

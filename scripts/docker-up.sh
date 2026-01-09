@@ -53,9 +53,9 @@ echo "Using CORS_ORIGINS=$CORS_ORIGINS"
 
 # Use docker-compose if available, else docker compose
 if command -v docker-compose >/dev/null 2>&1; then
-  docker-compose up -d --build
+  docker-compose up --build
 else
-  docker compose up -d --build
+  docker compose up --build
 fi
 
-echo "Containers started. Access frontend on http://localhost:5173 or the configured host." 
+# echo "Containers started. Access frontend on http://localhost:5173 or the configured host." 

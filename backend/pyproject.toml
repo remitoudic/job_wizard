@@ -28,6 +28,11 @@ dev = [
     "pytest-asyncio>=0.23.3",
     "pytest-cov>=4.1.0",
     "httpx>=0.26.0",
+    "respx>=0.21.0",
+]
+
+browser = [
+    "playwright>=1.38.0"
 ]
 
 [build-system]

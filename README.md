@@ -18,6 +18,32 @@ If your remote machine uses a different public IP, override it like:
 REMOTE_IP=1.2.3.4 ./scripts/docker-up.sh
 ```
 
+
+Parser improvements and headless fallback
+---------------------------------------
+
+If you hit 403 Forbidden errors when parsing job pages (some job sites actively block programmatic requests), the backend parser now:
+
+- Sends realistic browser-like headers and retries transient 403/429/5xx responses with exponential backoff ✅
+- Attempts a headless-browser fallback using Playwright if the HTTP approach fails (optional) 🔁
+
+To enable the fallback in your environment:
+
+```bash
+# From the backend folder
+pip install -e .[browser]
+# Then install browser binaries
+playwright install
+```
+
+To run the tests locally:
+
+```bash
+cd backend
+pip install -e .[dev]
+pytest -q
+```
+
 # Job Wizard 🧙‍♂️
 
 A powerful web application that generates personalized cover letters from job descriptions using AI. Simply paste a job URL, upload your photo, and get a professionally formatted PDF cover letter.
@@ -113,14 +139,14 @@ uv run uvicorn app.main:app --reload
 ```bash
 cd frontend
 
-# Install dependencies
-npm install
+# Install dependencies (using Bun in the container)
+bun install
 
 # Run dev server
-npm run dev
+bun run dev -- --host 0.0.0.0 --port 5173
 
 # Build for production
-npm run build
+bun run build
 ```
 
 ## Project Structure

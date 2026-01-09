@@ -22,6 +22,8 @@ UPLOAD_DIR = Path("/app/uploads")
 
 class JobURLRequest(BaseModel):
     url: HttpUrl
+    # Optional raw Cookie header string to use for authenticated fetches (Playwright)
+    cookie: Optional[str] = None
 
 
 class JobDescription(BaseModel):
@@ -50,7 +52,7 @@ async def parse_job_description(request: JobURLRequest):
     Parse job description from a URL
     """
     try:
-        job_data = await job_parser.parse_url(str(request.url))
+        job_data = await job_parser.parse_url(str(request.url), cookies=request.cookie)
         return job_data
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to parse job URL: {str(e)}")
