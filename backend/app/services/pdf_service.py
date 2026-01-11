@@ -24,6 +24,9 @@ class PDFService:
         company: str,
         user_name: str = "Applicant",
         image_path: Optional[str] = None,
+        email: Optional[str] = "",
+        phone: Optional[str] = "",
+        linkedin: Optional[str] = "",
     ):
         """
         Generate a professional cover letter PDF
@@ -59,6 +62,15 @@ class PDFService:
             fontSize=16,
             textColor=HexColor('#1a1a1a'),
             spaceAfter=6,
+            alignment=TA_CENTER,
+        )
+        
+        contact_style = ParagraphStyle(
+            'CustomContact',
+            parent=styles['Normal'],
+            fontSize=9,
+            textColor=HexColor('#666666'),
+            spaceAfter=20,
             alignment=TA_CENTER,
         )
         
@@ -112,7 +124,22 @@ class PDFService:
         
         # Add applicant name
         story.append(Paragraph(user_name, title_style))
-        story.append(Spacer(1, 0.1 * inch))
+        story.append(Spacer(1, 0.05 * inch))
+        
+        # Add contact info if present
+        contact_parts = []
+        if email:
+            contact_parts.append(email)
+        if phone:
+            contact_parts.append(phone)
+        if linkedin:
+            contact_parts.append(linkedin)
+            
+        if contact_parts:
+            contact_text = " | ".join(contact_parts)
+            story.append(Paragraph(contact_text, contact_style))
+        else:
+            story.append(Spacer(1, 0.1 * inch))
         
         # Add job title and company
         subtitle_text = f"Application for {job_title} at {company}"

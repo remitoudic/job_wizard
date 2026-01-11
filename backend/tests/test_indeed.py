@@ -1,0 +1,31 @@
+import asyncio
+import sys
+import os
+
+# Add backend to path
+sys.path.append(os.path.join(os.getcwd(), "backend"))
+
+from app.services.parsers.indeed import IndeedParser
+from app.services.parsers.registry import ParserRegistry
+
+async def test_indeed():
+    parser = IndeedParser()
+    
+    # 1. Test Normalization
+    test_url = "https://www.indeed.com/q-germany-jobs.html?vjk=482f46774f12078f"
+    normalized = parser.normalize_url(test_url)
+    expected = "https://www.indeed.com/viewjob?jk=482f46774f12078f"
+    
+    print(f"Original:   {test_url}")
+    print(f"Normalized: {normalized}")
+    assert normalized == expected, f"Expected {expected}, got {normalized}"
+    print("✅ Normalization OK")
+
+    # 2. Test Registry
+    registry_parser = ParserRegistry.get_parser(test_url)
+    print(f"Registry matched: {type(registry_parser).__name__}")
+    assert isinstance(registry_parser, IndeedParser), "Registry should return IndeedParser"
+    print("✅ Registry OK")
+
+if __name__ == "__main__":
+    asyncio.run(test_indeed())

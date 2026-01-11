@@ -50,6 +50,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - /app/.venv
       - backend_uploads:/app/uploads
     networks:
       - jobwizard-network

@@ -1,6 +1,7 @@
 import ollama
 import os
-from typing import List
+import json
+from typing import List, Dict
 
 
 class LLMService:
@@ -21,6 +22,7 @@ class LLMService:
         requirements: List[str],
         user_name: str = "Applicant",
         user_skills: str = "",
+        context_text: str = None,
     ) -> str:
         """
         Generate a personalized cover letter
@@ -32,6 +34,7 @@ class LLMService:
             requirements: List of job requirements
             user_name: Applicant's name
             user_skills: Applicant's skills/experience (optional)
+            context_text: Additional context from uploaded PDF (optional)
             
         Returns:
             Generated cover letter text
@@ -44,6 +47,7 @@ class LLMService:
             requirements=requirements,
             user_name=user_name,
             user_skills=user_skills,
+            context_text=context_text,
         )
         
         # Generate using Ollama
@@ -63,7 +67,46 @@ class LLMService:
             
         except Exception as e:
             raise Exception(f"Failed to generate cover letter with Ollama: {str(e)}")
-    
+
+    async def extract_contact_info(self, context_text: str) -> Dict[str, str]:
+        """
+        Extract contact info from context text using LLM
+        """
+        prompt = f"""You are a data extraction assistant. Extract contact information from the following text.
+        
+Text:
+{context_text[:2000]}
+
+Instructions:
+1. Extract Email, Phone Number, and LinkedIn/Website URL (if present).
+2. Return ONLY a JSON object with keys: "email", "phone", "linkedin".
+3. If a field is not found, use an empty string.
+4. Do not include any other text.
+
+JSON Extract:"""
+
+        try:
+            response = self.client.generate(
+                model=self.model,
+                prompt=prompt,
+                format="json",  
+                options={
+                    "temperature": 0.1, 
+                }
+            )
+            
+            response_text = response['response'].strip()
+            if response_text.startswith("```json"):
+                response_text = response_text.split("```json")[1].split("```")[0].strip()
+            elif response_text.startswith("```"):
+                response_text = response_text.split("```")[1].split("```")[0].strip()
+                
+            return json.loads(response_text)
+            
+        except Exception as e:
+            print(f"Error extracting contact info: {e}")
+            return {"email": "", "phone": "", "linkedin": ""}
+
     def _build_prompt(
         self,
         job_description: str,
@@ -72,6 +115,7 @@ class LLMService:
         requirements: List[str],
         user_name: str,
         user_skills: str,
+        context_text: str = None,
     ) -> str:
         """Build the prompt for the LLM"""
         
@@ -90,6 +134,7 @@ Job Description:
 
 Applicant Name: {user_name}
 {f"Applicant Skills/Experience: {user_skills}" if user_skills else ""}
+{f"Additional Applicant Context (CV/Cover Letter info): {context_text}" if context_text else ""}
 
 Instructions:
 1. Write a professional cover letter (3-4 paragraphs)

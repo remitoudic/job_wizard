@@ -6,23 +6,33 @@ export interface JobDescription {
     description: string;
     requirements: string[];
     url: string;
+    source?: string;
 }
 
 export interface CoverLetterRequest {
     job_description: JobDescription;
     user_name?: string;
     user_skills?: string;
+    context_text?: string;
 }
 
 export interface CoverLetterResponse {
     cover_letter: string;
     job_title: string;
     company: string;
+    email?: string;
+    phone?: string;
+    linkedin?: string;
 }
 
 export interface UploadImageResponse {
     filename: string;
     url: string;
+}
+
+export interface UploadContextResponse {
+    filename: string;
+    text: string;
 }
 
 export interface GeneratePdfRequest {
@@ -31,6 +41,9 @@ export interface GeneratePdfRequest {
     company: string;
     user_name?: string;
     image_filename?: string;
+    email?: string;
+    phone?: string;
+    linkedin?: string;
 }
 
 export interface GeneratePdfResponse {
@@ -91,6 +104,23 @@ export async function uploadImage(file: File): Promise<UploadImageResponse> {
     return response.json();
 }
 
+export async function uploadContext(file: File): Promise<UploadContextResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_URL}/api/upload-context`, {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to upload context file');
+    }
+
+    return response.json();
+}
+
 export async function generatePdf(request: GeneratePdfRequest): Promise<GeneratePdfResponse> {
     const formData = new FormData();
     formData.append('cover_letter', request.cover_letter);
@@ -102,6 +132,9 @@ export async function generatePdf(request: GeneratePdfRequest): Promise<Generate
     if (request.image_filename) {
         formData.append('image_filename', request.image_filename);
     }
+    if (request.email) formData.append('email', request.email);
+    if (request.phone) formData.append('phone', request.phone);
+    if (request.linkedin) formData.append('linkedin', request.linkedin);
 
     const response = await fetch(`${API_URL}/api/generate-pdf`, {
         method: 'POST',
