@@ -1,151 +1,127 @@
-import ollama
 import os
-import json
-from typing import List, Dict
+import asyncio
+import uuid
+from typing import Optional, Dict, Any
 
+from app.services.agents import create_writing_agent, create_extraction_agent, ContactInfo
 
 class LLMService:
-    """Service for generating cover letters using Ollama LLM"""
+    """Service for generating cover letters using Pydantic AI Agents"""
     
     def __init__(self):
-        self.host = os.getenv("OLLAMA_HOST", "http://ollama:11434")
-        self.model = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
+        # Configuration
+        self.ollama_host = os.getenv("OLLAMA_HOST", "http://ollama:11434")
+        self.ollama_model_name = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
         
-        # Configure ollama client
-        self.client = ollama.Client(host=self.host)
+        self.openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
+        self.openrouter_model_name = os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-exp:free")
+        
+        # Initialize Agents
+        self.local_writer = create_writing_agent(self.ollama_model_name, is_remote=False)
+        self.remote_writer = None
+        if self.openrouter_api_key:
+            self.remote_writer = create_writing_agent(self.openrouter_model_name, is_remote=True)
+            
+        # Extraction Agent (Use local for privacy/speed usually, or remote if configured)
+        # Using local for parsing to save free tier limits
+        self.extractor = create_extraction_agent(self.ollama_model_name, base_url=self.ollama_host)
+
+        self.alternatives_store = {} # Simple in-memory store
     
+    async def extract_contact_info(self, text: str) -> Dict[str, Any]:
+        """
+        Extract contact info using Pydantic AI Agent
+        """
+        try:
+            # Agent.run is async
+            result = await self.extractor.run(text)
+            return result.data.model_dump()
+        except Exception as e:
+            print(f"Extraction failed: {e}")
+            return {}
+
     async def generate_cover_letter(
         self,
         job_description: str,
         job_title: str,
         company: str,
-        requirements: List[str],
+        requirements: list[str],
         user_name: str = "Applicant",
         user_skills: str = "",
-        context_text: str = None,
-    ) -> str:
+        context_text: Optional[str] = None,
+    ) -> tuple[str, str, str]:
         """
-        Generate a personalized cover letter
+        Generate cover letter with race mode (Local vs Remote)
+        """
+        # Build prompt
+        prompt = f"""
+        JOB TITLE: {job_title}
+        COMPANY: {company}
+        DESCRIPTION: {job_description}
+        REQUIREMENTS: {', '.join(requirements)}
         
-        Args:
-            job_description: Full job description text
-            job_title: Job title
-            company: Company name
-            requirements: List of job requirements
-            user_name: Applicant's name
-            user_skills: Applicant's skills/experience (optional)
-            context_text: Additional context from uploaded PDF (optional)
-            
-        Returns:
-            Generated cover letter text
+        CANDIDATE NAME: {user_name}
+        CANDIDATE SKILLS: {user_skills}
         """
-        # Build the prompt
-        prompt = self._build_prompt(
-            job_description=job_description,
-            job_title=job_title,
-            company=company,
-            requirements=requirements,
-            user_name=user_name,
-            user_skills=user_skills,
-            context_text=context_text,
+        if context_text:
+            prompt += f"\nRESUME/CONTEXT: {context_text[:3000]}"
+
+        tasks = []
+        
+        # Task 1: Local
+        local_task = asyncio.create_task(
+            self.local_writer.run(prompt), 
+            name=f"Ollama ({self.ollama_model_name})"
         )
+        tasks.append(local_task)
         
-        # Generate using Ollama
-        try:
-            response = self.client.generate(
-                model=self.model,
-                prompt=prompt,
-                options={
-                    "temperature": 0.7,
-                    "top_p": 0.9,
-                    "max_tokens": 1000,
-                }
+        # Task 2: Remote
+        if self.remote_writer:
+            remote_task = asyncio.create_task(
+                self.remote_writer.run(prompt),
+                name=f"OpenRouter ({self.openrouter_model_name})"
             )
+            tasks.append(remote_task)
             
-            cover_letter = response['response'].strip()
-            return cover_letter
-            
-        except Exception as e:
-            raise Exception(f"Failed to generate cover letter with Ollama: {str(e)}")
+        if not tasks:
+            raise Exception("No generation agents available")
 
-    async def extract_contact_info(self, context_text: str) -> Dict[str, str]:
-        """
-        Extract contact info from context text using LLM
-        """
-        prompt = f"""You are a data extraction assistant. Extract contact information from the following text.
+        # Race
+        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
         
-Text:
-{context_text[:2000]}
-
-Instructions:
-1. Extract Email, Phone Number, and LinkedIn/Website URL (if present).
-2. Return ONLY a JSON object with keys: "email", "phone", "linkedin".
-3. If a field is not found, use an empty string.
-4. Do not include any other text.
-
-JSON Extract:"""
-
+        winner_task = done.pop()
         try:
-            response = self.client.generate(
-                model=self.model,
-                prompt=prompt,
-                format="json",  
-                options={
-                    "temperature": 0.1, 
-                }
-            )
-            
-            response_text = response['response'].strip()
-            if response_text.startswith("```json"):
-                response_text = response_text.split("```json")[1].split("```")[0].strip()
-            elif response_text.startswith("```"):
-                response_text = response_text.split("```")[1].split("```")[0].strip()
-                
-            return json.loads(response_text)
-            
+            winner_result = await winner_task
+            winner_text = winner_result.data # .data holds the str result
+            winner_source = winner_task.get_name()
         except Exception as e:
-            print(f"Error extracting contact info: {e}")
-            return {"email": "", "phone": "", "linkedin": ""}
+            # If winner failed, try waiting for others or raise
+            raise Exception(f"Winner task failed: {e}")
+            
+        # Process alternatives
+        alt_id = str(uuid.uuid4())
+        if pending:
+            asyncio.create_task(self._process_alternatives(pending, alt_id))
+            return winner_text, winner_source, alt_id
+            
+        return winner_text, winner_source, ""
 
-    def _build_prompt(
-        self,
-        job_description: str,
-        job_title: str,
-        company: str,
-        requirements: List[str],
-        user_name: str,
-        user_skills: str,
-        context_text: str = None,
-    ) -> str:
-        """Build the prompt for the LLM"""
-        
-        requirements_text = "\n".join(f"- {req}" for req in requirements[:5])
-        
-        prompt = f"""You are a professional cover letter writer. Write a compelling, personalized cover letter for the following job application.
+    async def _process_alternatives(self, pending_tasks, alt_id: str):
+        """Handle the slower tasks"""
+        try:
+            done, _ = await asyncio.wait(pending_tasks, return_when=asyncio.ALL_COMPLETED)
+            for task in done:
+                try:
+                    res = await task
+                    self.alternatives_store[alt_id] = {
+                        "text": res.data,
+                        "source": task.get_name()
+                    }
+                    break # Just store one alternative for now
+                except Exception as e:
+                    print(f"Alternative task failed: {e}")
+        except Exception as e:
+            print(f"Error processing alternatives: {e}")
 
-Job Title: {job_title}
-Company: {company}
-
-Job Requirements:
-{requirements_text}
-
-Job Description:
-{job_description[:1000]}
-
-Applicant Name: {user_name}
-{f"Applicant Skills/Experience: {user_skills}" if user_skills else ""}
-{f"Additional Applicant Context (CV/Cover Letter info): {context_text}" if context_text else ""}
-
-Instructions:
-1. Write a professional cover letter (3-4 paragraphs)
-2. Express enthusiasm for the role and company
-3. Highlight how the applicant's skills match the job requirements
-4. Keep it concise and impactful (250-350 words)
-5. Use a professional but warm tone
-6. Do NOT include the applicant's address or contact information
-7. Do NOT include the date
-8. Start with "Dear Hiring Manager,"
-
-Cover Letter:"""
-
-        return prompt
+    def get_alternative(self, alt_id: str) -> Optional[Dict[str, str]]:
+        return self.alternatives_store.get(alt_id)

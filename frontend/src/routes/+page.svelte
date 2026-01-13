@@ -6,6 +6,7 @@
 		uploadImage,
 		generatePdf,
 		uploadContext,
+		getAlternativeCoverLetter,
 	} from "$lib/api";
 
 	let jobUrl = "";
@@ -17,18 +18,31 @@
 	let contextText = "";
 	let contextFilename = "";
 
+	// Template
+	let templateName = "generic";
+
+	// Contact Info
+
 	// Contact Info
 	let email = "";
 	let phone = "";
 	let linkedin = "";
+	let website = "";
+	let address = "";
 
 	let jobData: any = null;
 	let coverLetter = "";
 	let pdfUrl = "";
+	let downloaded = false;
 
-	let loading = false;
+	let isParsing = false;
+	let isGenerating = false;
+	let isPdfGenerating = false;
 	let error = "";
-	let step = 1; // 1: Input, 2: Review, 3: Result
+	// Race Mode
+	let step = 1;
+	let alternativeId = "";
+	let source = "";
 
 	async function handleParseJob(advance = true) {
 		if (!jobUrl) {
@@ -36,16 +50,20 @@
 			return;
 		}
 
-		loading = true;
+		isParsing = true;
 		error = "";
 
 		try {
 			jobData = await parseJobUrl(jobUrl);
-			if (advance) step = 2;
+			if (advance) {
+				step = 2;
+				// Auto-start generation in background
+				handleGenerateCoverLetter();
+			}
 		} catch (e: any) {
 			error = e.message || "Failed to parse job URL";
 		} finally {
-			loading = false;
+			isParsing = false;
 		}
 	}
 
@@ -90,7 +108,7 @@
 	async function handleGenerateCoverLetter() {
 		if (!jobData) return;
 
-		loading = true;
+		isGenerating = true;
 		error = "";
 
 		try {
@@ -106,19 +124,54 @@
 			if (result.email) email = result.email;
 			if (result.phone) phone = result.phone;
 			if (result.linkedin) linkedin = result.linkedin;
+			if (result.website) website = result.website;
+			if (result.address) address = result.address;
+
+			// Auto-fill name if detected and currently empty
+			if (result.user_name_detected && !userName) {
+				userName = result.user_name_detected;
+			}
+
+			if (result.user_name_detected && !userName) {
+				userName = result.user_name_detected;
+			}
+
+			// Capture race result
+			if (result.alternative_id) alternativeId = result.alternative_id;
+			if (result.source) source = result.source;
 
 			step = 3;
 		} catch (e: any) {
 			error = e.message || "Failed to generate cover letter";
 		} finally {
-			loading = false;
+			isGenerating = false;
+		}
+	}
+
+	async function switchAlternative() {
+		if (!alternativeId) return;
+
+		try {
+			// Basic loading indication could be added here
+			const altResult = await getAlternativeCoverLetter(alternativeId);
+			if (altResult && altResult.text) {
+				coverLetter = altResult.text;
+				source = altResult.source;
+				// Swap IDs? Or just clear alternativeId now that we used it?
+				// For simple toggling, we'd need to keep both.
+				// MVP: Just consume it. Or maybe disable button after swap?
+				alternativeId = ""; // Disable for now to keep it simple, or we could support complex swapping later.
+			}
+		} catch (e) {
+			error =
+				"Alternative info not ready yet. Background generation might be slow. Try again in a few seconds.";
 		}
 	}
 
 	async function handleGeneratePdf() {
 		if (!coverLetter || !jobData) return;
 
-		loading = true;
+		isPdfGenerating = true;
 		error = "";
 
 		try {
@@ -131,13 +184,43 @@
 				email,
 				phone,
 				linkedin,
+				template_name: templateName,
 			});
 
 			pdfUrl = result.url;
+
+			// Auto-download
+			handleDownload();
 		} catch (e: any) {
 			error = e.message || "Failed to generate PDF";
 		} finally {
-			loading = false;
+			isPdfGenerating = false;
+		}
+	}
+
+	function handleDownload() {
+		if (!pdfUrl) return;
+
+		const fullUrl = `http://localhost:8000${pdfUrl}`;
+
+		// Create temporary link to force download
+		const link = document.createElement("a");
+		link.href = fullUrl;
+		link.download = `Cover_Letter_${jobData.company.replace(/\s+/g, "_")}.pdf`; // Suggest a nice filename
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+
+		// Update UI state
+		setTimeout(() => {
+			downloaded = true;
+		}, 1000);
+	}
+
+	function invalidatePdf() {
+		if (pdfUrl) {
+			pdfUrl = "";
+			downloaded = false;
 		}
 	}
 
@@ -156,6 +239,10 @@
 		jobData = null;
 		coverLetter = "";
 		pdfUrl = "";
+		downloaded = false;
+		isParsing = false;
+		isGenerating = false;
+		isPdfGenerating = false;
 		error = "";
 		step = 1;
 	}
@@ -266,7 +353,7 @@
 							bind:value={jobUrl}
 							placeholder="https://www.linkedin.com/jobs/view/..."
 							class="input"
-							disabled={loading}
+							disabled={isParsing}
 						/>
 						<p class="text-sm text-gray-500 mt-2">
 							Paste a job posting URL from LinkedIn, Indeed, or
@@ -276,17 +363,17 @@
 						<div class="mt-3 flex space-x-3">
 							<button
 								on:click={() => handleParseJob(false)}
-								disabled={loading || !jobUrl}
+								disabled={isParsing || !jobUrl}
 								class="btn btn-outline"
 							>
-								{loading ? "Parsing..." : "Parse Job Ad"}
+								{isParsing ? "Parsing..." : "Parse Job Ad"}
 							</button>
 							<button
 								on:click={() => handleParseJob(true)}
-								disabled={loading || !jobUrl}
+								disabled={isParsing || !jobUrl}
 								class="btn btn-primary"
 							>
-								{loading ? "Parsing..." : "Continue →"}
+								{isParsing ? "Parsing..." : "Continue →"}
 							</button>
 						</div>
 
@@ -318,7 +405,7 @@
 							bind:value={userName}
 							placeholder="John Doe"
 							class="input"
-							disabled={loading}
+							disabled={isParsing}
 						/>
 					</div>
 
@@ -333,7 +420,7 @@
 							placeholder="E.g., 5 years of Python development, experience with FastAPI..."
 							rows="4"
 							class="input"
-							disabled={loading}
+							disabled={isParsing}
 						></textarea>
 					</div>
 
@@ -352,7 +439,7 @@
 							accept="image/*,.pdf"
 							on:change={handleFileUpload}
 							class="input"
-							disabled={loading}
+							disabled={isParsing}
 						/>
 						{#if imagePreview}
 							<div class="mt-4">
@@ -383,10 +470,10 @@
 
 					<button
 						on:click={() => handleParseJob(true)}
-						disabled={loading || !jobUrl}
+						disabled={isParsing || !jobUrl}
 						class="btn btn-primary w-full"
 					>
-						{loading ? "Parsing..." : "Continue →"}
+						{isParsing ? "Parsing..." : "Continue →"}
 					</button>
 				</div>
 			</div>
@@ -482,16 +569,45 @@
 					<button
 						on:click={() => (step = 1)}
 						class="btn btn-secondary flex-1"
-						disabled={loading}
+						disabled={isGenerating}
 					>
 						← Back
 					</button>
 					<button
-						on:click={handleGenerateCoverLetter}
-						disabled={loading}
-						class="btn btn-primary flex-1"
+						on:click={() =>
+							coverLetter
+								? (step = 3)
+								: handleGenerateCoverLetter()}
+						disabled={isGenerating}
+						class="btn btn-primary flex-1 flex items-center justify-center"
 					>
-						{loading ? "Generating..." : "Generate Cover Letter ✨"}
+						{#if isGenerating}
+							<svg
+								class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+							>
+								<circle
+									class="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									stroke-width="4"
+								></circle>
+								<path
+									class="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+								></path>
+							</svg>
+							Generating AI Draft...
+						{:else if coverLetter}
+							View Generated Letter →
+						{:else}
+							Generate Cover Letter ✨
+						{/if}
 					</button>
 				</div>
 			</div>
@@ -505,11 +621,43 @@
 				</h2>
 
 				<div
-					class="bg-gray-50 rounded-lg p-6 mb-8 border-2 border-gray-200"
+					class="bg-gray-50 rounded-lg p-12 mb-8 border-2 border-gray-200 shadow-sm"
 				>
-					<div class="prose max-w-none">
+					<!-- Live Header Preview -->
+					<div class="mb-8 font-serif">
+						<div class="text-xl font-bold text-gray-900 mb-2">
+							{userName || "Your Name"}
+						</div>
+						<div
+							class="text-sm text-gray-600 mb-6 flex flex-wrap gap-3"
+						>
+							{#if email}<span>{email}</span>{/if}
+							{#if email && (phone || linkedin)}<span>•</span
+								>{/if}
+							{#if phone}<span>{phone}</span>{/if}
+							{#if (email || phone) && linkedin}<span>•</span
+								>{/if}
+							{#if linkedin}<span>{linkedin}</span>{/if}
+						</div>
+
+						<div class="text-gray-800 mb-6">
+							{new Date().toLocaleDateString("en-US", {
+								year: "numeric",
+								month: "long",
+								day: "numeric",
+							})}
+						</div>
+
+						<div class="text-gray-800 mb-8 font-semibold">
+							Re: Application for {jobData.title} at {jobData.company}
+						</div>
+					</div>
+
+					<div class="prose max-w-none font-serif">
 						{#each coverLetter.split("\n\n") as paragraph}
-							<p class="text-gray-800 mb-4 leading-relaxed">
+							<p
+								class="text-gray-800 mb-4 leading-relaxed whitespace-pre-line"
+							>
 								{paragraph}
 							</p>
 						{/each}
@@ -530,9 +678,10 @@
 							<input
 								type="email"
 								bind:value={email}
+								on:input={invalidatePdf}
 								placeholder="email@example.com"
 								class="input text-sm"
-								disabled={loading || pdfUrl !== ""}
+								disabled={isPdfGenerating}
 							/>
 						</div>
 						<div>
@@ -543,9 +692,10 @@
 							<input
 								type="tel"
 								bind:value={phone}
+								on:input={invalidatePdf}
 								placeholder="+1 234 567 8900"
 								class="input text-sm"
-								disabled={loading || pdfUrl !== ""}
+								disabled={isPdfGenerating}
 							/>
 						</div>
 						<div>
@@ -556,33 +706,117 @@
 							<input
 								type="text"
 								bind:value={linkedin}
+								on:input={invalidatePdf}
 								placeholder="linkedin.com/in/..."
 								class="input text-sm"
-								disabled={loading || pdfUrl !== ""}
+								disabled={isPdfGenerating}
+							/>
+						</div>
+
+						<!-- New Fields -->
+						<div>
+							<label
+								class="block text-sm font-medium text-gray-700 mb-1"
+								>Website</label
+							>
+							<input
+								type="text"
+								bind:value={website}
+								on:input={invalidatePdf}
+								placeholder="portfolio.com"
+								class="input text-sm"
+								disabled={isPdfGenerating}
+							/>
+						</div>
+						<!-- Address (Optional, maybe not full width?) -->
+						<div class="md:col-span-2">
+							<label
+								class="block text-sm font-medium text-gray-700 mb-1"
+								>Location / Address</label
+							>
+							<input
+								type="text"
+								bind:value={address}
+								on:input={invalidatePdf}
+								placeholder="New York, NY"
+								class="input text-sm"
+								disabled={isPdfGenerating}
 							/>
 						</div>
 					</div>
+				</div>
+
+				<div class="flex justify-between items-center mb-6">
+					<div class="text-sm text-gray-500 italic">
+						Generated by {source || "AI"}
+					</div>
+					{#if alternativeId}
+						<button
+							on:click={switchAlternative}
+							class="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center"
+						>
+							<span class="mr-1">🔄</span> View Alternative Version
+						</button>
+					{/if}
+				</div>
+
+				<div class="mb-6">
+					<label class="block text-sm font-medium text-gray-700 mb-2"
+						>PDF Template / Country</label
+					>
+					<select
+						bind:value={templateName}
+						on:change={invalidatePdf}
+						class="input"
+						disabled={isPdfGenerating}
+					>
+						<option value="generic">Generic (Standard)</option>
+						<!-- Future templates can be added here -->
+					</select>
 				</div>
 
 				<div class="space-y-4">
 					{#if !pdfUrl}
 						<button
 							on:click={handleGeneratePdf}
-							disabled={loading}
+							disabled={isPdfGenerating}
 							class="btn btn-primary w-full"
 						>
-							{loading
+							{isPdfGenerating
 								? "Generating PDF..."
 								: "Download as PDF 📄"}
 						</button>
+					{:else if downloaded}
+						<div
+							class="flex flex-col items-center justify-center p-6 bg-green-50 rounded-lg border border-green-200 mb-4"
+						>
+							<div
+								class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-3 shadow-sm"
+							>
+								<span class="text-3xl">✅</span>
+							</div>
+							<h3 class="text-xl font-bold text-green-800 mb-1">
+								All Done!
+							</h3>
+							<p class="text-green-600 mb-4 text-center">
+								Your cover letter has been downloaded to your
+								<b>Downloads</b> folder.
+							</p>
+							<a
+								href={`http://localhost:8000${pdfUrl}`}
+								download
+								class="text-green-700 font-medium hover:text-green-900 flex items-center transition-colors"
+							>
+								<span class="mr-1">⬇️</span> Download again
+							</a>
+						</div>
 					{:else}
-						<a
-							href={`http://localhost:8000${pdfUrl}`}
-							download
+						<button
+							on:click={handleDownload}
 							class="btn btn-primary w-full block text-center"
 						>
 							Download PDF 📥
-						</a>
+						</button>
 					{/if}
 
 					<button on:click={reset} class="btn btn-secondary w-full">

@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export interface JobDescription {
     title: string;
@@ -23,6 +23,11 @@ export interface CoverLetterResponse {
     email?: string;
     phone?: string;
     linkedin?: string;
+    website?: string;
+    address?: string;
+    user_name_detected?: string;
+    source?: string;
+    alternative_id?: string;
 }
 
 export interface UploadImageResponse {
@@ -44,6 +49,7 @@ export interface GeneratePdfRequest {
     email?: string;
     phone?: string;
     linkedin?: string;
+    template_name?: string;
 }
 
 export interface GeneratePdfResponse {
@@ -135,6 +141,7 @@ export async function generatePdf(request: GeneratePdfRequest): Promise<Generate
     if (request.email) formData.append('email', request.email);
     if (request.phone) formData.append('phone', request.phone);
     if (request.linkedin) formData.append('linkedin', request.linkedin);
+    if (request.template_name) formData.append('template_name', request.template_name);
 
     const response = await fetch(`${API_URL}/api/generate-pdf`, {
         method: 'POST',
@@ -147,4 +154,14 @@ export async function generatePdf(request: GeneratePdfRequest): Promise<Generate
     }
 
     return response.json();
+}
+
+export async function getAlternativeCoverLetter(altId: string) {
+    const response = await fetch(`${API_URL}/api/cover-letter/alternative/${altId}`);
+
+    if (!response.ok) {
+        throw new Error('Alternative not ready or not found');
+    }
+
+    return await response.json();
 }

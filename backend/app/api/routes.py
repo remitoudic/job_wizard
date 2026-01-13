@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, HttpUrl
 from typing import Optional
 import os
@@ -51,6 +52,11 @@ class CoverLetterResponse(BaseModel):
     email: Optional[str] = ""
     phone: Optional[str] = ""
     linkedin: Optional[str] = ""
+    website: Optional[str] = ""
+    address: Optional[str] = ""
+    user_name_detected: Optional[str] = ""
+    source: Optional[str] = "local"
+    alternative_id: Optional[str] = ""
 
 
 @router.post("/parse-job", response_model=JobDescription)
@@ -71,7 +77,7 @@ async def generate_cover_letter(request: CoverLetterRequest):
     Generate a personalized cover letter using LLM
     """
     try:
-        cover_letter = await llm_service.generate_cover_letter(
+        cover_letter, source, alternative_id = await llm_service.generate_cover_letter(
             job_description=request.job_description.description,
             job_title=request.job_description.title,
             company=request.job_description.company,
@@ -82,7 +88,7 @@ async def generate_cover_letter(request: CoverLetterRequest):
         )
         
         # Extract contact info if context provided
-        contact_info = {"email": "", "phone": "", "linkedin": ""}
+        contact_info = {"email": "", "phone": "", "linkedin": "", "name": "", "address": "", "website": ""}
         if request.context_text:
             try:
                 contact_info = await llm_service.extract_contact_info(request.context_text)
@@ -96,6 +102,11 @@ async def generate_cover_letter(request: CoverLetterRequest):
             email=contact_info.get("email", ""),
             phone=contact_info.get("phone", ""),
             linkedin=contact_info.get("linkedin", ""),
+            website=contact_info.get("website", ""),
+            address=contact_info.get("address", ""),
+            user_name_detected=contact_info.get("name", ""),
+            source=source,
+            alternative_id=alternative_id,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate cover letter: {str(e)}")
@@ -137,6 +148,17 @@ async def upload_context(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Failed to process context file: {str(e)}")
 
 
+@router.get("/cover-letter/alternative/{alt_id}")
+async def get_alternative_cover_letter(alt_id: str):
+    """
+    Get the alternative cover letter generated in the background
+    """
+    result = llm_service.get_alternative(alt_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Alternative not found (or not ready yet)")
+    return result
+
+
 @router.post("/upload-image")
 async def upload_image(file: UploadFile = File(...)):
     """
@@ -172,7 +194,8 @@ async def generate_pdf(
     cover_letter: str = Form(...),
     job_title: str = Form(...),
     company: str = Form(...),
-    user_name: str = Form("Applicant"),
+    template_name: str = Form("generic"),
+    user_name: str = Form(""),
     image_filename: Optional[str] = Form(None),
     email: Optional[str] = Form(""),
     phone: Optional[str] = Form(""),
@@ -198,6 +221,7 @@ async def generate_pdf(
             cover_letter=cover_letter,
             job_title=job_title,
             company=company,
+            template_name=template_name,
             user_name=user_name,
             image_path=str(image_path) if image_path else None,
             email=email,
@@ -207,9 +231,25 @@ async def generate_pdf(
         
         return {
             "filename": pdf_filename,
-            "url": f"/uploads/{pdf_filename}",
+            "url": f"/api/download/{pdf_filename}",
         }
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {str(e)}")
+
+
+@router.get("/download/{filename}")
+async def download_file(filename: str):
+    """
+    Download a file from the uploads directory
+    """
+    file_path = UPLOAD_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type='application/pdf'
+    )
