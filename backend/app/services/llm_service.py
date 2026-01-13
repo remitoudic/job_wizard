@@ -4,6 +4,7 @@ import uuid
 from typing import Optional, Dict, Any
 
 from app.services.agents import create_writing_agent, create_extraction_agent, ContactInfo
+import logfire
 
 class LLMService:
     """Service for generating cover letters using Pydantic AI Agents"""
@@ -34,6 +35,7 @@ class LLMService:
         """
         try:
             # Agent.run is async
+            logfire.info("Starting contact extraction")
             result = await self.extractor.run(text)
             return result.output.model_dump()
         except Exception as e:
@@ -68,6 +70,8 @@ class LLMService:
 
         tasks = []
         
+        logfire.info("Starting generation race", model_local=self.ollama_model_name, model_remote=self.openrouter_model_name if self.remote_writer else "none")
+        
         # Task 1: Local
         local_task = asyncio.create_task(
             self.local_writer.run(prompt), 
@@ -94,7 +98,10 @@ class LLMService:
             winner_result = await winner_task
             winner_text = winner_result.output # .output holds the result
             winner_source = winner_task.get_name()
+            logfire.info("Race won", winner=winner_source)
+            print(f"🏁 RACE WINNER: {winner_source}")
         except Exception as e:
+            logfire.error("Race winner failed", error=str(e))
             # If winner failed, try waiting for others or raise
             raise Exception(f"Winner task failed: {e}")
             
@@ -117,6 +124,7 @@ class LLMService:
                         "text": res.output,
                         "source": task.get_name()
                     }
+                    logfire.info("Alternative stored", id=alt_id, source=task.get_name())
                     break # Just store one alternative for now
                 except Exception as e:
                     print(f"Alternative task failed: {e}")

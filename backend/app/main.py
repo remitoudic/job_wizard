@@ -3,8 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 from pathlib import Path
+import logfire
 
 from app.api import routes
+
+# Configure Logfire
+logfire.configure(send_to_logfire='if-token-present')
 
 # Create FastAPI app
 app = FastAPI(
@@ -12,6 +16,9 @@ app = FastAPI(
     description="AI-powered cover letter generator from job descriptions",
     version="0.1.0",
 )
+
+# Instrument FastAPI with Logfire
+logfire.instrument_fastapi(app)
 
 # Configure CORS
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")

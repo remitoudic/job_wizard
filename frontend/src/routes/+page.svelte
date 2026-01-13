@@ -11,7 +11,6 @@
 
 	let jobUrl = "";
 	let userName = "";
-	let userSkills = "";
 	let imageFile: File | null = null;
 	let imagePreview = "";
 	let uploadedImageFilename = "";
@@ -115,7 +114,6 @@
 			const result = await generateCoverLetter({
 				job_description: jobData,
 				user_name: userName || "Applicant",
-				user_skills: userSkills,
 				context_text: contextText,
 			});
 
@@ -227,7 +225,6 @@
 	function reset() {
 		jobUrl = "";
 		userName = "";
-		userSkills = "";
 		imageFile = null;
 		imagePreview = "";
 		uploadedImageFilename = "";
@@ -262,7 +259,7 @@
 				🧙‍♂️ Job Wizard
 			</h1>
 			<p class="text-xl text-gray-600">
-				Generate personalized cover letters with AI
+				Generate personalized cover letters from just a url
 			</p>
 		</div>
 
@@ -338,44 +335,18 @@
 		{#if step === 1}
 			<div class="card">
 				<h2 class="text-2xl font-bold text-gray-800 mb-6">
-					Enter Job Details
+					Enter Job URL
 				</h2>
 
 				<div class="space-y-6">
 					<div>
-						<label
-							class="block text-sm font-semibold text-gray-700 mb-2"
-						>
-							Job URL
-						</label>
 						<input
 							type="url"
 							bind:value={jobUrl}
-							placeholder="https://www.linkedin.com/jobs/view/..."
+							placeholder="Paste job posting URL (LinkedIn, Indeed, etc)..."
 							class="input"
 							disabled={isParsing}
 						/>
-						<p class="text-sm text-gray-500 mt-2">
-							Paste a job posting URL from LinkedIn, Indeed, or
-							other job boards
-						</p>
-
-						<div class="mt-3 flex space-x-3">
-							<button
-								on:click={() => handleParseJob(false)}
-								disabled={isParsing || !jobUrl}
-								class="btn btn-outline"
-							>
-								{isParsing ? "Parsing..." : "Parse Job Ad"}
-							</button>
-							<button
-								on:click={() => handleParseJob(true)}
-								disabled={isParsing || !jobUrl}
-								class="btn btn-primary"
-							>
-								{isParsing ? "Parsing..." : "Continue →"}
-							</button>
-						</div>
 
 						{#if jobData}
 							<div class="mt-4 p-3 border rounded bg-gray-50">
@@ -394,79 +365,82 @@
 						{/if}
 					</div>
 
-					<div>
-						<label
-							class="block text-sm font-semibold text-gray-700 mb-2"
+					<details
+						class="group bg-white rounded-lg border border-gray-200 overflow-hidden"
+					>
+						<summary
+							class="flex justify-between items-center p-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
 						>
-							Your Name
-						</label>
-						<input
-							type="text"
-							bind:value={userName}
-							placeholder="John Doe"
-							class="input"
-							disabled={isParsing}
-						/>
-					</div>
-
-					<div>
-						<label
-							class="block text-sm font-semibold text-gray-700 mb-2"
-						>
-							Your Skills & Experience (Optional)
-						</label>
-						<textarea
-							bind:value={userSkills}
-							placeholder="E.g., 5 years of Python development, experience with FastAPI..."
-							rows="4"
-							class="input"
-							disabled={isParsing}
-						></textarea>
-					</div>
-
-					<div>
-						<label
-							class="block text-sm font-semibold text-gray-700 mb-2"
-						>
-							Personalization (CV/PDF or Photo)
-						</label>
-						<p class="text-xs text-gray-500 mb-2">
-							Upload a PDF (CV/Cover Letter) to personalize the
-							content, OR an Image to appear on the PDF.
-						</p>
-						<input
-							type="file"
-							accept="image/*,.pdf"
-							on:change={handleFileUpload}
-							class="input"
-							disabled={isParsing}
-						/>
-						{#if imagePreview}
-							<div class="mt-4">
-								<img
-									src={imagePreview}
-									alt="Preview"
-									class="w-32 h-32 object-cover rounded-lg shadow-md"
+							<h3 class="text-sm font-semibold text-gray-700">
+								Add context to personalize your cover letter
+							</h3>
+							<span
+								class="text-gray-500 transform transition-transform duration-200 group-open:rotate-180"
+								>▼</span
+							>
+						</summary>
+						<div class="p-4 border-t border-gray-200 space-y-6">
+							<div>
+								<label
+									class="block text-sm font-semibold text-gray-700 mb-2"
+								>
+									Your Name
+								</label>
+								<input
+									type="text"
+									bind:value={userName}
+									placeholder="John Doe"
+									class="input"
+									disabled={isParsing}
 								/>
 							</div>
-						{/if}
-						{#if contextFilename}
-							<div
-								class="mt-4 p-3 bg-blue-50 text-blue-700 rounded-lg flex items-center"
-							>
-								<span class="text-2xl mr-3">📄</span>
-								<div>
-									<div class="font-semibold">
-										Context Loaded
+
+							<div>
+								<label
+									class="block text-sm font-semibold text-gray-700 mb-2"
+								>
+									Personalization (CV/PDF or Photo)
+								</label>
+								<p class="text-xs text-gray-500 mb-2">
+									Upload a PDF (CV/Cover Letter) to
+									personalize the content, OR an Image to
+									appear on the PDF.
+								</p>
+								<input
+									type="file"
+									accept="image/*,.pdf"
+									on:change={handleFileUpload}
+									class="input"
+									disabled={isParsing}
+								/>
+								{#if imagePreview}
+									<div class="mt-4">
+										<img
+											src={imagePreview}
+											alt="Preview"
+											class="w-32 h-32 object-cover rounded-lg shadow-md"
+										/>
 									</div>
-									<div class="text-sm opacity-75">
-										Using info from uploaded PDF to
-										personalize letter
+								{/if}
+								{#if contextFilename}
+									<div
+										class="mt-4 p-3 bg-blue-50 text-blue-700 rounded-lg flex items-center"
+									>
+										<span class="text-2xl mr-3">📄</span>
+										<div>
+											<div class="font-semibold">
+												Context Loaded
+											</div>
+											<div class="text-sm opacity-75">
+												Using info from uploaded PDF to
+												personalize letter
+											</div>
+										</div>
 									</div>
-								</div>
+								{/if}
 							</div>
-						{/if}
-					</div>
+						</div>
+					</details>
 
 					<button
 						on:click={() => handleParseJob(true)}

@@ -1,52 +1,6 @@
 # Job Wizard 🧙‍♂️
 
-Quick start (auto-detect local vs remote)
-----------------------------------------
-
-Use the provided wrapper to auto-detect whether you're starting on your remote server (default IP 147.93.111.113) or locally. The script exports the correct `VITE_API_URL` and `CORS_ORIGINS` for `docker-compose` and then starts the stack.
-
-Run:
-
-```bash
-chmod +x scripts/docker-up.sh
-./scripts/docker-up.sh
-```
-
-If your remote machine uses a different public IP, override it like:
-
-```bash
-REMOTE_IP=1.2.3.4 ./scripts/docker-up.sh
-```
-
-
-Parser improvements and headless fallback
----------------------------------------
-
-If you hit 403 Forbidden errors when parsing job pages (some job sites actively block programmatic requests), the backend parser now:
-
-- Sends realistic browser-like headers and retries transient 403/429/5xx responses with exponential backoff ✅
-- Attempts a headless-browser fallback using Playwright if the HTTP approach fails (optional) 🔁
-
-To enable the fallback in your environment:
-
-```bash
-# From the backend folder
-pip install -e .[browser]
-# Then install browser binaries
-playwright install
-```
-
-To run the tests locally:
-
-```bash
-cd backend
-pip install -e .[dev]
-pytest -q
-```
-
-# Job Wizard 🧙‍♂️
-
-A powerful web application that generates personalized cover letters from job descriptions using AI. Simply paste a job URL, upload your photo, and get a professionally formatted PDF cover letter.
+A powerful web application that generates personalized cover letters from job descriptions using AI. Simply paste a job URL, upload your CV as a PDF (or any other background documents) as context, and get a professionally formatted PDF cover letter. The more the system knows about you, the more personalized the cover letter will be.
 
 ## Features
 
@@ -59,12 +13,14 @@ A powerful web application that generates personalized cover letters from job de
 ## Architecture
 
 ```
-┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-│  SvelteKit  │─────▶│   FastAPI   │─────▶│   Ollama    │
-│  Frontend   │      │   Backend   │      │     LLM     │
-└─────────────┘      └─────────────┘      └─────────────┘
-                            │
-                            ▼
+                                          ┌─────────────┐
+                                     ┌───▶│   Ollama    │
+┌─────────────┐      ┌─────────────┐ │    │   (Local)   │
+│  SvelteKit  │─────▶│   FastAPI   │─┤    └─────────────┘
+│  Frontend   │      │   Backend   │ │    ┌─────────────┐
+└─────────────┘      └─────────────┘ └───▶│ OpenRouter  │
+                            │             │   (Remote)  │
+                            ▼             └─────────────┘
                      ┌─────────────┐
                      │ PostgreSQL  │
                      │  Database   │
@@ -112,7 +68,7 @@ A powerful web application that generates personalized cover letters from job de
 
 1. Open http://localhost:5173 in your browser
 2. Paste a job description URL (LinkedIn, Indeed, etc.)
-3. Upload your professional photo
+3. Upload your CV/PDF for context (and optional photo)
 4. Click "Generate Cover Letter"
 5. Review the AI-generated content
 6. Download your PDF
@@ -129,6 +85,9 @@ uv sync
 
 # Run tests
 uv run pytest
+
+# Install Playwright browsers (Required for job parsing)
+uv run playwright install chromium
 
 # Run locally (without Docker)
 uv run uvicorn app.main:app --reload
@@ -195,3 +154,28 @@ Check CORS settings in `.env` and ensure `VITE_API_URL` is correct.
 ## License
 
 MIT
+
+Parser improvements and headless fallback
+---------------------------------------
+
+If you hit 403 Forbidden errors when parsing job pages (some job sites actively block programmatic requests), the backend parser now:
+
+- Sends realistic browser-like headers and retries transient 403/429/5xx responses with exponential backoff ✅
+- Attempts a headless-browser fallback using Playwright if the HTTP approach fails (optional) 🔁
+
+To enable the fallback in your environment:
+
+```bash
+# From the backend folder
+pip install -e .[browser]
+# Then install browser binaries
+playwright install
+```
+
+To run the tests locally:
+
+```bash
+cd backend
+pip install -e .[dev]
+pytest -q
+```

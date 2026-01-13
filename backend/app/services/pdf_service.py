@@ -7,6 +7,7 @@ from reportlab.lib.colors import HexColor
 from PIL import Image as PILImage
 from typing import Optional
 import os
+import logfire
 
 
 class PDFService:
@@ -64,4 +65,9 @@ class PDFService:
         )
         
         # Build PDF
-        doc.build(story)
+        try:
+            logfire.info("Generating PDF", template=template_name, output=output_path)
+            doc.build(story)
+        except Exception as e:
+            logfire.error("PDF generation failed", error=str(e))
+            raise e

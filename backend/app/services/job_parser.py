@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from typing import Dict
 import asyncio
 from app.services.parsers import ParserRegistry
+import logfire
 
 class JobParser:
     """Service for parsing job descriptions using strategy pattern"""
@@ -26,6 +27,7 @@ class JobParser:
         """
         # 1. Get Strategy
         parser = ParserRegistry.get_parser(url)
+        logfire.info("Parsing job URL", url=url, strategy=parser.__class__.__name__)
         
         # 2. Normalize URL (Strategy specific)
         url = parser.normalize_url(url)
@@ -45,6 +47,7 @@ class JobParser:
 
             except httpx.HTTPStatusError as e:
                 status = e.response.status_code if e.response is not None else None
+                logfire.warn("HTTP failed", url=url, status=status, attempt=attempt)
                 last_exc = e
                 if status in (403, 429) or (status and 500 <= status < 600):
                     if attempt == self.max_retries:
@@ -59,12 +62,14 @@ class JobParser:
 
         # Fallback: Headless Browser
         try:
+            logfire.info("Attempting Playwright fallback", url=url)
             content = await self._fetch_with_playwright(url, cookies=cookies)
             soup = BeautifulSoup(content, "lxml")
             return parser.extract_job_data(soup, url)
         except ImportError:
             raise Exception("Failed to fetch URL. Playwright fallback unavailable.") from last_exc
         except Exception as e:
+            logfire.error("Parsing failed", url=url, error=str(e))
             raise Exception(f"Failed to fetch URL: {e}") from e
 
     async def _fetch_with_playwright(self, url: str, cookies: str | None = None) -> str:
