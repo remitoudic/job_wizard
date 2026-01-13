@@ -35,7 +35,7 @@ class LLMService:
         try:
             # Agent.run is async
             result = await self.extractor.run(text)
-            return result.data.model_dump()
+            return result.output.model_dump()
         except Exception as e:
             print(f"Extraction failed: {e}")
             return {}
@@ -92,7 +92,7 @@ class LLMService:
         winner_task = done.pop()
         try:
             winner_result = await winner_task
-            winner_text = winner_result.data # .data holds the str result
+            winner_text = winner_result.output # .output holds the result
             winner_source = winner_task.get_name()
         except Exception as e:
             # If winner failed, try waiting for others or raise
@@ -114,7 +114,7 @@ class LLMService:
                 try:
                     res = await task
                     self.alternatives_store[alt_id] = {
-                        "text": res.data,
+                        "text": res.output,
                         "source": task.get_name()
                     }
                     break # Just store one alternative for now
