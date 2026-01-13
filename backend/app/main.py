@@ -7,6 +7,10 @@ import logfire
 
 from app.api import routes
 
+# Handle empty token from docker-compose
+if os.getenv("LOGFIRE_TOKEN") == "":
+    del os.environ["LOGFIRE_TOKEN"]
+
 # Configure Logfire
 logfire.configure(send_to_logfire='if-token-present')
 
