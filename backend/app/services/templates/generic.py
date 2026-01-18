@@ -26,16 +26,22 @@ class GenericTemplate(BaseTemplate):
         job_title: str,
         company: str,
         user_name: str,
+        first_name: str = "",
+        surname: str = "",
         image_path: Optional[str] = None,
         email: Optional[str] = "",
         phone: Optional[str] = "",
         linkedin: Optional[str] = "",
     ):
         # 1. Header (Left Side)
-        # Name
+        # Name - use first_name and surname if provided, otherwise fall back to user_name
+        display_name = user_name
+        if first_name or surname:
+            display_name = f"{first_name} {surname}".strip()
+        
         name_style = self.title_style
         name_style.alignment = TA_LEFT
-        story.append(Paragraph(user_name, name_style))
+        story.append(Paragraph(display_name, name_style))
         story.append(Spacer(1, 0.05 * inch))
 
         # Contact Info (Left)

@@ -20,6 +20,8 @@ export interface CoverLetterResponse {
     cover_letter: string;
     job_title: string;
     company: string;
+    first_name?: string;
+    surname?: string;
     email?: string;
     phone?: string;
     linkedin?: string;
@@ -45,6 +47,8 @@ export interface GeneratePdfRequest {
     job_title: string;
     company: string;
     user_name?: string;
+    first_name?: string;
+    surname?: string;
     image_filename?: string;
     email?: string;
     phone?: string;
@@ -134,6 +138,12 @@ export async function generatePdf(request: GeneratePdfRequest): Promise<Generate
     formData.append('company', request.company);
     if (request.user_name) {
         formData.append('user_name', request.user_name);
+    }
+    if (request.first_name) {
+        formData.append('first_name', request.first_name);
+    }
+    if (request.surname) {
+        formData.append('surname', request.surname);
     }
     if (request.image_filename) {
         formData.append('image_filename', request.image_filename);

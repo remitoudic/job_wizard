@@ -13,6 +13,8 @@ logfire.configure(token=os.getenv("LOGFIRE_TOKEN"), send_to_logfire='if-token-pr
 
 class ContactInfo(BaseModel):
     name: Optional[str] = Field("", description="Full name of the candidate")
+    first_name: Optional[str] = Field("", description="First name of the candidate")
+    surname: Optional[str] = Field("", description="Surname/last name of the candidate")
     email: Optional[str] = Field("", description="Email address")
     phone: Optional[str] = Field("", description="Phone number")
     linkedin: Optional[str] = Field("", description="LinkedIn profile URL")
@@ -69,7 +71,7 @@ def create_extraction_agent(model_name: str = "llama3.2:1b", base_url: str = "ht
 
 def create_writing_agent(model_name: str, is_remote: bool = False) -> Agent:
     """
-    Creates an agent for writing cover letters.
+    Creates an agent for writing cover letters with optimized parameters for speed.
     """
     if not is_remote:
         host = os.getenv("OLLAMA_HOST", "http://ollama:11434")
@@ -87,12 +89,17 @@ def create_writing_agent(model_name: str, is_remote: bool = False) -> Agent:
     
     agent = Agent(
         model,
-        output_type=str, 
+        output_type=str,
+        # Optimized system prompt - more concise and direct
         system_prompt=(
-            "You are a professional career coach and expert copywriter. "
-            "Write a compelling, professional cover letter based on the provided job description and user details. "
-            "Do NOT include placeholders like [Your Name]. Use the provided info. "
-            "Return ONLY the body of the letter. No conversational filler."
-        )
+            "Write a professional cover letter. Use the provided details. "
+            "Be concise and compelling. Return only the letter body, no extra text."
+        ),
+        # Speed optimization parameters
+        model_settings={
+            "temperature": 0.7,      # Balanced creativity/speed
+            "max_tokens": 600,       # Limit output length
+            "top_p": 0.9,           # Nucleus sampling for speed
+        }
     )
     return agent

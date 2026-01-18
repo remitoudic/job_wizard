@@ -21,6 +21,14 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: jobwizard-ollama
+    environment:
+      - OLLAMA_DEBUG=0
+      - OLLAMA_ORIGINS=*
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "11434:11434"
     volumes:
@@ -39,6 +47,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: jobwizard-backend
+    env_file:
+      - .env
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://jobwizard:changeme123@postgres:5432/jobwizard}
       OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}

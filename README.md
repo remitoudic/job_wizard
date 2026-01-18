@@ -108,6 +108,60 @@ bun run dev -- --host 0.0.0.0 --port 5173
 bun run build
 ```
 
+### Testing
+
+The project includes tests for both local (Ollama) and remote (OpenRouter) LLM providers.
+
+#### Prerequisites
+
+- Docker containers must be running (`docker compose up -d`)
+- For OpenRouter tests: Set `OPENROUTER_API_KEY` in your `.env` file
+
+#### Running Tests
+
+**Run all tests:**
+```bash
+docker exec jobwizard-backend pytest tests/ -v
+```
+
+**Run specific tests:**
+```bash
+# Test Ollama connectivity
+docker exec jobwizard-backend pytest tests/test_ollama.py -v
+
+# Test OpenRouter connectivity
+docker exec jobwizard-backend pytest tests/test_openrouter.py -v
+
+# Test both LLM providers
+docker exec jobwizard-backend pytest tests/test_ollama.py tests/test_openrouter.py -v
+```
+
+**Run with detailed output (see model responses):**
+```bash
+docker exec jobwizard-backend pytest tests/test_ollama.py -v -s
+```
+
+#### What the Tests Verify
+
+- **Ollama Test** (`test_ollama.py`):
+  - Verifies connection to local Ollama service
+  - Checks that the configured model (`llama3.2:1b`) is available
+  - Tests text generation capability
+
+- **OpenRouter Test** (`test_openrouter.py`):
+  - Verifies connection to OpenRouter API
+  - Tests the configured model (`xiaomi/mimo-v2-flash:free`)
+  - Validates API key authentication
+  - Note: Skipped if `OPENROUTER_API_KEY` is not set
+
+#### Expected Output
+
+```
+tests/test_ollama.py::test_ollama_connection PASSED
+tests/test_openrouter.py::test_openrouter_connection PASSED
+======================== 2 passed in X.XXs ========================
+```
+
 ## Project Structure
 
 ```

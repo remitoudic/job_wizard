@@ -21,13 +21,13 @@
 	let templateName = "generic";
 
 	// Contact Info
-
-	// Contact Info
 	let email = "";
 	let phone = "";
 	let linkedin = "";
 	let website = "";
 	let address = "";
+	let firstName = "";
+	let surname = "";
 
 	let jobData: any = null;
 	let coverLetter = "";
@@ -42,6 +42,15 @@
 	let step = 1;
 	let alternativeId = "";
 	let source = "";
+
+	// Multiple cover letter versions
+	let allCoverLetters: Array<{
+		text: string;
+		source: string;
+		status?: string;
+	}> = [];
+	let currentVersionIndex = 0;
+	let isLoadingAlternatives = false;
 
 	async function handleParseJob(advance = true) {
 		if (!jobUrl) {
@@ -119,6 +128,8 @@
 
 			coverLetter = result.cover_letter;
 			// Pre-fill contact info if available
+			if (result.first_name) firstName = result.first_name;
+			if (result.surname) surname = result.surname;
 			if (result.email) email = result.email;
 			if (result.phone) phone = result.phone;
 			if (result.linkedin) linkedin = result.linkedin;
@@ -130,13 +141,20 @@
 				userName = result.user_name_detected;
 			}
 
-			if (result.user_name_detected && !userName) {
-				userName = result.user_name_detected;
-			}
+			// Initialize all cover letters with the winner
+			allCoverLetters = [
+				{ text: result.cover_letter, source: result.source || "AI" },
+			];
+			currentVersionIndex = 0;
 
 			// Capture race result
 			if (result.alternative_id) alternativeId = result.alternative_id;
 			if (result.source) source = result.source;
+
+			// Load alternatives in background
+			if (alternativeId) {
+				loadAlternatives();
+			}
 
 			step = 3;
 		} catch (e: any) {
@@ -146,23 +164,54 @@
 		}
 	}
 
-	async function switchAlternative() {
-		if (!alternativeId) return;
+	async function loadAlternatives() {
+		if (!alternativeId || isLoadingAlternatives) return;
 
+		isLoadingAlternatives = true;
 		try {
-			// Basic loading indication could be added here
+			// Wait a bit for alternatives to complete
+			await new Promise((resolve) => setTimeout(resolve, 2000));
+
 			const altResult = await getAlternativeCoverLetter(alternativeId);
-			if (altResult && altResult.text) {
-				coverLetter = altResult.text;
-				source = altResult.source;
-				// Swap IDs? Or just clear alternativeId now that we used it?
-				// For simple toggling, we'd need to keep both.
-				// MVP: Just consume it. Or maybe disable button after swap?
-				alternativeId = ""; // Disable for now to keep it simple, or we could support complex swapping later.
+			if (altResult) {
+				// altResult is now an array of alternatives
+				if (Array.isArray(altResult)) {
+					// Add all alternatives to the list
+					altResult.forEach((alt) => {
+						if (alt.text && alt.source) {
+							allCoverLetters.push({
+								text: alt.text,
+								source: alt.source,
+								status: alt.status || "completed",
+							});
+						}
+					});
+					allCoverLetters = allCoverLetters; // Trigger reactivity
+				} else if (altResult.text) {
+					// Single alternative (old format)
+					allCoverLetters.push({
+						text: altResult.text,
+						source: altResult.source,
+					});
+					allCoverLetters = allCoverLetters;
+				}
 			}
 		} catch (e) {
-			error =
-				"Alternative info not ready yet. Background generation might be slow. Try again in a few seconds.";
+			console.log("Alternatives not ready yet, will retry...");
+			// Retry after a delay
+			setTimeout(() => loadAlternatives(), 3000);
+		} finally {
+			isLoadingAlternatives = false;
+		}
+	}
+
+	function switchVersion(index: number) {
+		if (index >= 0 && index < allCoverLetters.length) {
+			currentVersionIndex = index;
+			coverLetter = allCoverLetters[index].text;
+			source = allCoverLetters[index].source;
+			// Invalidate PDF when switching versions
+			invalidatePdf();
 		}
 	}
 
@@ -178,6 +227,8 @@
 				job_title: jobData.title,
 				company: jobData.company,
 				user_name: userName || "Applicant",
+				first_name: firstName,
+				surname: surname,
 				image_filename: uploadedImageFilename,
 				email,
 				phone,
@@ -230,6 +281,8 @@
 		uploadedImageFilename = "";
 		contextText = "";
 		contextFilename = "";
+		firstName = "";
+		surname = "";
 		email = "";
 		phone = "";
 		linkedin = "";
@@ -600,7 +653,11 @@
 					<!-- Live Header Preview -->
 					<div class="mb-8 font-serif">
 						<div class="text-xl font-bold text-gray-900 mb-2">
-							{userName || "Your Name"}
+							{#if firstName || surname}
+								{firstName} {surname}
+							{:else}
+								{userName || "Your Name"}
+							{/if}
 						</div>
 						<div
 							class="text-sm text-gray-600 mb-6 flex flex-wrap gap-3"
@@ -644,6 +701,34 @@
 						Contact Information for Header
 					</h3>
 					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+						<div>
+							<label
+								class="block text-sm font-medium text-gray-700 mb-1"
+								>First Name</label
+							>
+							<input
+								type="text"
+								bind:value={firstName}
+								on:input={invalidatePdf}
+								placeholder="John"
+								class="input text-sm"
+								disabled={isPdfGenerating}
+							/>
+						</div>
+						<div>
+							<label
+								class="block text-sm font-medium text-gray-700 mb-1"
+								>Surname</label
+							>
+							<input
+								type="text"
+								bind:value={surname}
+								on:input={invalidatePdf}
+								placeholder="Doe"
+								class="input text-sm"
+								disabled={isPdfGenerating}
+							/>
+						</div>
 						<div>
 							<label
 								class="block text-sm font-medium text-gray-700 mb-1"
@@ -720,19 +805,64 @@
 					</div>
 				</div>
 
-				<div class="flex justify-between items-center mb-6">
-					<div class="text-sm text-gray-500 italic">
-						Generated by {source || "AI"}
+				<!-- Version Selector -->
+				{#if allCoverLetters.length > 1}
+					<div
+						class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+					>
+						<div class="flex items-center justify-between mb-3">
+							<h3 class="text-sm font-semibold text-gray-700">
+								🏁 Race Results - {allCoverLetters.length} Versions
+								Generated
+							</h3>
+							{#if isLoadingAlternatives}
+								<span class="text-xs text-gray-500"
+									>Loading more...</span
+								>
+							{/if}
+						</div>
+						<div class="flex flex-wrap gap-2">
+							{#each allCoverLetters as version, index}
+								<button
+									on:click={() => switchVersion(index)}
+									disabled={version.status === "failed"}
+									class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 {currentVersionIndex ===
+									index
+										? 'bg-primary-600 text-white shadow-md'
+										: version.status === 'failed'
+											? 'bg-red-50 text-red-500 border border-red-200 cursor-not-allowed'
+											: 'bg-white text-gray-700 border border-gray-300 hover:border-primary-400 hover:bg-primary-50'}"
+								>
+									{#if index === 0}
+										<span>🏆</span>
+									{/if}
+									{#if version.status === "failed"}
+										<span>⚠️</span>
+									{/if}
+									<span>{version.source}</span>
+									{#if version.status === "failed"}
+										<span class="text-xs">(Failed)</span>
+									{/if}
+								</button>
+							{/each}
+						</div>
+						<p class="text-xs text-gray-600 mt-2">
+							Click to switch between versions. 🏆 = Race winner
+							(fastest)
+						</p>
 					</div>
-					{#if alternativeId}
-						<button
-							on:click={switchAlternative}
-							class="text-primary-600 hover:text-primary-700 text-sm font-semibold flex items-center"
-						>
-							<span class="mr-1">🔄</span> View Alternative Version
-						</button>
-					{/if}
-				</div>
+				{:else}
+					<div class="flex justify-between items-center mb-6">
+						<div class="text-sm text-gray-500 italic">
+							Generated by {source || "AI"}
+						</div>
+						{#if isLoadingAlternatives}
+							<span class="text-sm text-gray-500"
+								>Loading alternatives...</span
+							>
+						{/if}
+					</div>
+				{/if}
 
 				<div class="mb-6">
 					<label class="block text-sm font-medium text-gray-700 mb-2"

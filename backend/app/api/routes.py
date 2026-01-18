@@ -49,6 +49,8 @@ class CoverLetterResponse(BaseModel):
     cover_letter: str
     job_title: str
     company: str
+    first_name: Optional[str] = ""
+    surname: Optional[str] = ""
     email: Optional[str] = ""
     phone: Optional[str] = ""
     linkedin: Optional[str] = ""
@@ -88,7 +90,7 @@ async def generate_cover_letter(request: CoverLetterRequest):
         )
         
         # Extract contact info if context provided
-        contact_info = {"email": "", "phone": "", "linkedin": "", "name": "", "address": "", "website": ""}
+        contact_info = {"email": "", "phone": "", "linkedin": "", "name": "", "first_name": "", "surname": "", "address": "", "website": ""}
         if request.context_text:
             try:
                 contact_info = await llm_service.extract_contact_info(request.context_text)
@@ -99,6 +101,8 @@ async def generate_cover_letter(request: CoverLetterRequest):
             cover_letter=cover_letter,
             job_title=request.job_description.title,
             company=request.job_description.company,
+            first_name=contact_info.get("first_name", ""),
+            surname=contact_info.get("surname", ""),
             email=contact_info.get("email", ""),
             phone=contact_info.get("phone", ""),
             linkedin=contact_info.get("linkedin", ""),
@@ -196,6 +200,8 @@ async def generate_pdf(
     company: str = Form(...),
     template_name: str = Form("generic"),
     user_name: str = Form(""),
+    first_name: Optional[str] = Form(""),
+    surname: Optional[str] = Form(""),
     image_filename: Optional[str] = Form(None),
     email: Optional[str] = Form(""),
     phone: Optional[str] = Form(""),
@@ -223,6 +229,8 @@ async def generate_pdf(
             company=company,
             template_name=template_name,
             user_name=user_name,
+            first_name=first_name,
+            surname=surname,
             image_path=str(image_path) if image_path else None,
             email=email,
             phone=phone,
