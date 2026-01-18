@@ -1,6 +1,6 @@
 # Job Wizard 🧙‍♂️
 
-A powerful web application that generates personalized cover letters from job descriptions using AI. Simply paste a job URL, upload your CV as a PDF (or any other background documents) as context, and get a professionally formatted PDF cover letter. The more the system knows about you, the more personalized the cover letter will be.
+A web application that generates personalized cover letters from job descriptions using AI. Simply paste a job URL, upload your CV as a PDF (or any other background documents) as context and get a professionally formatted PDF cover letter. The more the system knows about you, the more personalized the cover letter will be.
 
 ## Features
 

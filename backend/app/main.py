@@ -12,13 +12,22 @@ if os.getenv("LOGFIRE_TOKEN") == "":
     del os.environ["LOGFIRE_TOKEN"]
 
 # Configure Logfire
-logfire.configure(send_to_logfire='if-token-present')
+from app.api import general
+from app.api.routes import auth, users
+from app.core.db import init_db
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
 
 # Create FastAPI app
 app = FastAPI(
     title="Job Wizard API",
     description="AI-powered cover letter generator from job descriptions",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 # Instrument FastAPI with Logfire
@@ -43,7 +52,9 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 # Include API routes
-app.include_router(routes.router, prefix="/api")
+app.include_router(general.router, prefix="/api")
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(users.router, prefix="/api/users", tags=["users"])
 
 
 @app.get("/")

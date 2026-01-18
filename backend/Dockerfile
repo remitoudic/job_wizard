@@ -6,7 +6,10 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Copy dependency files
-COPY pyproject.toml ./
+COPY backend/pyproject.toml ./
+
+# Copy database package
+COPY database /database_pkg
 
 # Install dependencies
 RUN uv sync --no-dev
@@ -24,6 +27,7 @@ WORKDIR /app
 # Copy uv and dependencies from builder
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
+COPY --from=builder /database_pkg /database_pkg
 
 # Copy application code
 COPY . .

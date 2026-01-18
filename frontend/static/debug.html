@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Debug</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        button { margin: 10px 0; padding: 10px; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 4px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Auth Debug Page</h1>
+    
+    <div>
+        <h2>1. Test Login</h2>
+        <button onclick="testLogin()">Login as remitoudic@gmail.com</button>
+        <pre id="loginResult"></pre>
+    </div>
+
+    <div>
+        <h2>2. Test Get User Profile</h2>
+        <button onclick="testGetProfile()">Fetch /api/users/me</button>
+        <pre id="profileResult"></pre>
+    </div>
+
+    <div>
+        <h2>3. LocalStorage</h2>
+        <button onclick="showLocalStorage()">Show LocalStorage</button>
+        <pre id="storageResult"></pre>
+    </div>
+
+    <div>
+        <h2>4. Test Admin Access</h2>
+        <button onclick="testAdminAccess()">Fetch /api/users/</button>
+        <pre id="adminResult"></pre>
+    </div>
+
+    <script>
+        const API_URL = `${window.location.protocol}//${window.location.hostname}:8000`;
+        
+        async function testLogin() {
+            const result = document.getElementById('loginResult');
+            try {
+                const formData = new URLSearchParams();
+                formData.append('username', 'remitoudic@gmail.com');
+                formData.append('password', 'remitoudic');
+                
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                result.className = response.ok ? 'success' : 'error';
+                result.textContent = JSON.stringify(data, null, 2);
+                
+                if (response.ok && data.access_token) {
+                    localStorage.setItem('token', data.access_token);
+                    result.textContent += '\n\n✓ Token saved to localStorage';
+                }
+            } catch (error) {
+                result.className = 'error';
+                result.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function testGetProfile() {
+            const result = document.getElementById('profileResult');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                result.className = 'error';
+                result.textContent = 'No token found. Please login first.';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/api/users/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                result.className = response.ok ? 'success' : 'error';
+                result.textContent = JSON.stringify(data, null, 2);
+                
+                if (data.is_superuser) {
+                    result.textContent += '\n\n✓ User is SUPERUSER';
+                } else {
+                    result.textContent += '\n\n✗ User is NOT superuser';
+                }
+            } catch (error) {
+                result.className = 'error';
+                result.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function showLocalStorage() {
+            const result = document.getElementById('storageResult');
+            const token = localStorage.getItem('token');
+            result.textContent = `Token: ${token || 'Not found'}`;
+        }
+
+        async function testAdminAccess() {
+            const result = document.getElementById('adminResult');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                result.className = 'error';
+                result.textContent = 'No token found. Please login first.';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/api/users/`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                result.className = response.ok ? 'success' : 'error';
+                result.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                result.className = 'error';
+                result.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Show API URL being used
+        document.body.insertAdjacentHTML('afterbegin', `<p><strong>API URL:</strong> ${API_URL}</p>`);
+    </script>
+</body>
+</html>

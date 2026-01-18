@@ -24,6 +24,12 @@ dependencies = [
     "playwright>=1.38.0",
     "pydantic-ai>=0.0.14",
     "logfire[asyncio,fastapi]>=0.46.0",
+    "sqlmodel>=0.0.14",
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt==3.2.2",
+    "python-jose[cryptography]>=3.3.0",
+    "python-multipart>=0.0.9",
+    "job-wizard-db @ file:///database_pkg",
 ]
 
 [project.optional-dependencies]
@@ -41,6 +47,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

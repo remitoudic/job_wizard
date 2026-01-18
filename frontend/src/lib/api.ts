@@ -1,4 +1,61 @@
+import { auth } from '../stores/auth';
+import { get } from 'svelte/store';
+
 const API_URL = import.meta.env.VITE_API_URL || '';
+
+function getHeaders() {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+    };
+
+    // Inject token if available
+    const token = get(auth).token;
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+}
+
+export async function loginUser(formData: FormData) {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        body: formData,
+    });
+    if (!response.ok) throw new Error('Login failed');
+    return response.json();
+}
+
+export async function registerUser(userData: any) {
+    const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+    });
+    if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || 'Registration failed');
+    }
+    return response.json();
+}
+
+export async function getProfile() {
+    const response = await fetch(`${API_URL}/api/users/me`, {
+        method: 'GET',
+        headers: getHeaders(),
+    });
+    if (!response.ok) throw new Error('Failed to fetch profile');
+    return response.json();
+}
+
+export async function updateProfile(userData: any) {
+    const response = await fetch(`${API_URL}/api/users/me`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(userData),
+    });
+    if (!response.ok) throw new Error('Failed to update profile');
+    return response.json();
+}
 
 export interface JobDescription {
     title: string;
@@ -14,6 +71,35 @@ export interface CoverLetterRequest {
     user_name?: string;
     user_skills?: string;
     context_text?: string;
+}
+
+export interface User {
+    id: number;
+    email: string;
+    username: string;
+    full_name?: string;
+    job_title?: string;
+    linkedin_url?: string;
+    portfolio_url?: string;
+    website_url?: string;
+    address?: string;
+    phone?: string;
+    last_login?: string;
+    is_superuser?: boolean;
+}
+
+export async function getUsers(token: string): Promise<User[]> {
+    const response = await fetch(`${API_URL}/api/users/`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch users');
+    }
+
+    return response.json();
 }
 
 export interface CoverLetterResponse {
