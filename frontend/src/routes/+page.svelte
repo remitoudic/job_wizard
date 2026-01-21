@@ -400,75 +400,79 @@
 	<title>Job Wizard - AI Cover Letter Generator</title>
 </svelte:head>
 
-<div class="min-h-screen py-12 px-4">
-	<div class="max-w-4xl mx-auto">
-		<div class="text-center mb-12 relative">
+<div class="min-h-screen py-16 px-4">
+	<div class="max-w-3xl mx-auto">
+		<div class="text-center mb-16 px-4">
 			<h1
-				class="text-5xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent mb-4"
+				class="text-5xl font-extrabold text-[#0F172A] tracking-tight mb-4"
 			>
-				🧙‍♂️ Job Wizard
+				Job Wizard
 			</h1>
-			<p class="text-xl text-gray-600">
-				Generate personalized cover letters from just a url
+			<p class="text-lg text-[#334155] max-w-lg mx-auto leading-relaxed">
+				Craft professional, personalized cover letters in seconds. Just
+				paste a job URL and let AI do the heavy lifting.
 			</p>
 		</div>
 
 		<!-- Progress Steps -->
-		<div class="flex justify-center mb-12">
-			<div class="flex items-center space-x-4">
-				<div class="flex items-center">
+		<div class="flex justify-center mb-16">
+			<div class="flex items-center w-full max-w-md">
+				<div class="flex flex-col items-center flex-1 relative">
 					<div
-						class="w-10 h-10 rounded-full flex items-center justify-center font-semibold {step >=
+						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {step >=
 						1
-							? 'bg-primary-600 text-white'
-							: 'bg-gray-300 text-gray-600'}"
+							? 'bg-[#0369A1] text-white shadow-sm'
+							: 'bg-[#E2E8F0] text-[#64748B]'}"
 					>
 						1
 					</div>
 					<span
-						class="ml-2 text-sm font-medium {step >= 1
-							? 'text-primary-600'
-							: 'text-gray-500'}">Job Details</span
+						class="mt-2 text-xs font-semibold uppercase tracking-wider {step >=
+						1
+							? 'text-[#0369A1]'
+							: 'text-[#64748B]'}">Details</span
 					>
 				</div>
 				<div
-					class="w-16 h-1 {step >= 2
-						? 'bg-primary-600'
-						: 'bg-gray-300'}"
+					class="w-20 h-0.5 {step >= 2
+						? 'bg-[#0369A1]'
+						: 'bg-[#E2E8F0]'} -mt-6"
 				></div>
-				<div class="flex items-center">
+				<div class="flex flex-col items-center flex-1 relative">
 					<div
-						class="w-10 h-10 rounded-full flex items-center justify-center font-semibold {step >=
+						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {step >=
 						2
-							? 'bg-primary-600 text-white'
-							: 'bg-gray-300 text-gray-600'}"
+							? 'bg-[#0369A1] text-white shadow-sm'
+							: 'bg-[#E2E8F0] text-[#64748B]'}"
 					>
 						2
 					</div>
 					<span
-						class="ml-2 text-sm font-medium {step >= 2
-							? 'text-primary-600'
-							: 'text-gray-500'}">Generate</span
+						class="mt-2 text-xs font-semibold uppercase tracking-wider {step >=
+						2
+							? 'text-[#0369A1]'
+							: 'text-[#64748B]'}">Review</span
 					>
 				</div>
 				<div
-					class="w-16 h-1 {step >= 3
-						? 'bg-primary-600'
-						: 'bg-gray-300'}"
+					class="w-20 h-0.5 {step >= 3
+						? 'bg-[#0369A1]'
+						: 'bg-[#E2E8F0]'} -mt-6"
 				></div>
-				<div class="flex items-center">
+				<div class="flex flex-col items-center flex-1 relative">
 					<div
-						class="w-10 h-10 rounded-full flex items-center justify-center font-semibold {step >=
+						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {step >=
 						3
-							? 'bg-primary-600 text-white'
-							: 'bg-gray-300 text-gray-600'}"
+							? 'bg-[#0369A1] text-white shadow-sm'
+							: 'bg-[#E2E8F0] text-[#64748B]'}"
 					>
 						3
 					</div>
 					<span
-						class="ml-2 text-sm font-medium {step >= 3
-							? 'text-primary-600'
-							: 'text-gray-500'}">Download</span
+						class="mt-2 text-xs font-semibold uppercase tracking-wider {step >=
+						3
+							? 'text-[#0369A1]'
+							: 'text-[#64748B]'}">Result</span
 					>
 				</div>
 			</div>
@@ -476,128 +480,236 @@
 
 		<!-- Error Message -->
 		{#if error}
-			<div class="card mb-8 bg-red-50 border-2 border-red-200">
-				<p class="text-red-700 font-medium">⚠️ {error}</p>
+			<div
+				class="mb-8 p-4 bg-red-50 border border-red-100 text-red-700 rounded-md text-sm flex items-start gap-3"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-5 w-5 text-red-500 shrink-0"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+					/>
+				</svg>
+				<span>{error}</span>
 			</div>
 		{/if}
 
 		<!-- Step 1: Input -->
 		{#if step === 1}
 			<div class="card">
-				<h2 class="text-2xl font-bold text-gray-800 mb-6">
-					Enter Job URL
-				</h2>
+				<div class="mb-8">
+					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">
+						Get Started
+					</h2>
+					<p class="text-[#334155] text-sm">
+						Paste the link to the job posting below.
+					</p>
+				</div>
 
-				<div class="space-y-6">
-					<div>
+				<div class="space-y-8">
+					<div class="relative">
 						<input
 							type="url"
 							bind:value={jobUrl}
-							placeholder="Paste job posting URL (LinkedIn, Indeed, etc)..."
-							class="input"
+							placeholder="e.g. https://www.linkedin.com/jobs/view/..."
+							class="input pr-12"
 							disabled={isParsing}
 						/>
+						{#if isParsing}
+							<div
+								class="absolute right-4 top-1/2 -translate-y-1/2"
+							>
+								<svg
+									class="animate-spin h-5 w-5 text-[#0369A1]"
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+								>
+									<circle
+										class="opacity-25"
+										cx="12"
+										cy="12"
+										r="10"
+										stroke="currentColor"
+										stroke-width="4"
+									></circle>
+									<path
+										class="opacity-75"
+										fill="currentColor"
+										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									></path>
+								</svg>
+							</div>
+						{/if}
 
 						{#if jobData}
-							<div class="mt-4 p-3 border rounded bg-gray-50">
-								<div class="text-sm text-gray-500">
-									Parsed preview
-								</div>
-								<div class="mt-2">
-									<div class="font-medium text-gray-800">
+							<div
+								class="mt-4 p-4 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between"
+							>
+								<div>
+									<div
+										class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1"
+									>
+										Parsed Position
+									</div>
+									<div class="font-semibold text-[#0F172A]">
 										{jobData.title}
 									</div>
-									<div class="text-sm text-gray-600">
+									<div class="text-sm text-[#334155]">
 										{jobData.company}
 									</div>
+								</div>
+								<div class="bg-green-100 p-1.5 rounded-full">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-5 w-5 text-green-600"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M5 13l4 4L19 7"
+										/>
+									</svg>
 								</div>
 							</div>
 						{/if}
 					</div>
 
-					<details
-						class="group bg-white rounded-lg border border-gray-200 overflow-hidden"
-					>
-						<summary
-							class="flex justify-between items-center p-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
-						>
-							<h3 class="text-sm font-semibold text-gray-700">
-								Add context to personalize your cover letter
-							</h3>
-							<span
-								class="text-gray-500 transform transition-transform duration-200 group-open:rotate-180"
-								>▼</span
+					<div class="pt-2 border-t border-[#E2E8F0]">
+						<details class="group">
+							<summary
+								class="flex justify-between items-center py-4 cursor-pointer text-[#334155] hover:text-[#0F172A] transition-colors focus:outline-none"
 							>
-						</summary>
-						<div class="p-4 border-t border-gray-200 space-y-6">
-							<div>
-								<label
-									class="block text-sm font-semibold text-gray-700 mb-2"
+								<span class="text-sm font-semibold"
+									>Personalize with your context</span
 								>
-									Your Name
-								</label>
-								<input
-									type="text"
-									bind:value={userName}
-									placeholder="John Doe"
-									class="input"
-									disabled={isParsing}
-								/>
-							</div>
-
-							<div>
-								<label
-									class="block text-sm font-semibold text-gray-700 mb-2"
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-5 w-5 transition-transform duration-200 group-open:rotate-180"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
 								>
-									Personalization (CV/PDF or Photo)
-								</label>
-								<p class="text-xs text-gray-500 mb-2">
-									Upload a PDF (CV/Cover Letter) to
-									personalize the content, OR an Image to
-									appear on the PDF.
-								</p>
-								<input
-									type="file"
-									accept="image/*,.pdf"
-									on:change={handleFileUpload}
-									class="input"
-									disabled={isParsing}
-								/>
-								{#if imagePreview}
-									<div class="mt-4">
-										<img
-											src={imagePreview}
-											alt="Preview"
-											class="w-32 h-32 object-cover rounded-lg shadow-md"
-										/>
-									</div>
-								{/if}
-								{#if contextFilename}
-									<div
-										class="mt-4 p-3 bg-blue-50 text-blue-700 rounded-lg flex items-center"
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M19 9l-7 7-7-7"
+									/>
+								</svg>
+							</summary>
+							<div
+								class="pb-6 space-y-6 animate-in fade-in slide-in-from-top-2"
+							>
+								<div>
+									<label
+										class="block text-sm font-semibold text-[#334155] mb-2"
+										>Your Name</label
 									>
-										<span class="text-2xl mr-3">📄</span>
-										<div>
-											<div class="font-semibold">
-												Context Loaded
-											</div>
-											<div class="text-sm opacity-75">
-												Using info from uploaded PDF to
-												personalize letter
-											</div>
-										</div>
+									<input
+										type="text"
+										bind:value={userName}
+										placeholder="Full Name"
+										class="input"
+										disabled={isParsing}
+									/>
+								</div>
+
+								<div>
+									<label
+										class="block text-sm font-semibold text-[#334155] mb-2"
+										>Upload Profile (CV or Photo)</label
+									>
+									<p class="text-xs text-[#64748B] mb-3">
+										Add your CV (PDF) to personalize the
+										cover letter content, or a photo to
+										embed it in the final PDF.
+									</p>
+									<div class="flex items-center gap-4">
+										<input
+											type="file"
+											id="file-upload"
+											accept="image/*,.pdf"
+											on:change={handleFileUpload}
+											class="hidden"
+											disabled={isParsing}
+										/>
+										<label
+											for="file-upload"
+											class="btn btn-secondary text-sm cursor-pointer flex items-center gap-2"
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-4 w-4"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+												/>
+											</svg>
+											Choose File
+										</label>
+										{#if imageFile || contextFilename}
+											<span
+												class="text-sm font-medium text-green-600 flex items-center gap-1"
+											>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													class="h-4 w-4"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M5 13l4 4L19 7"
+													/>
+												</svg>
+												{imageFile ? "Image" : "PDF"} Selected
+											</span>
+										{/if}
 									</div>
-								{/if}
+
+									{#if imagePreview}
+										<div
+											class="mt-4 inline-block p-1 border border-[#E2E8F0] rounded-lg"
+										>
+											<img
+												src={imagePreview}
+												alt="Preview"
+												class="w-24 h-24 object-cover rounded-md"
+											/>
+										</div>
+									{/if}
+								</div>
 							</div>
-						</div>
-					</details>
+						</details>
+					</div>
 
 					<button
 						on:click={() => handleParseJob(true)}
 						disabled={isParsing || !jobUrl}
-						class="btn btn-primary w-full"
+						class="btn btn-primary w-full py-4 text-lg"
 					>
-						{isParsing ? "Parsing..." : "Continue →"}
+						{isParsing ? "Analyzing Position..." : "Next Step"}
 					</button>
 				</div>
 			</div>
@@ -606,49 +718,69 @@
 		<!-- Step 2: Review & Generate -->
 		{#if step === 2 && jobData}
 			<div class="card">
-				<h2 class="text-2xl font-bold text-gray-800 mb-6">
-					Review Job Details
-				</h2>
+				<div class="mb-8">
+					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">
+						Review Position
+					</h2>
+					<p class="text-[#334155] text-sm">
+						Verify the details before generating your letter.
+					</p>
+				</div>
 
-				<div class="space-y-4 mb-8">
-					<div>
-						<h3
-							class="text-sm font-semibold text-gray-500 uppercase"
-						>
-							Job Title
-						</h3>
-						<p class="text-lg font-medium text-gray-800">
-							{jobData.title}
-						</p>
-					</div>
-					<div>
-						<h3
-							class="text-sm font-semibold text-gray-500 uppercase"
-						>
-							Company
-						</h3>
-						<p class="text-lg font-medium text-gray-800">
-							{jobData.company}
-						</p>
-					</div>
-					<details
-						class="group bg-white rounded-lg border border-gray-200 overflow-hidden mb-4"
-					>
-						<summary
-							class="flex justify-between items-center p-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+				<div class="space-y-6 mb-10">
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div
+							class="p-4 rounded-md bg-[#F8FAFC] border border-[#E2E8F0]"
 						>
 							<h3
-								class="text-sm font-semibold text-gray-500 uppercase"
+								class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1"
 							>
-								Job Description
+								Role
 							</h3>
-							<span
-								class="text-gray-500 transform transition-transform duration-200"
-								>▼</span
+							<p class="text-lg font-bold text-[#0F172A]">
+								{jobData.title}
+							</p>
+						</div>
+						<div
+							class="p-4 rounded-md bg-[#F8FAFC] border border-[#E2E8F0]"
+						>
+							<h3
+								class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1"
 							>
+								Company
+							</h3>
+							<p class="text-lg font-bold text-[#0F172A]">
+								{jobData.company}
+							</p>
+						</div>
+					</div>
+
+					<details
+						class="group border border-[#E2E8F0] rounded-md overflow-hidden transition-all"
+					>
+						<summary
+							class="flex justify-between items-center p-4 cursor-pointer bg-white hover:bg-[#F8FAFC] transition-colors focus:outline-none"
+						>
+							<span class="text-sm font-semibold text-[#334155]"
+								>Full Job Description</span
+							>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-5 w-5 transition-transform duration-200 group-open:rotate-180"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M19 9l-7 7-7-7"
+								/>
+							</svg>
 						</summary>
 						<div
-							class="p-4 border-t border-gray-200 text-sm text-gray-700 whitespace-pre-wrap max-h-96 overflow-y-auto"
+							class="p-6 border-t border-[#E2E8F0] text-sm text-[#334155] leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto bg-white"
 						>
 							{jobData.description}
 						</div>
@@ -656,46 +788,69 @@
 
 					{#if jobData.requirements.length > 0}
 						<details
-							class="group bg-white rounded-lg border border-gray-200 overflow-hidden"
+							class="group border border-[#E2E8F0] rounded-md overflow-hidden transition-all bg-white"
 						>
 							<summary
-								class="flex justify-between items-center p-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+								class="flex justify-between items-center p-4 cursor-pointer hover:bg-[#F8FAFC] transition-colors focus:outline-none list-none"
 							>
-								<h3
-									class="text-sm font-semibold text-gray-500 uppercase"
-								>
-									Key Requirements
-								</h3>
 								<span
-									class="text-gray-500 transform transition-transform duration-200"
-									>▼</span
+									class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]"
 								>
+									Key Requirements Detected
+								</span>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-5 w-5 text-[#64748B] transition-transform duration-200 group-open:rotate-180"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M19 9l-7 7-7-7"
+									/>
+								</svg>
 							</summary>
-							<div class="p-4 border-t border-gray-200">
-								<ul class="list-disc list-inside space-y-1">
+							<div class="p-6 border-t border-[#E2E8F0]">
+								<div
+									class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+								>
 									{#each jobData.requirements as req}
-										<li class="text-gray-700">{req}</li>
+										<div
+											class="flex items-start gap-2 text-sm text-[#334155]"
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-4 w-4 text-[#0369A1] shrink-0 mt-0.5"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M5 13l4 4L19 7"
+												/>
+											</svg>
+											<span>{req}</span>
+										</div>
 									{/each}
-								</ul>
+								</div>
 							</div>
 						</details>
 					{/if}
-
-					{#if jobData.source}
-						<div class="mt-4 text-sm text-gray-500">
-							<span class="font-semibold">Source:</span>
-							{jobData.source}
-						</div>
-					{/if}
 				</div>
 
-				<div class="flex space-x-4">
+				<div class="flex flex-col sm:flex-row gap-4">
 					<button
 						on:click={() => (step = 1)}
-						class="btn btn-secondary flex-1"
+						class="btn btn-secondary sm:flex-1 py-4"
 						disabled={isGenerating}
 					>
-						← Back
+						Back
 					</button>
 					<button
 						on:click={() =>
@@ -703,11 +858,11 @@
 								? (step = 3)
 								: handleGenerateCoverLetter()}
 						disabled={isGenerating}
-						class="btn btn-primary flex-1 flex items-center justify-center"
+						class="btn btn-primary sm:flex-[2] py-4 flex items-center justify-center gap-3"
 					>
 						{#if isGenerating}
 							<svg
-								class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+								class="animate-spin h-5 w-5 text-white"
 								xmlns="http://www.w3.org/2000/svg"
 								fill="none"
 								viewBox="0 0 24 24"
@@ -726,11 +881,25 @@
 									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 								></path>
 							</svg>
-							Generating AI Draft...
+							Crafting Your Letter...
 						{:else if coverLetter}
-							View Generated Letter →
+							Review Draft
 						{:else}
-							Generate Cover Letter ✨
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-5 w-5"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M13 10V3L4 14h7v7l9-11h-7z"
+								/>
+							</svg>
+							Generate Cover Letter
 						{/if}
 					</button>
 				</div>
@@ -740,22 +909,28 @@
 		<!-- Step 3: Result -->
 		{#if step === 3 && coverLetter}
 			<div class="card relative">
-				<div class="flex justify-between items-center mb-6">
-					<h2 class="text-2xl font-bold text-gray-800">
-						Your Cover Letter
-					</h2>
+				<div
+					class="flex justify-between items-end mb-8 border-b border-[#E2E8F0] pb-6"
+				>
+					<div>
+						<h2 class="text-2xl font-bold text-[#0F172A] mb-1">
+							Your Cover Letter
+						</h2>
+						<p class="text-[#334155] text-sm">
+							Review, edit, and download your personalized draft.
+						</p>
+					</div>
 
-					<!-- Settings Button -->
-					<div class="relative inline-block text-left">
+					<div class="relative">
 						<button
 							id="settings-btn"
 							on:click={toggleSettings}
-							class="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary-600 focus:outline-none"
-							title="Generation Settings"
+							class="p-2.5 rounded-md hover:bg-[#F1F5F9] transition-colors text-[#64748B] hover:text-[#0369A1] focus:outline-none border border-[#E2E8F0]"
+							title="Letter Settings"
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
-								class="h-6 w-6"
+								class="h-5 w-5"
 								fill="none"
 								viewBox="0 0 24 24"
 								stroke="currentColor"
@@ -764,41 +939,33 @@
 									stroke-linecap="round"
 									stroke-linejoin="round"
 									stroke-width="2"
-									d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-								/>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+									d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
 								/>
 							</svg>
 						</button>
 
-						<!-- Settings Menu -->
 						{#if showSettings}
 							<div
 								id="settings-menu"
-								class="absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 p-4"
+								class="absolute right-0 mt-3 w-72 rounded-lg shadow-xl bg-white ring-1 ring-[#0F172A] ring-opacity-5 z-50 p-6 animate-in fade-in zoom-in-95"
 								transition:fade
 							>
-								<div class="mb-4">
-									<h3
-										class="text-sm font-semibold text-gray-900 border-b pb-2 mb-3"
-									>
-										Generation Settings
-									</h3>
+								<h3
+									class="text-sm font-bold text-[#0F172A] mb-4"
+								>
+									Letter Preferences
+								</h3>
 
-									<div class="mb-4">
+								<div class="space-y-4">
+									<div>
 										<label
-											class="block text-xs font-medium text-gray-700 mb-1"
+											class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
+											>Template Style</label
 										>
-											Template Style
-										</label>
 										<select
 											bind:value={templateStyle}
 											on:change={invalidatePdf}
-											class="block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+											class="w-full text-sm border-[#E2E8F0] rounded-md focus:ring-[#0369A1] focus:border-[#0369A1]"
 										>
 											<option value="english"
 												>English (Standard)</option
@@ -811,18 +978,16 @@
 
 									<div>
 										<label
-											class="block text-xs font-medium text-gray-700 mb-1"
+											class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
+											>Language</label
 										>
-											Language
-										</label>
 										<select
 											bind:value={language}
-											class="block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+											class="w-full text-sm border-[#E2E8F0] rounded-md focus:ring-[#0369A1] focus:border-[#0369A1]"
 										>
 											<option value="english"
 												>English</option
 											>
-											<!-- Future support: <option value="greek">Greek</option> -->
 										</select>
 									</div>
 								</div>
@@ -832,8 +997,11 @@
 				</div>
 
 				<div
-					class="bg-gray-50 rounded-lg p-12 mb-8 border-2 border-gray-200 shadow-sm"
+					class="bg-[#F8FAFC] rounded-lg p-8 md:p-12 mb-10 border border-[#E2E8F0] shadow-inner relative overflow-hidden"
 				>
+					<div
+						class="absolute top-0 left-0 w-1 h-full bg-[#0369A1]/20"
+					></div>
 					<!-- Live Header Preview -->
 					<div class="mb-8 font-serif">
 						<!-- Line 1: Name -->
@@ -1025,47 +1193,51 @@
 					</div>
 
 					<!-- Content Area -->
-					<div class="prose max-w-none font-serif">
+					<div class="prose max-w-none font-serif relative">
 						{#if isEditing}
 							<textarea
 								bind:value={tempCoverLetter}
-								class="w-full h-96 p-4 border rounded-lg shadow-inner font-sans text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+								class="w-full h-96 p-6 border border-[#0369A1] rounded-md bg-white font-serif text-lg leading-relaxed focus:ring-4 focus:ring-[#0369A1]/10 outline-none transition-all"
 							></textarea>
-							<div class="flex justify-end space-x-3 mt-4">
+							<div class="flex justify-end gap-3 mt-6">
 								<button
 									on:click={cancelEdit}
-									class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+									class="px-4 py-2 text-sm font-semibold text-[#64748B] hover:text-[#0F172A]"
 								>
-									Cancel
+									Discard
 								</button>
 								<button
 									on:click={saveEdit}
-									class="btn btn-primary"
+									class="btn btn-primary text-sm px-8"
 								>
 									Save Changes
 								</button>
 							</div>
 						{:else}
-							<div class="relative group">
+							<div class="relative group min-h-[400px]">
 								<button
 									on:click={startEditing}
-									class="absolute -top-2 -right-2 p-2 bg-white rounded-full shadow hover:shadow-md text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-all duration-200"
-									title="Edit Text"
+									class="absolute -top-6 -right-6 p-2.5 bg-white rounded-full shadow-lg border border-[#E2E8F0] text-[#64748B] hover:text-[#0369A1] opacity-0 group-hover:opacity-100 transition-all duration-200"
+									title="Edit Letter Content"
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
-										class="h-5 w-5"
-										viewBox="0 0 20 20"
-										fill="currentColor"
+										class="h-4 w-4"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
 									>
 										<path
-											d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
 										/>
 									</svg>
 								</button>
 								{#each coverLetter.split("\n\n") as paragraph}
 									<p
-										class="text-gray-800 mb-4 leading-relaxed whitespace-pre-line"
+										class="text-[#0F172A] text-lg leading-relaxed mb-6 whitespace-pre-line last:mb-0"
 									>
 										{paragraph}
 									</p>
@@ -1075,157 +1247,176 @@
 					</div>
 				</div>
 
-				<!-- Contact Info Review / Edit Header -->
-				<div class="mb-8">
+				<!-- Header Edit Section -->
+				<div class="mb-10">
 					<details
-						class="group bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm"
+						class="group border border-[#E2E8F0] rounded-lg overflow-hidden transition-all bg-white shadow-sm"
 					>
 						<summary
-							class="flex justify-between items-center p-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors list-none"
+							class="flex justify-between items-center p-5 cursor-pointer hover:bg-[#F8FAFC] transition-colors focus:outline-none list-none"
 						>
-							<h3 class="text-lg font-bold text-gray-800">
-								📝 Edit Header
-							</h3>
-							<span
-								class="text-gray-500 transform transition-transform duration-200 group-open:rotate-180"
-								>▼</span
+							<div class="flex items-center gap-3">
+								<div
+									class="p-2 rounded-md bg-[#F1F5F9] text-[#475569]"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-5 w-5"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+										/>
+									</svg>
+								</div>
+								<h3 class="text-base font-bold text-[#0F172A]">
+									Edit PDF Header Information
+								</h3>
+							</div>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-5 w-5 text-[#64748B] transition-transform duration-200 group-open:rotate-180"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
 							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M19 9l-7 7-7-7"
+								/>
+							</svg>
 						</summary>
-						<div class="p-6 border-t border-gray-200 space-y-6">
-							<!-- 1st line: first name, family name -->
-							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div
+							class="p-8 border-t border-[#E2E8F0] space-y-8 bg-white"
+						>
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 								<div>
 									<label
-										class="block text-sm font-semibold text-gray-700 mb-1"
+										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>First Name</label
 									>
 									<input
 										type="text"
 										bind:value={firstName}
 										on:input={invalidatePdf}
-										placeholder="First Name"
 										class="input"
 										disabled={isPdfGenerating}
 									/>
 								</div>
 								<div>
 									<label
-										class="block text-sm font-semibold text-gray-700 mb-1"
+										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>Family Name</label
 									>
 									<input
 										type="text"
 										bind:value={surname}
 										on:input={invalidatePdf}
-										placeholder="Family Name"
 										class="input"
 										disabled={isPdfGenerating}
 									/>
 								</div>
 							</div>
 
-							<!-- 2nd line: Adress street, postcode city country -->
-							<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+							<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 								<div class="md:col-span-2">
 									<label
-										class="block text-sm font-semibold text-gray-700 mb-1"
-										>Street</label
+										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
+										>Street Address</label
 									>
 									<input
 										type="text"
 										bind:value={addressStreet}
 										on:input={invalidatePdf}
-										placeholder="Street Address"
 										class="input"
 										disabled={isPdfGenerating}
 									/>
 								</div>
 								<div>
 									<label
-										class="block text-sm font-semibold text-gray-700 mb-1"
+										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>Postcode</label
 									>
 									<input
 										type="text"
 										bind:value={addressPostcode}
 										on:input={invalidatePdf}
-										placeholder="Postcode"
 										class="input"
 										disabled={isPdfGenerating}
 									/>
 								</div>
 								<div>
 									<label
-										class="block text-sm font-semibold text-gray-700 mb-1"
+										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>City & Country</label
 									>
-									<div class="flex space-x-2">
+									<div class="flex gap-2">
 										<input
 											type="text"
 											bind:value={addressCity}
 											on:input={invalidatePdf}
+											class="input flex-1"
 											placeholder="City"
-											class="input"
 											disabled={isPdfGenerating}
 										/>
 										<input
 											type="text"
 											bind:value={addressCountry}
 											on:input={invalidatePdf}
+											class="input flex-1"
 											placeholder="Country"
-											class="input"
 											disabled={isPdfGenerating}
 										/>
 									</div>
 								</div>
 							</div>
 
-							<!-- 3rd line: email address -->
-							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 								<div>
 									<label
-										class="block text-sm font-semibold text-gray-700 mb-1"
+										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>Email Address</label
 									>
 									<input
 										type="email"
 										bind:value={email}
 										on:input={invalidatePdf}
-										placeholder="email@example.com"
 										class="input"
 										disabled={isPdfGenerating}
 									/>
 								</div>
-								<!-- Keep other fields as optional extras in this section if needed, or stick to the 3 lines -->
-								<div class="grid grid-cols-2 gap-2">
-									<div>
-										<label
-											class="block text-sm font-semibold text-gray-700 mb-1"
-											>Phone</label
-										>
-										<input
-											type="tel"
-											bind:value={phone}
-											on:input={invalidatePdf}
-											placeholder="Phone"
-											class="input"
-											disabled={isPdfGenerating}
-										/>
-									</div>
-									<div>
-										<label
-											class="block text-sm font-semibold text-gray-700 mb-1"
-											>LinkedIn</label
-										>
-										<input
-											type="text"
-											bind:value={linkedin}
-											on:input={invalidatePdf}
-											placeholder="LinkedIn"
-											class="input"
-											disabled={isPdfGenerating}
-										/>
-									</div>
+								<div>
+									<label
+										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
+										>Phone Number</label
+									>
+									<input
+										type="tel"
+										bind:value={phone}
+										on:input={invalidatePdf}
+										class="input"
+										disabled={isPdfGenerating}
+									/>
+								</div>
+								<div>
+									<label
+										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
+										>LinkedIn URL</label
+									>
+									<input
+										type="text"
+										bind:value={linkedin}
+										on:input={invalidatePdf}
+										class="input"
+										disabled={isPdfGenerating}
+									/>
 								</div>
 							</div>
 						</div>
@@ -1235,109 +1426,217 @@
 				<!-- Version Selector -->
 				{#if allCoverLetters.length > 1}
 					<div
-						class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+						class="mb-10 p-6 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl relative overflow-hidden"
 					>
-						<div class="flex items-center justify-between mb-3">
-							<h3 class="text-sm font-semibold text-gray-700">
-								🏁 Race Results - {allCoverLetters.length} Versions
-								Generated
-							</h3>
+						<div class="flex items-center justify-between mb-6">
+							<div>
+								<h3 class="text-sm font-bold text-[#0F172A]">
+									AI Race Results
+								</h3>
+								<p class="text-xs text-[#64748B]">
+									Multiple models competed to write this
+									letter. View alternatives below.
+								</p>
+							</div>
 							{#if isLoadingAlternatives}
-								<span class="text-xs text-gray-500"
-									>Loading more...</span
+								<div
+									class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-[#0369A1]"
 								>
+									<svg
+										class="animate-spin h-3 w-3"
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+									>
+										<circle
+											class="opacity-25"
+											cx="12"
+											cy="12"
+											r="10"
+											stroke="currentColor"
+											stroke-width="4"
+										></circle>
+										<path
+											class="opacity-75"
+											fill="currentColor"
+											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+										></path>
+									</svg>
+									Syncing...
+								</div>
 							{/if}
 						</div>
-						<div class="flex flex-wrap gap-2">
+
+						<div class="flex flex-wrap gap-3">
 							{#each allCoverLetters as version, index}
 								<button
 									on:click={() => switchVersion(index)}
 									disabled={version.status === "failed"}
-									class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 {currentVersionIndex ===
+									class="px-5 py-3 rounded-md text-sm font-semibold transition-all border flex items-center gap-2 shadow-sm {currentVersionIndex ===
 									index
-										? 'bg-primary-600 text-white shadow-md'
+										? 'bg-[#0F172A] text-white border-[#0F172A] scale-105'
 										: version.status === 'failed'
-											? 'bg-red-50 text-red-500 border border-red-200 cursor-not-allowed'
-											: 'bg-white text-gray-700 border border-gray-300 hover:border-primary-400 hover:bg-primary-50'}"
+											? 'bg-red-50 text-red-500 border-red-100 cursor-not-allowed opacity-50'
+											: 'bg-white text-[#475569] border-[#E2E8F0] hover:border-[#0369A1] hover:text-[#0369A1]'}"
 								>
 									{#if index === 0}
-										<span>🏆</span>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-4 w-4 text-yellow-500"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z"
+											/>
+										</svg>
 									{/if}
-									{#if version.status === "failed"}
-										<span>⚠️</span>
-									{/if}
-									<span>{version.source}</span>
-									{#if version.status === "failed"}
-										<span class="text-xs">(Failed)</span>
-									{/if}
+									{version.source}
 								</button>
 							{/each}
 						</div>
-						<p class="text-xs text-gray-600 mt-2">
-							Click to switch between versions. 🏆 = Race winner
-							(fastest)
-						</p>
 					</div>
 				{:else}
-					<div class="flex justify-between items-center mb-6">
-						<div class="text-sm text-gray-500 italic">
-							Generated by {source || "AI"}
+					<div class="flex justify-between items-center mb-8 px-2">
+						<div
+							class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]"
+						>
+							Generated by <span class="text-[#0369A1]"
+								>{source || "AI Engine"}</span
+							>
 						</div>
 						{#if isLoadingAlternatives}
-							<span class="text-sm text-gray-500"
-								>Loading alternatives...</span
+							<div
+								class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#64748B] animate-pulse"
 							>
+								Generating alternatives...
+							</div>
 						{/if}
 					</div>
 				{/if}
 
-				<div class="space-y-4">
+				<div class="space-y-4 pt-4">
 					{#if !pdfUrl}
 						<button
 							on:click={handleGeneratePdf}
 							disabled={isPdfGenerating}
-							class="btn btn-primary w-full"
+							class="btn btn-primary w-full py-5 text-lg flex items-center justify-center gap-3"
 						>
-							{isPdfGenerating
-								? "Generating PDF..."
-								: "Download as PDF 📄"}
+							{#if isPdfGenerating}
+								<svg
+									class="animate-spin h-6 w-6 text-white"
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+								>
+									<circle
+										class="opacity-25"
+										cx="12"
+										cy="12"
+										r="10"
+										stroke="currentColor"
+										stroke-width="4"
+									></circle>
+									<path
+										class="opacity-75"
+										fill="currentColor"
+										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									></path>
+								</svg>
+								Preparing PDF...
+							{:else}
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-6 w-6"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+									/>
+								</svg>
+								Download as PDF
+							{/if}
 						</button>
-					{:else if downloaded}
+					{:else}
 						<div
-							class="flex flex-col items-center justify-center p-6 bg-green-50 rounded-lg border border-green-200 mb-4"
+							class="bg-green-50 border border-green-100 rounded-xl p-8 text-center animate-in zoom-in-95 duration-500"
 						>
 							<div
-								class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-3 shadow-sm"
+								class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm"
 							>
-								<span class="text-3xl">✅</span>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-8 w-8"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M5 13l4 4L19 7"
+									/>
+								</svg>
 							</div>
-							<h3 class="text-xl font-bold text-green-800 mb-1">
-								All Done!
+							<h3 class="text-xl font-bold text-[#0F172A] mb-2">
+								Ready for Submission
 							</h3>
-							<p class="text-green-600 mb-4 text-center">
-								Your cover letter has been downloaded to your
-								<b>Downloads</b> folder.
-							</p>
-							<a
-								href={`http://localhost:8000${pdfUrl}`}
-								download
-								class="text-green-700 font-medium hover:text-green-900 flex items-center transition-colors"
+							<p
+								class="text-[#334155] text-sm mb-6 max-w-xs mx-auto"
 							>
-								<span class="mr-1">⬇️</span> Download again
-							</a>
+								Your personalized cover letter has been
+								generated and is ready for download.
+							</p>
+
+							<div class="flex flex-col gap-3">
+								<button
+									on:click={handleDownload}
+									class="btn btn-primary w-full py-4 flex items-center justify-center gap-2"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-5 w-5"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+										/>
+									</svg>
+									Download PDF
+								</button>
+								<button
+									on:click={reset}
+									class="text-[#64748B] hover:text-[#0F172A] text-sm font-semibold py-2"
+								>
+									Start Over
+								</button>
+							</div>
 						</div>
-					{:else}
-						<button
-							on:click={handleDownload}
-							class="btn btn-primary w-full block text-center"
-						>
-							Download PDF 📥
-						</button>
 					{/if}
 
-					<button on:click={reset} class="btn btn-secondary w-full">
-						Create Another Cover Letter
-					</button>
+					{#if !downloaded}
+						<button
+							on:click={reset}
+							class="btn btn-secondary w-full py-4"
+						>
+							Start Over
+						</button>
+					{/if}
 				</div>
 			</div>
 		{/if}

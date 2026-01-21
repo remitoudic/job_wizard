@@ -15,80 +15,98 @@
 	}
 </script>
 
-<div class="min-h-screen bg-gray-50 flex flex-col">
+<div class="min-h-screen bg-[#F8FAFC] flex flex-col font-body">
 	<!-- Navbar -->
-	<nav class="bg-white border-b border-gray-200">
+	<nav
+		class="bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] sticky top-0 z-50"
+	>
 		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 			<div class="flex justify-between h-16">
 				<!-- Logo / Brand -->
 				<div class="flex items-center">
-					<a href="/" class="flex-shrink-0 flex items-center gap-2">
-						<span class="text-2xl">🧙‍♂️</span>
+					<a
+						href="/"
+						class="flex-shrink-0 flex items-center gap-3 group"
+					>
+						<div
+							class="p-1.5 bg-[#0F172A] rounded-md transition-transform group-hover:scale-110"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-6 w-6 text-white"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M13 10V3L4 14h7v7l9-11h-7z"
+								/>
+							</svg>
+						</div>
 						<span
-							class="font-bold text-xl text-gray-900 tracking-tight"
+							class="font-bold text-xl text-[#0F172A] tracking-tight"
 							>Job Wizard</span
 						>
 					</a>
-
-					<!-- Desktop Menu -->
-					<div class="hidden sm:ml-8 sm:flex sm:space-x-8">
-						<a
-							href="/"
-							class="text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-primary-500 text-sm font-medium"
-						>
-							Home
-						</a>
-					</div>
 				</div>
 
 				<!-- Right Side Menu -->
-				<div class="flex items-center gap-4">
+				<div class="flex items-center gap-6">
 					{#if $auth.isAuthenticated}
-						<div class="flex items-center gap-4">
-							{#if $auth.user}
-								<span class="text-sm text-gray-600"
-									>Hi, <strong>{$auth.user.username}</strong
-									></span
-								>
-							{/if}
+						<div class="flex items-center gap-6">
+							<a
+								href="/"
+								class="text-sm font-semibold transition-all {$page
+									.url.pathname === '/'
+									? 'text-[#0369A1]'
+									: 'text-[#64748B] hover:text-[#0F172A]'}"
+							>
+								Home
+							</a>
 							<a
 								href="/profile"
-								class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+								class="text-sm font-semibold transition-all {$page
+									.url.pathname === '/profile'
+									? 'text-[#0369A1]'
+									: 'text-[#64748B] hover:text-[#0F172A]'}"
 							>
 								Profile
 							</a>
 							{#if $auth.user?.is_superuser}
 								<a
 									href="/admin"
-									class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-									class:border-indigo-500={$page.url
-										.pathname === "/admin"}
-									class:text-gray-900={$page.url.pathname ===
-										"/admin"}
+									class="text-sm font-semibold transition-all {$page
+										.url.pathname === '/admin'
+										? 'text-[#0369A1]'
+										: 'text-[#64748B] hover:text-[#0F172A]'}"
 								>
 									Admin
 								</a>
 							{/if}
+							<div class="h-4 w-[1px] bg-[#E2E8F0]"></div>
 							<button
 								on:click={handleLogout}
-								class="text-red-600 hover:text-red-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-red-50 transition-colors"
+								class="text-sm font-semibold text-red-500 hover:text-red-600 transition-colors"
 							>
 								Logout
 							</button>
 						</div>
 					{:else}
-						<div class="flex items-center gap-2">
+						<div class="flex items-center gap-4">
 							<a
 								href="/login"
-								class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+								class="text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
 							>
 								Login
 							</a>
 							<a
 								href="/register"
-								class="bg-primary-600 text-white hover:bg-primary-700 px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm"
+								class="btn btn-primary text-sm py-2 px-5"
 							>
-								Register
+								Get Started
 							</a>
 						</div>
 					{/if}
@@ -99,17 +117,37 @@
 
 	<!-- Main Content -->
 	<main class="flex-grow">
-		<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-			<slot />
-		</div>
+		<slot />
 	</main>
 
 	<!-- Footer -->
-	<footer class="bg-white border-t border-gray-200 mt-auto">
-		<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-			<p class="text-center text-sm text-gray-500">
-				&copy; 2026 Job Wizard AI. All rights reserved.
-			</p>
+	<footer class="bg-white border-t border-[#E2E8F0] mt-auto">
+		<div class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+			<div
+				class="flex flex-col md:flex-row justify-between items-center gap-6"
+			>
+				<div class="flex items-center gap-2 grayscale opacity-50">
+					<span class="text-xl">🧙‍♂️</span>
+					<span class="font-bold text-gray-900 tracking-tight"
+						>Job Wizard</span
+					>
+				</div>
+				<p class="text-sm text-[#64748B]">
+					&copy; 2026 Job Wizard AI. All rights reserved.
+				</p>
+				<div class="flex gap-6">
+					<a
+						href="#"
+						class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]"
+						>Privacy</a
+					>
+					<a
+						href="#"
+						class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]"
+						>Terms</a
+					>
+				</div>
+			</div>
 		</div>
 	</footer>
 </div>

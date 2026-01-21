@@ -67,3 +67,9 @@ Thumbs.db
 # Uploads
 backend/uploads/*
 !backend/uploads/.gitkeep
+
+# Agents
+.agent/
+
+# Shared
+.shared/

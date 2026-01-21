@@ -31,6 +31,8 @@ export default {
             },
             fontFamily: {
                 sans: ['Inter', 'system-ui', 'sans-serif'],
+                body: ['"Space Grotesk"', 'sans-serif'],
+                heading: ['Archivo', 'sans-serif'],
             },
         }
     },
