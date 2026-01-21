@@ -422,12 +422,8 @@
 						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {$step >=
 						1
 							? 'bg-[#0369A1] text-white shadow-sm'
-							: 'bg-[#E2E8F0] text-[#64748B]'} {$step > 1
-							? 'cursor-pointer hover:bg-[#0284C7]'
-							: 'cursor-default'}"
-						on:click={() => {
-							if ($step > 1) step.set(1);
-						}}
+							: 'bg-[#E2E8F0] text-[#64748B]'} cursor-pointer hover:bg-[#0284C7]"
+						on:click={() => step.set(1)}
 					>
 						1
 					</button>
@@ -448,11 +444,11 @@
 						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {$step >=
 						2
 							? 'bg-[#0369A1] text-white shadow-sm'
-							: 'bg-[#E2E8F0] text-[#64748B]'} {$step > 2
+							: 'bg-[#E2E8F0] text-[#64748B]'} {jobData
 							? 'cursor-pointer hover:bg-[#0284C7]'
 							: 'cursor-default'}"
 						on:click={() => {
-							if ($step > 2) step.set(2);
+							if (jobData) step.set(2);
 						}}
 					>
 						2
@@ -470,14 +466,19 @@
 						: 'bg-[#E2E8F0]'} -mt-6"
 				></div>
 				<div class="flex flex-col items-center flex-1 relative">
-					<div
+					<button
 						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {$step >=
 						3
 							? 'bg-[#0369A1] text-white shadow-sm'
-							: 'bg-[#E2E8F0] text-[#64748B]'} cursor-default"
+							: 'bg-[#E2E8F0] text-[#64748B]'} {coverLetter
+							? 'cursor-pointer hover:bg-[#0284C7]'
+							: 'cursor-default'}"
+						on:click={() => {
+							if (coverLetter) step.set(3);
+						}}
 					>
 						3
-					</div>
+					</button>
 					<span
 						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >=
 						3
@@ -715,7 +716,15 @@
 					</div>
 
 					<button
-						on:click={() => handleParseJob(true)}
+						on:click={() => {
+							// If we already have jobData for this URL, just go to Step 2
+							// We can check if jobData exists and loosely if the URL matches (if we want to be strict)
+							if (jobData) {
+								step.set(2);
+							} else {
+								handleParseJob(true);
+							}
+						}}
 						disabled={isParsing || !jobUrl}
 						class="btn btn-primary w-full py-4 text-lg"
 					>
