@@ -51,7 +51,7 @@ class LLMService:
         job_title: str,
         company: str,
         requirements: list[str],
-        user_name: str = "Applicant",
+        user_name: str = "",
         user_skills: str = "",
         context_text: Optional[str] = None,
     ) -> tuple[str, str, str]:
@@ -62,7 +62,14 @@ class LLMService:
         
         # Build optimized prompt (concise for speed)
         req_list = ', '.join(requirements[:5]) if requirements else 'See description'
-        prompt = f"""Write a cover letter for {user_name} applying to {company} as {job_title}.
+        
+        name_placeholder = f"for {user_name}" if user_name else ""
+        prompt = f"""Write a professional cover letter {name_placeholder} applying to {company} as {job_title}.
+
+IMPORTANT: 
+1. If you don't know the candidate's name, DO NOT use a placeholder like "[Your Name]". Start directly with the address/salutation.
+2. DO NOT use placeholders for date like "[Date]".
+3. Return ONLY the letter body.
 
 Key requirements: {req_list}
 Candidate skills: {user_skills}

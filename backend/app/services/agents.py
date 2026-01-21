@@ -20,6 +20,10 @@ class ContactInfo(BaseModel):
     linkedin: Optional[str] = Field("", description="LinkedIn profile URL")
     website: Optional[str] = Field("", description="Personal website or portfolio URL")
     address: Optional[str] = Field("", description="Physical address or location (City, State)")
+    address_street: Optional[str] = Field("", description="Street address")
+    address_postcode: Optional[str] = Field("", description="Postcode/Zip code")
+    address_city: Optional[str] = Field("", description="City")
+    address_country: Optional[str] = Field("", description="Country")
 
 class JobDetails(BaseModel):
     job_description: str

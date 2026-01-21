@@ -11,10 +11,12 @@ def test_generation():
         cover_letter="This is a test cover letter.\n\nIt has multiple paragraphs.",
         job_title="Software Engineer",
         company="Tech Corp",
-        template_name="generic",
+        template_name="british",
         user_name="John Doe",
         email="john@example.com",
-        phone="123-456-7890"
+        phone="123-456-7890",
+        recipient_name="Jane Smith",
+        employer_address="123 High Street\nLondon\nSW1A 1AA"
     )
     
     if os.path.exists(output_path):

@@ -56,6 +56,10 @@ class CoverLetterResponse(BaseModel):
     linkedin: Optional[str] = ""
     website: Optional[str] = ""
     address: Optional[str] = ""
+    address_street: Optional[str] = ""
+    address_postcode: Optional[str] = ""
+    address_city: Optional[str] = ""
+    address_country: Optional[str] = ""
     user_name_detected: Optional[str] = ""
     source: Optional[str] = "local"
     alternative_id: Optional[str] = ""
@@ -108,6 +112,10 @@ async def generate_cover_letter(request: CoverLetterRequest):
             linkedin=contact_info.get("linkedin", ""),
             website=contact_info.get("website", ""),
             address=contact_info.get("address", ""),
+            address_street=contact_info.get("address_street", ""),
+            address_postcode=contact_info.get("address_postcode", ""),
+            address_city=contact_info.get("address_city", ""),
+            address_country=contact_info.get("address_country", ""),
             user_name_detected=contact_info.get("name", ""),
             source=source,
             alternative_id=alternative_id,
@@ -206,6 +214,14 @@ async def generate_pdf(
     email: Optional[str] = Form(""),
     phone: Optional[str] = Form(""),
     linkedin: Optional[str] = Form(""),
+    custom_date: Optional[str] = Form(None),
+    custom_subject: Optional[str] = Form(None),
+    full_name: Optional[str] = Form(None),
+    address: Optional[str] = Form(""),
+    address_street: Optional[str] = Form(""),
+    address_postcode: Optional[str] = Form(""),
+    address_city: Optional[str] = Form(""),
+    address_country: Optional[str] = Form(""),
 ):
     """
     Generate PDF with cover letter and optional user photo
@@ -235,6 +251,14 @@ async def generate_pdf(
             email=email,
             phone=phone,
             linkedin=linkedin,
+            custom_date=custom_date,
+            custom_subject=custom_subject,
+            full_name=full_name,
+            address=address,
+            address_street=address_street,
+            address_postcode=address_postcode,
+            address_city=address_city,
+            address_country=address_country,
         )
         
         return {

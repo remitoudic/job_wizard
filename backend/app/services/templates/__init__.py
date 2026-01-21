@@ -1,3 +1,3 @@
 from .registry import TemplateRegistry
-from .generic import GenericTemplate
+from .british import BritishTemplate
 from .base import BaseTemplate

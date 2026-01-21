@@ -17,7 +17,6 @@ def create_superuser():
         if not user:
             user = User(
                 email="remitoudic@gmail.com",
-                username="remitoudic",
                 full_name="Remi Toudic",
                 hashed_password=get_password_hash("remitoudic"),
                 is_superuser=True,

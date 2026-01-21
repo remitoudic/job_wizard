@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import { fade } from "svelte/transition";
 	import {
 		parseJobUrl,
 		generateCoverLetter,
@@ -7,6 +8,7 @@
 		generatePdf,
 		uploadContext,
 		getAlternativeCoverLetter,
+		API_URL,
 	} from "$lib/api";
 
 	let jobUrl = "";
@@ -17,8 +19,10 @@
 	let contextText = "";
 	let contextFilename = "";
 
-	// Template
-	let templateName = "generic";
+	// Settings
+	let showSettings = false;
+	let templateStyle = "english";
+	let language = "english"; // Currently unused backend-side but good for UI
 
 	// Contact Info
 	let email = "";
@@ -26,6 +30,10 @@
 	let linkedin = "";
 	let website = "";
 	let address = "";
+	let addressStreet = "";
+	let addressPostcode = "";
+	let addressCity = "";
+	let addressCountry = "";
 	let firstName = "";
 	let surname = "";
 
@@ -42,6 +50,19 @@
 	let step = 1;
 	let alternativeId = "";
 	let source = "";
+
+	// Edit Mode - Body
+	let isEditing = false;
+	let tempCoverLetter = "";
+
+	// Edit Mode - Header
+	let isEditingName = false;
+	let isEditingDate = false;
+	let isEditingSubject = false;
+
+	let editableName = "";
+	let editableDate = "";
+	let editableSubject = "";
 
 	// Multiple cover letter versions
 	let allCoverLetters: Array<{
@@ -135,6 +156,11 @@
 			if (result.linkedin) linkedin = result.linkedin;
 			if (result.website) website = result.website;
 			if (result.address) address = result.address;
+			if (result.address_street) addressStreet = result.address_street;
+			if (result.address_postcode)
+				addressPostcode = result.address_postcode;
+			if (result.address_city) addressCity = result.address_city;
+			if (result.address_country) addressCountry = result.address_country;
 
 			// Auto-fill name if detected and currently empty
 			if (result.user_name_detected && !userName) {
@@ -155,6 +181,18 @@
 			if (alternativeId) {
 				loadAlternatives();
 			}
+
+			// Initialize Editable Header Fields
+			editableName =
+				firstName || surname
+					? `${firstName} ${surname}`.trim()
+					: userName || "";
+			editableDate = new Date().toLocaleDateString("en-US", {
+				year: "numeric",
+				month: "long",
+				day: "numeric",
+			});
+			editableSubject = `Re: Application for ${jobData.title} at ${jobData.company}`;
 
 			step = 3;
 		} catch (e: any) {
@@ -233,7 +271,15 @@
 				email,
 				phone,
 				linkedin,
-				template_name: templateName,
+				template_name: templateStyle,
+				custom_date: editableDate,
+				custom_subject: editableSubject,
+				full_name: editableName,
+				address,
+				address_street: addressStreet,
+				address_postcode: addressPostcode,
+				address_city: addressCity,
+				address_country: addressCountry,
 			});
 
 			pdfUrl = result.url;
@@ -250,7 +296,7 @@
 	function handleDownload() {
 		if (!pdfUrl) return;
 
-		const fullUrl = `http://localhost:8000${pdfUrl}`;
+		const fullUrl = `${API_URL}${pdfUrl}`;
 
 		// Create temporary link to force download
 		const link = document.createElement("a");
@@ -295,7 +341,59 @@
 		isPdfGenerating = false;
 		error = "";
 		step = 1;
+
+		// Reset Edit Modes
+		isEditing = false;
+		isEditingName = false;
+		isEditingDate = false;
+		isEditingSubject = false;
+		editableName = "";
+		editableDate = "";
+		editableSubject = "";
 	}
+
+	function startEditing() {
+		tempCoverLetter = coverLetter;
+		isEditing = true;
+	}
+
+	function saveEdit() {
+		coverLetter = tempCoverLetter;
+		isEditing = false;
+		// Update the current version in the list too so switching doesn't lose it
+		if (allCoverLetters[currentVersionIndex]) {
+			allCoverLetters[currentVersionIndex].text = coverLetter;
+		}
+		invalidatePdf();
+	}
+
+	function cancelEdit() {
+		isEditing = false;
+		tempCoverLetter = "";
+	}
+
+	function toggleSettings() {
+		showSettings = !showSettings;
+	}
+
+	// Close settings when clicking outside
+	onMount(() => {
+		const handleClickOutside = (event) => {
+			const settingsMenu = document.getElementById("settings-menu");
+			const settingsBtn = document.getElementById("settings-btn");
+			if (
+				showSettings &&
+				settingsMenu &&
+				settingsBtn &&
+				!settingsMenu.contains(event.target) &&
+				!settingsBtn.contains(event.target)
+			) {
+				showSettings = false;
+			}
+		};
+		document.addEventListener("click", handleClickOutside);
+		return () => document.removeEventListener("click", handleClickOutside);
+	});
 </script>
 
 <svelte:head>
@@ -304,8 +402,7 @@
 
 <div class="min-h-screen py-12 px-4">
 	<div class="max-w-4xl mx-auto">
-		<!-- Header -->
-		<div class="text-center mb-12">
+		<div class="text-center mb-12 relative">
 			<h1
 				class="text-5xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent mb-4"
 			>
@@ -642,167 +739,497 @@
 
 		<!-- Step 3: Result -->
 		{#if step === 3 && coverLetter}
-			<div class="card">
-				<h2 class="text-2xl font-bold text-gray-800 mb-6">
-					Your Cover Letter
-				</h2>
+			<div class="card relative">
+				<div class="flex justify-between items-center mb-6">
+					<h2 class="text-2xl font-bold text-gray-800">
+						Your Cover Letter
+					</h2>
+
+					<!-- Settings Button -->
+					<div class="relative inline-block text-left">
+						<button
+							id="settings-btn"
+							on:click={toggleSettings}
+							class="p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary-600 focus:outline-none"
+							title="Generation Settings"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-6 w-6"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+								/>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+								/>
+							</svg>
+						</button>
+
+						<!-- Settings Menu -->
+						{#if showSettings}
+							<div
+								id="settings-menu"
+								class="absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 p-4"
+								transition:fade
+							>
+								<div class="mb-4">
+									<h3
+										class="text-sm font-semibold text-gray-900 border-b pb-2 mb-3"
+									>
+										Generation Settings
+									</h3>
+
+									<div class="mb-4">
+										<label
+											class="block text-xs font-medium text-gray-700 mb-1"
+										>
+											Template Style
+										</label>
+										<select
+											bind:value={templateStyle}
+											on:change={invalidatePdf}
+											class="block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+										>
+											<option value="english"
+												>English (Standard)</option
+											>
+											<option value="german"
+												>German (DIN 5008)</option
+											>
+										</select>
+									</div>
+
+									<div>
+										<label
+											class="block text-xs font-medium text-gray-700 mb-1"
+										>
+											Language
+										</label>
+										<select
+											bind:value={language}
+											class="block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+										>
+											<option value="english"
+												>English</option
+											>
+											<!-- Future support: <option value="greek">Greek</option> -->
+										</select>
+									</div>
+								</div>
+							</div>
+						{/if}
+					</div>
+				</div>
 
 				<div
 					class="bg-gray-50 rounded-lg p-12 mb-8 border-2 border-gray-200 shadow-sm"
 				>
 					<!-- Live Header Preview -->
 					<div class="mb-8 font-serif">
-						<div class="text-xl font-bold text-gray-900 mb-2">
-							{#if firstName || surname}
-								{firstName} {surname}
+						<!-- Line 1: Name -->
+						<div
+							class="text-base font-bold text-gray-900 mb-0.5 relative group w-fit"
+						>
+							{#if isEditingName}
+								<div class="flex items-center space-x-2">
+									<input
+										type="text"
+										bind:value={editableName}
+										class="input py-1 px-2 text-base font-bold w-full"
+									/>
+									<button
+										on:click={() => {
+											isEditingName = false;
+											invalidatePdf();
+										}}
+										class="p-1 text-green-600 hover:bg-green-50 rounded"
+										title="Save"
+									>
+										✓
+									</button>
+									<button
+										on:click={() => (isEditingName = false)}
+										class="p-1 text-red-500 hover:bg-red-50 rounded"
+										title="Cancel"
+									>
+										✕
+									</button>
+								</div>
 							{:else}
-								{userName || "Your Name"}
+								<div class="pr-8">
+									{editableName || "[Your Name]"}
+									<button
+										on:click={() => (isEditingName = true)}
+										class="absolute right-0 top-0.5 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
+										title="Edit Name"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-4 w-4"
+											viewBox="0 0 20 20"
+											fill="currentColor"
+										>
+											<path
+												d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+											/>
+										</svg>
+									</button>
+								</div>
 							{/if}
 						</div>
-						<div
-							class="text-sm text-gray-600 mb-6 flex flex-wrap gap-3"
-						>
+
+						<!-- Line 2: Address -->
+						<div class="text-base text-gray-900 mb-0.5">
+							{#if addressStreet}
+								{addressStreet}, {addressPostcode}
+								{addressCity}
+								{#if addressCountry}, {addressCountry}{/if}
+							{:else if address}
+								{address}
+							{:else}
+								<span class="text-gray-400 italic text-sm"
+									>[Address not set]</span
+								>
+							{/if}
+						</div>
+
+						<!-- Line 3: Contact Info -->
+						<div class="text-base text-gray-900 mb-6">
 							{#if email}<span>{email}</span>{/if}
-							{#if email && (phone || linkedin)}<span>•</span
-								>{/if}
+							{#if email && (phone || linkedin)}<span>
+									|
+								</span>{/if}
 							{#if phone}<span>{phone}</span>{/if}
-							{#if (email || phone) && linkedin}<span>•</span
-								>{/if}
+							{#if (email || phone) && linkedin}<span>
+									|
+								</span>{/if}
 							{#if linkedin}<span>{linkedin}</span>{/if}
+							{#if !email && !phone && !linkedin}
+								<span class="text-gray-400 italic text-sm"
+									>[Contact info not set]</span
+								>
+							{/if}
 						</div>
 
-						<div class="text-gray-800 mb-6">
-							{new Date().toLocaleDateString("en-US", {
-								year: "numeric",
-								month: "long",
-								day: "numeric",
-							})}
+						<div
+							class="text-gray-800 mb-6 relative group w-fit ml-auto"
+						>
+							{#if isEditingDate}
+								<div
+									class="flex items-center space-x-2 justify-end"
+								>
+									<input
+										type="text"
+										bind:value={editableDate}
+										class="input py-1 px-2 text-right w-48"
+									/>
+									<button
+										on:click={() => {
+											isEditingDate = false;
+											invalidatePdf();
+										}}
+										class="p-1 text-green-600 hover:bg-green-50 rounded"
+									>
+										✓
+									</button>
+									<button
+										on:click={() => (isEditingDate = false)}
+										class="p-1 text-red-500 hover:bg-red-50 rounded"
+									>
+										✕
+									</button>
+								</div>
+							{:else}
+								<div class="pl-8">
+									{editableDate || "[Date]"}
+									<button
+										on:click={() => (isEditingDate = true)}
+										class="absolute -left-2 top-0 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
+										title="Edit Date"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-4 w-4"
+											viewBox="0 0 20 20"
+											fill="currentColor"
+										>
+											<path
+												d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+											/>
+										</svg>
+									</button>
+								</div>
+							{/if}
 						</div>
 
-						<div class="text-gray-800 mb-8 font-semibold">
-							Re: Application for {jobData.title} at {jobData.company}
+						<div
+							class="text-gray-800 mb-8 font-semibold relative group w-fit"
+						>
+							{#if isEditingSubject}
+								<div class="flex items-center space-x-2">
+									<input
+										type="text"
+										bind:value={editableSubject}
+										class="input py-1 px-2 w-full font-semibold"
+									/>
+									<button
+										on:click={() => {
+											isEditingSubject = false;
+											invalidatePdf();
+										}}
+										class="p-1 text-green-600 hover:bg-green-50 rounded"
+									>
+										✓
+									</button>
+									<button
+										on:click={() =>
+											(isEditingSubject = false)}
+										class="p-1 text-red-500 hover:bg-red-50 rounded"
+									>
+										✕
+									</button>
+								</div>
+							{:else}
+								<div class="pr-8">
+									{editableSubject || "[Subject]"}
+									<button
+										on:click={() =>
+											(isEditingSubject = true)}
+										class="absolute right-0 top-0 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
+										title="Edit Subject"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-4 w-4"
+											viewBox="0 0 20 20"
+											fill="currentColor"
+										>
+											<path
+												d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+											/>
+										</svg>
+									</button>
+								</div>
+							{/if}
 						</div>
 					</div>
 
+					<!-- Content Area -->
 					<div class="prose max-w-none font-serif">
-						{#each coverLetter.split("\n\n") as paragraph}
-							<p
-								class="text-gray-800 mb-4 leading-relaxed whitespace-pre-line"
-							>
-								{paragraph}
-							</p>
-						{/each}
+						{#if isEditing}
+							<textarea
+								bind:value={tempCoverLetter}
+								class="w-full h-96 p-4 border rounded-lg shadow-inner font-sans text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+							></textarea>
+							<div class="flex justify-end space-x-3 mt-4">
+								<button
+									on:click={cancelEdit}
+									class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+								>
+									Cancel
+								</button>
+								<button
+									on:click={saveEdit}
+									class="btn btn-primary"
+								>
+									Save Changes
+								</button>
+							</div>
+						{:else}
+							<div class="relative group">
+								<button
+									on:click={startEditing}
+									class="absolute -top-2 -right-2 p-2 bg-white rounded-full shadow hover:shadow-md text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-all duration-200"
+									title="Edit Text"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-5 w-5"
+										viewBox="0 0 20 20"
+										fill="currentColor"
+									>
+										<path
+											d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+										/>
+									</svg>
+								</button>
+								{#each coverLetter.split("\n\n") as paragraph}
+									<p
+										class="text-gray-800 mb-4 leading-relaxed whitespace-pre-line"
+									>
+										{paragraph}
+									</p>
+								{/each}
+							</div>
+						{/if}
 					</div>
 				</div>
 
-				<!-- Contact Info Review -->
-				<div class="card mb-8 bg-white border border-gray-200">
-					<h3 class="text-lg font-semibold text-gray-800 mb-4">
-						Contact Information for Header
-					</h3>
-					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<div>
-							<label
-								class="block text-sm font-medium text-gray-700 mb-1"
-								>First Name</label
+				<!-- Contact Info Review / Edit Header -->
+				<div class="mb-8">
+					<details
+						class="group bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm"
+					>
+						<summary
+							class="flex justify-between items-center p-4 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors list-none"
+						>
+							<h3 class="text-lg font-bold text-gray-800">
+								📝 Edit Header
+							</h3>
+							<span
+								class="text-gray-500 transform transition-transform duration-200 group-open:rotate-180"
+								>▼</span
 							>
-							<input
-								type="text"
-								bind:value={firstName}
-								on:input={invalidatePdf}
-								placeholder="John"
-								class="input text-sm"
-								disabled={isPdfGenerating}
-							/>
-						</div>
-						<div>
-							<label
-								class="block text-sm font-medium text-gray-700 mb-1"
-								>Surname</label
-							>
-							<input
-								type="text"
-								bind:value={surname}
-								on:input={invalidatePdf}
-								placeholder="Doe"
-								class="input text-sm"
-								disabled={isPdfGenerating}
-							/>
-						</div>
-						<div>
-							<label
-								class="block text-sm font-medium text-gray-700 mb-1"
-								>Email</label
-							>
-							<input
-								type="email"
-								bind:value={email}
-								on:input={invalidatePdf}
-								placeholder="email@example.com"
-								class="input text-sm"
-								disabled={isPdfGenerating}
-							/>
-						</div>
-						<div>
-							<label
-								class="block text-sm font-medium text-gray-700 mb-1"
-								>Phone</label
-							>
-							<input
-								type="tel"
-								bind:value={phone}
-								on:input={invalidatePdf}
-								placeholder="+1 234 567 8900"
-								class="input text-sm"
-								disabled={isPdfGenerating}
-							/>
-						</div>
-						<div>
-							<label
-								class="block text-sm font-medium text-gray-700 mb-1"
-								>LinkedIn/URL</label
-							>
-							<input
-								type="text"
-								bind:value={linkedin}
-								on:input={invalidatePdf}
-								placeholder="linkedin.com/in/..."
-								class="input text-sm"
-								disabled={isPdfGenerating}
-							/>
-						</div>
+						</summary>
+						<div class="p-6 border-t border-gray-200 space-y-6">
+							<!-- 1st line: first name, family name -->
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div>
+									<label
+										class="block text-sm font-semibold text-gray-700 mb-1"
+										>First Name</label
+									>
+									<input
+										type="text"
+										bind:value={firstName}
+										on:input={invalidatePdf}
+										placeholder="First Name"
+										class="input"
+										disabled={isPdfGenerating}
+									/>
+								</div>
+								<div>
+									<label
+										class="block text-sm font-semibold text-gray-700 mb-1"
+										>Family Name</label
+									>
+									<input
+										type="text"
+										bind:value={surname}
+										on:input={invalidatePdf}
+										placeholder="Family Name"
+										class="input"
+										disabled={isPdfGenerating}
+									/>
+								</div>
+							</div>
 
-						<!-- New Fields -->
-						<div>
-							<label
-								class="block text-sm font-medium text-gray-700 mb-1"
-								>Website</label
-							>
-							<input
-								type="text"
-								bind:value={website}
-								on:input={invalidatePdf}
-								placeholder="portfolio.com"
-								class="input text-sm"
-								disabled={isPdfGenerating}
-							/>
+							<!-- 2nd line: Adress street, postcode city country -->
+							<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+								<div class="md:col-span-2">
+									<label
+										class="block text-sm font-semibold text-gray-700 mb-1"
+										>Street</label
+									>
+									<input
+										type="text"
+										bind:value={addressStreet}
+										on:input={invalidatePdf}
+										placeholder="Street Address"
+										class="input"
+										disabled={isPdfGenerating}
+									/>
+								</div>
+								<div>
+									<label
+										class="block text-sm font-semibold text-gray-700 mb-1"
+										>Postcode</label
+									>
+									<input
+										type="text"
+										bind:value={addressPostcode}
+										on:input={invalidatePdf}
+										placeholder="Postcode"
+										class="input"
+										disabled={isPdfGenerating}
+									/>
+								</div>
+								<div>
+									<label
+										class="block text-sm font-semibold text-gray-700 mb-1"
+										>City & Country</label
+									>
+									<div class="flex space-x-2">
+										<input
+											type="text"
+											bind:value={addressCity}
+											on:input={invalidatePdf}
+											placeholder="City"
+											class="input"
+											disabled={isPdfGenerating}
+										/>
+										<input
+											type="text"
+											bind:value={addressCountry}
+											on:input={invalidatePdf}
+											placeholder="Country"
+											class="input"
+											disabled={isPdfGenerating}
+										/>
+									</div>
+								</div>
+							</div>
+
+							<!-- 3rd line: email address -->
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div>
+									<label
+										class="block text-sm font-semibold text-gray-700 mb-1"
+										>Email Address</label
+									>
+									<input
+										type="email"
+										bind:value={email}
+										on:input={invalidatePdf}
+										placeholder="email@example.com"
+										class="input"
+										disabled={isPdfGenerating}
+									/>
+								</div>
+								<!-- Keep other fields as optional extras in this section if needed, or stick to the 3 lines -->
+								<div class="grid grid-cols-2 gap-2">
+									<div>
+										<label
+											class="block text-sm font-semibold text-gray-700 mb-1"
+											>Phone</label
+										>
+										<input
+											type="tel"
+											bind:value={phone}
+											on:input={invalidatePdf}
+											placeholder="Phone"
+											class="input"
+											disabled={isPdfGenerating}
+										/>
+									</div>
+									<div>
+										<label
+											class="block text-sm font-semibold text-gray-700 mb-1"
+											>LinkedIn</label
+										>
+										<input
+											type="text"
+											bind:value={linkedin}
+											on:input={invalidatePdf}
+											placeholder="LinkedIn"
+											class="input"
+											disabled={isPdfGenerating}
+										/>
+									</div>
+								</div>
+							</div>
 						</div>
-						<!-- Address (Optional, maybe not full width?) -->
-						<div class="md:col-span-2">
-							<label
-								class="block text-sm font-medium text-gray-700 mb-1"
-								>Location / Address</label
-							>
-							<input
-								type="text"
-								bind:value={address}
-								on:input={invalidatePdf}
-								placeholder="New York, NY"
-								class="input text-sm"
-								disabled={isPdfGenerating}
-							/>
-						</div>
-					</div>
+					</details>
 				</div>
 
 				<!-- Version Selector -->
@@ -863,21 +1290,6 @@
 						{/if}
 					</div>
 				{/if}
-
-				<div class="mb-6">
-					<label class="block text-sm font-medium text-gray-700 mb-2"
-						>PDF Template / Country</label
-					>
-					<select
-						bind:value={templateName}
-						on:change={invalidatePdf}
-						class="input"
-						disabled={isPdfGenerating}
-					>
-						<option value="generic">Generic (Standard)</option>
-						<!-- Future templates can be added here -->
-					</select>
-				</div>
 
 				<div class="space-y-4">
 					{#if !pdfUrl}

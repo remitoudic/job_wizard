@@ -5,7 +5,6 @@ from datetime import datetime
 
 class UserBase(SQLModel):
     email: str = Field(unique=True, index=True)
-    username: str = Field(unique=True, index=True)
     full_name: Optional[str] = None
     job_title: Optional[str] = None
     linkedin_url: Optional[str] = None

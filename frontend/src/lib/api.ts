@@ -1,7 +1,7 @@
 import { auth } from '../stores/auth';
 import { get } from 'svelte/store';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+export const API_URL = import.meta.env.VITE_API_URL || '';
 
 function getHeaders() {
     const headers: Record<string, string> = {
@@ -140,6 +140,9 @@ export interface GeneratePdfRequest {
     phone?: string;
     linkedin?: string;
     template_name?: string;
+    custom_date?: string;
+    custom_subject?: string;
+    full_name?: string;
 }
 
 export interface GeneratePdfResponse {
@@ -238,6 +241,9 @@ export async function generatePdf(request: GeneratePdfRequest): Promise<Generate
     if (request.phone) formData.append('phone', request.phone);
     if (request.linkedin) formData.append('linkedin', request.linkedin);
     if (request.template_name) formData.append('template_name', request.template_name);
+    if (request.custom_date) formData.append('custom_date', request.custom_date);
+    if (request.custom_subject) formData.append('custom_subject', request.custom_subject);
+    if (request.full_name) formData.append('full_name', request.full_name);
 
     const response = await fetch(`${API_URL}/api/generate-pdf`, {
         method: 'POST',

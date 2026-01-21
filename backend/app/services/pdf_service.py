@@ -1,4 +1,4 @@
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_LEFT, TA_CENTER
@@ -14,7 +14,7 @@ class PDFService:
     """Service for generating PDF cover letters"""
     
     def __init__(self):
-        self.page_width, self.page_height = letter
+        self.page_width, self.page_height = A4
         self.margin = 0.75 * inch
     
     def generate_cover_letter_pdf(
@@ -23,14 +23,24 @@ class PDFService:
         cover_letter: str,
         job_title: str,
         company: str,
-        template_name: str = "generic",
-        user_name: str = "Applicant",
+        template_name: str = "british",
+        user_name: str = "",
         first_name: str = "",
         surname: str = "",
         image_path: Optional[str] = None,
         email: Optional[str] = "",
         phone: Optional[str] = "",
         linkedin: Optional[str] = "",
+        custom_date: Optional[str] = None,
+        custom_subject: Optional[str] = None,
+        full_name: Optional[str] = None,
+        address: Optional[str] = "",
+        address_street: Optional[str] = "",
+        address_postcode: Optional[str] = "",
+        address_city: Optional[str] = "",
+        address_country: Optional[str] = "",
+        employer_address: Optional[str] = "",
+        recipient_name: Optional[str] = "",
     ):
         """
         Generate a professional cover letter PDF using the specified template.
@@ -38,7 +48,7 @@ class PDFService:
         # Create PDF document
         doc = SimpleDocTemplate(
             output_path,
-            pagesize=letter,
+            pagesize=A4,
             rightMargin=self.margin,
             leftMargin=self.margin,
             topMargin=self.margin,
@@ -65,7 +75,17 @@ class PDFService:
             image_path=image_path,
             email=email,
             phone=phone,
-            linkedin=linkedin
+            linkedin=linkedin,
+            custom_date=custom_date,
+            custom_subject=custom_subject,
+            full_name=full_name,
+            address=address,
+            address_street=address_street,
+            address_postcode=address_postcode,
+            address_city=address_city,
+            address_country=address_country,
+            employer_address=employer_address,
+            recipient_name=recipient_name,
         )
         
         # Build PDF
