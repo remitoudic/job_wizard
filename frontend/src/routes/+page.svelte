@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
+	import { step } from "../stores/wizard";
 	import {
 		parseJobUrl,
 		generateCoverLetter,
@@ -47,7 +48,6 @@
 	let isPdfGenerating = false;
 	let error = "";
 	// Race Mode
-	let step = 1;
 	let alternativeId = "";
 	let source = "";
 
@@ -85,7 +85,7 @@
 		try {
 			jobData = await parseJobUrl(jobUrl);
 			if (advance) {
-				step = 2;
+				step.set(2);
 				// Auto-start generation in background
 				handleGenerateCoverLetter();
 			}
@@ -194,7 +194,7 @@
 			});
 			editableSubject = `Re: Application for ${jobData.title} at ${jobData.company}`;
 
-			step = 3;
+			step.set(3);
 		} catch (e: any) {
 			error = e.message || "Failed to generate cover letter";
 		} finally {
@@ -340,7 +340,7 @@
 		isGenerating = false;
 		isPdfGenerating = false;
 		error = "";
-		step = 1;
+		step.set(1);
 
 		// Reset Edit Modes
 		isEditing = false;
@@ -418,58 +418,68 @@
 		<div class="flex justify-center mb-16">
 			<div class="flex items-center w-full max-w-md">
 				<div class="flex flex-col items-center flex-1 relative">
-					<div
-						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {step >=
+					<button
+						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {$step >=
 						1
 							? 'bg-[#0369A1] text-white shadow-sm'
-							: 'bg-[#E2E8F0] text-[#64748B]'}"
+							: 'bg-[#E2E8F0] text-[#64748B]'} {$step > 1
+							? 'cursor-pointer hover:bg-[#0284C7]'
+							: 'cursor-default'}"
+						on:click={() => {
+							if ($step > 1) step.set(1);
+						}}
 					>
 						1
-					</div>
+					</button>
 					<span
-						class="mt-2 text-xs font-semibold uppercase tracking-wider {step >=
+						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >=
 						1
 							? 'text-[#0369A1]'
 							: 'text-[#64748B]'}">Details</span
 					>
 				</div>
 				<div
-					class="w-20 h-0.5 {step >= 2
+					class="w-20 h-0.5 {$step >= 2
 						? 'bg-[#0369A1]'
 						: 'bg-[#E2E8F0]'} -mt-6"
 				></div>
 				<div class="flex flex-col items-center flex-1 relative">
-					<div
-						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {step >=
+					<button
+						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {$step >=
 						2
 							? 'bg-[#0369A1] text-white shadow-sm'
-							: 'bg-[#E2E8F0] text-[#64748B]'}"
+							: 'bg-[#E2E8F0] text-[#64748B]'} {$step > 2
+							? 'cursor-pointer hover:bg-[#0284C7]'
+							: 'cursor-default'}"
+						on:click={() => {
+							if ($step > 2) step.set(2);
+						}}
 					>
 						2
-					</div>
+					</button>
 					<span
-						class="mt-2 text-xs font-semibold uppercase tracking-wider {step >=
+						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >=
 						2
 							? 'text-[#0369A1]'
 							: 'text-[#64748B]'}">Review</span
 					>
 				</div>
 				<div
-					class="w-20 h-0.5 {step >= 3
+					class="w-20 h-0.5 {$step >= 3
 						? 'bg-[#0369A1]'
 						: 'bg-[#E2E8F0]'} -mt-6"
 				></div>
 				<div class="flex flex-col items-center flex-1 relative">
 					<div
-						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {step >=
+						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {$step >=
 						3
 							? 'bg-[#0369A1] text-white shadow-sm'
-							: 'bg-[#E2E8F0] text-[#64748B]'}"
+							: 'bg-[#E2E8F0] text-[#64748B]'} cursor-default"
 					>
 						3
 					</div>
 					<span
-						class="mt-2 text-xs font-semibold uppercase tracking-wider {step >=
+						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >=
 						3
 							? 'text-[#0369A1]'
 							: 'text-[#64748B]'}">Result</span
@@ -502,7 +512,7 @@
 		{/if}
 
 		<!-- Step 1: Input -->
-		{#if step === 1}
+		{#if $step === 1}
 			<div class="card">
 				<div class="mb-8">
 					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">
@@ -716,7 +726,7 @@
 		{/if}
 
 		<!-- Step 2: Review & Generate -->
-		{#if step === 2 && jobData}
+		{#if $step === 2 && jobData}
 			<div class="card">
 				<div class="mb-8">
 					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">
@@ -846,7 +856,7 @@
 
 				<div class="flex flex-col sm:flex-row gap-4">
 					<button
-						on:click={() => (step = 1)}
+						on:click={() => step.set(1)}
 						class="btn btn-secondary sm:flex-1 py-4"
 						disabled={isGenerating}
 					>
@@ -855,7 +865,7 @@
 					<button
 						on:click={() =>
 							coverLetter
-								? (step = 3)
+								? step.set(3)
 								: handleGenerateCoverLetter()}
 						disabled={isGenerating}
 						class="btn btn-primary sm:flex-[2] py-4 flex items-center justify-center gap-3"
@@ -907,7 +917,7 @@
 		{/if}
 
 		<!-- Step 3: Result -->
-		{#if step === 3 && coverLetter}
+		{#if $step === 3 && coverLetter}
 			<div class="card relative">
 				<div
 					class="flex justify-between items-end mb-8 border-b border-[#E2E8F0] pb-6"
