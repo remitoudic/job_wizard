@@ -5,6 +5,9 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
 
+	export let data: any = {};
+	export let params: Record<string, string> = {};
+
 	onMount(() => {
 		auth.initialize();
 	});
