@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { registerUser } from "$lib/api";
+    import { registerUser, loginUser, API_URL } from "$lib/api";
+    import { auth } from "../../stores/auth";
     import { goto } from "$app/navigation";
 
     // SvelteKit may pass `data` and `params` to pages — declare to prevent runtime warnings
@@ -26,10 +27,46 @@
         }
 
         try {
+            // 1. Register
             await registerUser({ email, password });
+
+            // 2. Auto-Login
+            const formData = new FormData();
+            formData.append("username", email);
+            formData.append("password", password);
+
+            const loginData = await loginUser(formData);
+
+            // 3. Fetch Profile
+            const profileResponse = await fetch(`${API_URL}/api/users/me`, {
+                headers: {
+                    Authorization: `Bearer ${loginData.access_token}`,
+                },
+            });
+
+            if (!profileResponse.ok) {
+                // If profile fetch fails, we still consider registration and login somewhat successful,
+                // but for safety let's just redirect to login to be safe or try to proceed.
+                // However, without user object auth.login might fail or be incomplete.
+                // Let's throw to be safe and let user manually login if this edge case happens.
+                throw new Error(
+                    "Failed to fetch user profile after registration",
+                );
+            }
+
+            const user = await profileResponse.json();
+
+            // 4. Update Auth Store
+            auth.login(loginData.access_token, user);
+
+            // 5. Redirect to Home
             goto("/");
         } catch (e: any) {
+            console.error(e);
             error = e.message || "Registration failed";
+            // If registration succeeded but login failed, the user exists now.
+            // We could check error message and redirect to login if it says "Email already registered" etc.
+            // But for now keeping it simple.
         } finally {
             isLoading = false;
         }
