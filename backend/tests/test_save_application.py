@@ -44,7 +44,9 @@ def test_user_fixture(test_session: Session):
     user = User(
         email="testuser@example.com",
         hashed_password=get_password_hash("testpass123"),
-        full_name="Test User",
+        first_name="Test",
+        surname="User",
+        username="testuser",
         is_superuser=False,
     )
     test_session.add(user)

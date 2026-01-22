@@ -11,6 +11,7 @@
     let user: User | null = null;
     let isLoading = true;
     let isSaving = false;
+    let isAddressOpen = false;
     let message = "";
     let error = "";
 
@@ -49,6 +50,29 @@
 >
     <h1 class="text-2xl font-bold mb-6 text-gray-800">My Profile</h1>
 
+    <div
+        class="mb-6 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100 flex items-start gap-3"
+    >
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-blue-500 mt-0.5 shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+        </svg>
+        <p>
+            The contact information will be used for the header of covering
+            letter, and will be used only for this purpose.
+        </p>
+    </div>
+
     {#if isLoading}
         <div class="text-center py-10 text-gray-500">Loading profile...</div>
     {:else if user}
@@ -69,26 +93,37 @@
 
         <form on:submit|preventDefault={handleSave} class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1"
-                        >Full Name</label
+                        >Username</label
                     >
                     <input
                         type="text"
-                        bind:value={user.full_name}
+                        bind:value={user.username}
                         class="input w-full"
-                        placeholder="John Doe"
+                        placeholder="johndoe"
                     />
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1"
-                        >Job Title</label
+                        >First Name</label
                     >
                     <input
                         type="text"
-                        bind:value={user.job_title}
+                        bind:value={user.first_name}
                         class="input w-full"
-                        placeholder="Software Engineer"
+                        placeholder="John"
+                    />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                        >Surname</label
+                    >
+                    <input
+                        type="text"
+                        bind:value={user.surname}
+                        class="input w-full"
+                        placeholder="Doe"
                     />
                 </div>
                 <div>
@@ -124,17 +159,85 @@
                         placeholder="https://linkedin.com/in/..."
                     />
                 </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                        >Portfolio URL</label
+
+                <div class="md:col-span-2 pt-4">
+                    <button
+                        type="button"
+                        on:click={() => (isAddressOpen = !isAddressOpen)}
+                        class="flex items-center justify-between w-full text-left text-lg font-medium text-gray-900 border-b border-gray-100 pb-2 mb-4 hover:bg-gray-50 transition-colors"
                     >
-                    <input
-                        type="url"
-                        bind:value={user.portfolio_url}
-                        class="input w-full"
-                        placeholder="https://myportfolio.com"
-                    />
+                        <span>Address</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 transform transition-transform {isAddressOpen
+                                ? 'rotate-180'
+                                : ''}"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 9l-7 7-7-7"
+                            />
+                        </svg>
+                    </button>
                 </div>
+
+                {#if isAddressOpen}
+                    <div class="md:col-span-2 contents">
+                        <div class="md:col-span-2">
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-1"
+                                >Street</label
+                            >
+                            <input
+                                type="text"
+                                bind:value={user.street}
+                                class="input w-full"
+                                placeholder="123 Main St"
+                            />
+                        </div>
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-1"
+                                >City</label
+                            >
+                            <input
+                                type="text"
+                                bind:value={user.city}
+                                class="input w-full"
+                                placeholder="New York"
+                            />
+                        </div>
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-1"
+                                >Postcode</label
+                            >
+                            <input
+                                type="text"
+                                bind:value={user.postcode}
+                                class="input w-full"
+                                placeholder="10001"
+                            />
+                        </div>
+                        <div class="md:col-span-2">
+                            <label
+                                class="block text-sm font-medium text-gray-700 mb-1"
+                                >Country</label
+                            >
+                            <input
+                                type="text"
+                                bind:value={user.country}
+                                class="input w-full"
+                                placeholder="USA"
+                            />
+                        </div>
+                    </div>
+                {/if}
             </div>
 
             <div class="pt-4 border-t border-gray-100 flex justify-end">

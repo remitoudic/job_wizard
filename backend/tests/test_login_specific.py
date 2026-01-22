@@ -51,7 +51,9 @@ def test_login_specific_user(client: TestClient, test_session: Session):
     user = User(
         email=email,
         hashed_password=get_password_hash(password),
-        full_name="Remi Toudic",
+        first_name="Remi",
+        surname="Toudic",
+        username="remitoudic",
         is_superuser=False,
     )
     test_session.add(user)

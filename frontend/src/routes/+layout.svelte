@@ -62,15 +62,6 @@
 					{#if $auth.isAuthenticated}
 						<div class="flex items-center gap-6">
 							<a
-								href="/"
-								class="text-sm font-semibold transition-all {$page
-									.url.pathname === '/'
-									? 'text-[#0369A1]'
-									: 'text-[#64748B] hover:text-[#0F172A]'}"
-							>
-								Home
-							</a>
-							<a
 								href="/applications"
 								class="text-sm font-semibold transition-all {$page
 									.url.pathname === '/applications'

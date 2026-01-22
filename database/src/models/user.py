@@ -5,12 +5,20 @@ from datetime import datetime
 
 class UserBase(SQLModel):
     email: str = Field(unique=True, index=True)
-    full_name: Optional[str] = None
+    username: Optional[str] = Field(default=None, unique=True, index=True)
+    first_name: Optional[str] = None
+    surname: Optional[str] = None
     job_title: Optional[str] = None
     linkedin_url: Optional[str] = None
     portfolio_url: Optional[str] = None
     website_url: Optional[str] = None
-    address: Optional[str] = None
+    
+    # Address fields
+    street: Optional[str] = None
+    city: Optional[str] = None
+    postcode: Optional[str] = None
+    country: Optional[str] = None
+    
     phone: Optional[str] = None
     is_superuser: bool = False
 
@@ -28,11 +36,18 @@ class UserRead(UserBase):
 
 class UserUpdate(SQLModel):
     email: Optional[str] = None
-    full_name: Optional[str] = None
+    username: Optional[str] = None
+    first_name: Optional[str] = None
+    surname: Optional[str] = None
     job_title: Optional[str] = None
     linkedin_url: Optional[str] = None
     portfolio_url: Optional[str] = None
     website_url: Optional[str] = None
-    address: Optional[str] = None
+    
+    street: Optional[str] = None
+    city: Optional[str] = None
+    postcode: Optional[str] = None
+    country: Optional[str] = None
+    
     phone: Optional[str] = None
     password: Optional[str] = None

@@ -4,12 +4,19 @@ import { browser } from '$app/environment';
 export interface User {
     id?: number;
     email: string;
-    full_name?: string;
+    username?: string;
+    first_name?: string;
+    surname?: string;
     job_title?: string;
     linkedin_url?: string;
     portfolio_url?: string;
     website_url?: string;
-    address?: string;
+
+    street?: string;
+    city?: string;
+    postcode?: string;
+    country?: string;
+
     phone?: string;
     is_superuser?: boolean;
     last_login?: string;

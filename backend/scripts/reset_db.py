@@ -24,7 +24,9 @@ def create_superuser_local():
         if not user:
             user = User(
                 email="remitoudic@gmail.com",
-                full_name="Remi Toudic",
+                first_name="Remi",
+                surname="Toudic",
+                username="remitoudic",
                 hashed_password=get_password_hash("remitoudic"),
                 is_superuser=True,
                 job_title="System Administrator"

@@ -32,7 +32,9 @@ def test_user_fixture(session: Session):
     user = User(
         email="test@example.com",
         hashed_password="fake_hash",
-        full_name="Test User",
+        first_name="Test",
+        surname="User",
+        username="testuser",
         is_superuser=False,
     )
     session.add(user)
