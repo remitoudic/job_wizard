@@ -26,11 +26,19 @@ class JobParser:
         Parse job description from URL using the appropriate strategy
         """
         # 1. Get Strategy
-        parser = ParserRegistry.get_parser(url)
-        logfire.info("Parsing job URL", url=url, strategy=parser.__class__.__name__)
+        try:
+            parser = ParserRegistry.get_parser(url)
+            logfire.info("Parsing job URL", url=url, strategy=parser.__class__.__name__)
+        except Exception as e:
+            logfire.error("Failed to get parser strategy", url=url, error=str(e))
+            raise Exception(f"Unsupported job board URL: {url}")
         
         # 2. Normalize URL (Strategy specific)
-        url = parser.normalize_url(url)
+        try:
+            url = parser.normalize_url(url)
+        except Exception as e:
+            logfire.error("URL normalization failed", url=url, error=str(e))
+            raise Exception(f"Invalid job URL format: {str(e)}")
 
         # 3. Fetch Content (Shared Logic)
         last_exc: Exception | None = None
@@ -43,20 +51,50 @@ class JobParser:
                     soup = BeautifulSoup(response.text, "lxml")
                     
                     # 4. Extract Data (Strategy Delegate)
-                    return parser.extract_job_data(soup, url)
+                    try:
+                        result = parser.extract_job_data(soup, url)
+                        logfire.info("Job data extracted successfully", url=url)
+                        return result
+                    except Exception as e:
+                        logfire.error("Data extraction failed", url=url, error=str(e))
+                        raise Exception(f"Could not extract job details from page: {str(e)}")
 
+            except httpx.TimeoutException as e:
+                logfire.warn("Request timeout", url=url, attempt=attempt)
+                last_exc = e
+                if attempt == self.max_retries:
+                    raise Exception(f"Request timeout after {self.max_retries} attempts. The page may be slow or unreachable.")
+                wait = self.backoff_factor * (2 ** (attempt - 1))
+                await asyncio.sleep(wait)
+                continue
+                
             except httpx.HTTPStatusError as e:
                 status = e.response.status_code if e.response is not None else None
-                logfire.warn("HTTP failed", url=url, status=status, attempt=attempt)
+                logfire.warn("HTTP error", url=url, status=status, attempt=attempt)
                 last_exc = e
-                if status in (403, 429) or (status and 500 <= status < 600):
+                
+                # Provide specific error messages for common HTTP errors
+                if status == 403:
+                    raise Exception("Access forbidden (403). The site may require login or has blocked automated access.")
+                elif status == 404:
+                    raise Exception("Job posting not found (404). The URL may be incorrect or the posting may have been removed.")
+                elif status == 429:
+                    raise Exception("Rate limited (429). Too many requests. Please wait a moment and try again.")
+                elif status and 500 <= status < 600:
                     if attempt == self.max_retries:
-                        break
+                        raise Exception(f"Server error ({status}). The job board's server is experiencing issues. Please try again later.")
                     wait = self.backoff_factor * (2 ** (attempt - 1))
                     await asyncio.sleep(wait)
                     continue
-                raise
+                else:
+                    raise Exception(f"HTTP error {status}: {str(e)}")
+                    
+            except httpx.ConnectError as e:
+                logfire.error("Connection error", url=url, error=str(e))
+                raise Exception(f"Could not connect to the website. Please check the URL and your internet connection.")
+                
             except Exception as e:
+                logfire.error("Unexpected error during fetch", url=url, error=str(e), error_type=type(e).__name__)
                 last_exc = e
                 break
 
@@ -65,12 +103,19 @@ class JobParser:
             logfire.info("Attempting Playwright fallback", url=url)
             content = await self._fetch_with_playwright(url, cookies=cookies)
             soup = BeautifulSoup(content, "lxml")
-            return parser.extract_job_data(soup, url)
+            try:
+                result = parser.extract_job_data(soup, url)
+                logfire.info("Job data extracted via Playwright", url=url)
+                return result
+            except Exception as e:
+                logfire.error("Playwright extraction failed", url=url, error=str(e))
+                raise Exception(f"Could not extract job details even with browser automation: {str(e)}")
         except ImportError:
-            raise Exception("Failed to fetch URL. Playwright fallback unavailable.") from last_exc
+            logfire.error("Playwright not available", url=url)
+            raise Exception("Failed to fetch URL. Browser automation is unavailable.") from last_exc
         except Exception as e:
-            logfire.error("Parsing failed", url=url, error=str(e))
-            raise Exception(f"Failed to fetch URL: {e}") from e
+            logfire.error("Playwright fallback failed", url=url, error=str(e))
+            raise Exception(f"Browser automation failed: {str(e)}") from e
 
     async def _fetch_with_playwright(self, url: str, cookies: str | None = None) -> str:
         """Fetch page content using Playwright (headless browser)."""

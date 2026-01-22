@@ -29,7 +29,7 @@ dependencies = [
     "bcrypt==3.2.2",
     "python-jose[cryptography]>=3.3.0",
     "python-multipart>=0.0.9",
-    "job-wizard-db @ file:///database_pkg",
+    "job-wizard-db @ file:///root/job_wizard/database",
 ]
 
 [project.optional-dependencies]

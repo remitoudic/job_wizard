@@ -4,6 +4,10 @@
     import { auth } from "../../stores/auth";
     import type { User } from "../../stores/auth";
 
+    // SvelteKit may pass `data` and `params` to pages — declare to prevent runtime warnings
+    export let data: any = {};
+    export let params: Record<string, string> = {};
+
     let user: User | null = null;
     let isLoading = true;
     let isSaving = false;

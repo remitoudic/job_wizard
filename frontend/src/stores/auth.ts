@@ -4,7 +4,6 @@ import { browser } from '$app/environment';
 export interface User {
     id?: number;
     email: string;
-    username: string;
     full_name?: string;
     job_title?: string;
     linkedin_url?: string;

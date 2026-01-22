@@ -1,7 +1,11 @@
 <script lang="ts">
-    import { loginUser } from "$lib/api";
+    import { loginUser, getProfile, API_URL } from "$lib/api";
     import { auth } from "../../stores/auth";
     import { goto } from "$app/navigation";
+
+    // SvelteKit may pass `data` and `params` to pages — declare to prevent runtime warnings
+    export let data: any = {};
+    export let params: Record<string, string> = {};
 
     let email = "";
     let password = "";
@@ -21,8 +25,7 @@
             const data = await loginUser(formData);
 
             // Fetch complete user profile to get is_superuser and other fields
-            const apiUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
-            const profileResponse = await fetch(`${apiUrl}/api/users/me`, {
+            const profileResponse = await fetch(`${API_URL}/api/users/me`, {
                 headers: {
                     Authorization: `Bearer ${data.access_token}`,
                 },

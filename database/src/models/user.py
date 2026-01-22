@@ -28,7 +28,6 @@ class UserRead(UserBase):
 
 class UserUpdate(SQLModel):
     email: Optional[str] = None
-    username: Optional[str] = None
     full_name: Optional[str] = None
     job_title: Optional[str] = None
     linkedin_url: Optional[str] = None

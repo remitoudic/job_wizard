@@ -5,7 +5,7 @@ from jose import jwt, JWTError
 from sqlmodel import Session
 from app.core.db import get_session
 from app.core.security import SECRET_KEY, ALGORITHM
-from app.models import TokenData
+from app.api.validation.schemas import TokenData
 from src.models.user import User
 from app.services.user import user_service
 

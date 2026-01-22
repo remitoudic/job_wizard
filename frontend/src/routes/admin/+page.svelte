@@ -4,6 +4,10 @@
     import { getUsers, type User } from "$lib/api";
     import { goto } from "$app/navigation";
 
+    // SvelteKit may pass `data` and `params` to pages — declare to prevent runtime warnings
+    export let data: any = {};
+    export let params: Record<string, string> = {};
+
     let users: User[] = [];
     let error = "";
     let isLoading = true;

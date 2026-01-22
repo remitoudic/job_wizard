@@ -26,6 +26,7 @@
 				<div class="flex items-center">
 					<a
 						href="/"
+						data-sveltekit-reload
 						class="flex-shrink-0 flex items-center gap-3 group"
 					>
 						<div
@@ -47,7 +48,7 @@
 							</svg>
 						</div>
 						<span
-							class="font-bold text-xl text-[#0F172A] tracking-tight"
+							class="font-bold text-xl text-[#0F172A] tracking-tight transition-colors group-hover:text-[#0369A1]"
 							>Job Wizard</span
 						>
 					</a>
@@ -65,6 +66,15 @@
 									: 'text-[#64748B] hover:text-[#0F172A]'}"
 							>
 								Home
+							</a>
+							<a
+								href="/applications"
+								class="text-sm font-semibold transition-all {$page
+									.url.pathname === '/applications'
+									? 'text-[#0369A1]'
+									: 'text-[#64748B] hover:text-[#0F172A]'}"
+							>
+								Applications
 							</a>
 							<a
 								href="/profile"

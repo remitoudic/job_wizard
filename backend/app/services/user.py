@@ -9,9 +9,7 @@ class UserService:
         statement = select(User).where(User.email == email)
         return session.exec(statement).first()
     
-    def get_by_username(self, session: Session, username: str) -> Optional[User]:
-        statement = select(User).where(User.username == username)
-        return session.exec(statement).first()
+
 
     def authenticate(self, session: Session, email: str, password: str) -> Optional[User]:
         user = self.get_by_email(session, email)

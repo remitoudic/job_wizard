@@ -9,8 +9,14 @@
 		generatePdf,
 		uploadContext,
 		getAlternativeCoverLetter,
+		saveApplication,
 		API_URL,
 	} from "$lib/api";
+	import { auth } from "../stores/auth";
+
+	// SvelteKit automatically passes these props - declare them to avoid warnings
+	export let data: any = {};
+	export let params: Record<string, string> = {};
 
 	let jobUrl = "";
 	let userName = "";
@@ -47,6 +53,13 @@
 	let isGenerating = false;
 	let isPdfGenerating = false;
 	let error = "";
+
+	// Manual Input
+	let isManualInput = false;
+	let manualTitle = "";
+	let manualCompany = "";
+	let manualDescription = "";
+
 	// Race Mode
 	let alternativeId = "";
 	let source = "";
@@ -81,6 +94,7 @@
 
 		isParsing = true;
 		error = "";
+		isManualInput = false;
 
 		try {
 			jobData = await parseJobUrl(jobUrl);
@@ -253,6 +267,23 @@
 		}
 	}
 
+	function handleManualSubmit() {
+		if (!manualTitle || !manualCompany || !manualDescription) {
+			error = "Please fill in all manual fields";
+			return;
+		}
+		error = "";
+		jobData = {
+			title: manualTitle,
+			company: manualCompany,
+			description: manualDescription,
+			requirements: [],
+			url: jobUrl || "manual",
+		};
+		step.set(2);
+		handleGenerateCoverLetter();
+	}
+
 	async function handleGeneratePdf() {
 		if (!coverLetter || !jobData) return;
 
@@ -260,6 +291,38 @@
 		error = "";
 
 		try {
+			// preparing header object
+			const header = {
+				name: userName,
+				email,
+				phone,
+				linkedin,
+				address,
+				address_street: addressStreet,
+				address_postcode: addressPostcode,
+				address_city: addressCity,
+				address_country: addressCountry,
+			};
+
+			// Saving application to database
+			await saveApplication({
+				job_url: jobUrl,
+				job_title: jobData.title,
+				job_company: jobData.company,
+				job_description:
+					jobData.full_description || jobData.description, // Use full description if available
+				job_requirements: jobData.requirements,
+				job_source: jobData.source || "unknown",
+				generated_letters: allCoverLetters.map((l) => ({
+					model: l.source.includes("GPT") ? "gpt-4o" : "llama-3.2-1b", // precise mapping if possible, else approximation
+					letter: l.text,
+					timestamp: new Date().toISOString(), // API expects this
+				})),
+				selected_letter_index: currentVersionIndex,
+				header: header,
+				cover_letter_body: coverLetter,
+			});
+
 			const result = await generatePdf({
 				cover_letter: coverLetter,
 				job_title: jobData.title,
@@ -341,6 +404,12 @@
 		isPdfGenerating = false;
 		error = "";
 		step.set(1);
+
+		// Manual Input Reset
+		isManualInput = false;
+		manualTitle = "";
+		manualCompany = "";
+		manualDescription = "";
 
 		// Reset Edit Modes
 		isEditing = false;
@@ -492,23 +561,144 @@
 		<!-- Error Message -->
 		{#if error}
 			<div
-				class="mb-8 p-4 bg-red-50 border border-red-100 text-red-700 rounded-md text-sm flex items-start gap-3"
+				class="mb-8 p-4 bg-red-50 border border-red-100 text-red-700 rounded-md text-sm flex flex-col gap-4"
 			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-5 w-5 text-red-500 shrink-0"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-					/>
-				</svg>
-				<span>{error}</span>
+				<div class="flex items-start gap-3">
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-5 w-5 text-red-500 shrink-0"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+						/>
+					</svg>
+					<span class="flex-1">{error}</span>
+				</div>
+
+				{#if error.includes("restricted") || error.includes("automated access") || error.includes("blocked")}
+					<div class="pl-8">
+						<button
+							on:click={() => {
+								isManualInput = true;
+								error = "";
+							}}
+							class="text-[#0369A1] font-semibold hover:underline flex items-center gap-1.5 transition-all"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-4 w-4"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+								/>
+							</svg>
+							Enter details manually
+						</button>
+					</div>
+				{/if}
+			</div>
+		{/if}
+
+		{#if isManualInput && $step === 1}
+			<div
+				class="card mb-8 animate-in fade-in slide-in-from-top-4 duration-300"
+				transition:fade
+			>
+				<div class="mb-6 flex justify-between items-center">
+					<div>
+						<h2 class="text-xl font-bold text-[#0F172A]">
+							Manual Job Entry
+						</h2>
+						<p class="text-[#64748B] text-xs">
+							The site is blocked, but we can still help if you
+							paste the details.
+						</p>
+					</div>
+					<button
+						on:click={() => (isManualInput = false)}
+						class="text-[#64748B] hover:text-[#0F172A] p-1"
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-5 w-5"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M6 18L18 6M6 6l12 12"
+							/>
+						</svg>
+					</button>
+				</div>
+
+				<div class="space-y-5">
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div>
+							<label
+								for="manual-title"
+								class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
+								>Job Title</label
+							>
+							<input
+								id="manual-title"
+								type="text"
+								bind:value={manualTitle}
+								class="input text-sm"
+								placeholder="e.g. Senior Software Engineer"
+							/>
+						</div>
+						<div>
+							<label
+								for="manual-company"
+								class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
+								>Company Name</label
+							>
+							<input
+								id="manual-company"
+								type="text"
+								bind:value={manualCompany}
+								class="input text-sm"
+								placeholder="e.g. Acme Corp"
+							/>
+						</div>
+					</div>
+					<div>
+						<label
+							for="manual-desc"
+							class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
+							>Job Description</label
+						>
+						<textarea
+							id="manual-desc"
+							bind:value={manualDescription}
+							rows="8"
+							class="input text-sm resize-none"
+							placeholder="Paste the full job description here..."
+						></textarea>
+					</div>
+					<button
+						on:click={handleManualSubmit}
+						class="btn btn-primary w-full py-3 font-semibold shadow-lg hover:shadow-xl transition-all"
+					>
+						Submit & Generate Letter
+					</button>
+				</div>
 			</div>
 		{/if}
 

@@ -76,7 +76,6 @@ export interface CoverLetterRequest {
 export interface User {
     id: number;
     email: string;
-    username: string;
     full_name?: string;
     job_title?: string;
     linkedin_url?: string;
@@ -113,6 +112,10 @@ export interface CoverLetterResponse {
     linkedin?: string;
     website?: string;
     address?: string;
+    address_street?: string;
+    address_postcode?: string;
+    address_city?: string;
+    address_country?: string;
     user_name_detected?: string;
     source?: string;
     alternative_id?: string;
@@ -143,6 +146,11 @@ export interface GeneratePdfRequest {
     custom_date?: string;
     custom_subject?: string;
     full_name?: string;
+    address?: string;
+    address_street?: string;
+    address_postcode?: string;
+    address_city?: string;
+    address_country?: string;
 }
 
 export interface GeneratePdfResponse {
@@ -244,6 +252,11 @@ export async function generatePdf(request: GeneratePdfRequest): Promise<Generate
     if (request.custom_date) formData.append('custom_date', request.custom_date);
     if (request.custom_subject) formData.append('custom_subject', request.custom_subject);
     if (request.full_name) formData.append('full_name', request.full_name);
+    if (request.address) formData.append('address', request.address);
+    if (request.address_street) formData.append('address_street', request.address_street);
+    if (request.address_postcode) formData.append('address_postcode', request.address_postcode);
+    if (request.address_city) formData.append('address_city', request.address_city);
+    if (request.address_country) formData.append('address_country', request.address_country);
 
     const response = await fetch(`${API_URL}/api/generate-pdf`, {
         method: 'POST',
@@ -266,4 +279,80 @@ export async function getAlternativeCoverLetter(altId: string) {
     }
 
     return await response.json();
+}
+
+// Save Application Types
+export interface GeneratedLetterData {
+    model: string;
+    letter: string;
+    timestamp: string;
+}
+
+export interface SaveApplicationRequest {
+    job_url: string;
+    job_title: string;
+    job_company: string;
+    job_description: string;
+    job_requirements: string[];
+    job_source: string;
+    generated_letters: GeneratedLetterData[];
+    selected_letter_index: number;
+    header: Record<string, any>;
+    cover_letter_body: string;
+}
+
+export interface SaveApplicationResponse {
+    success: boolean;
+    application_id: number;
+    job_description_id: number;
+    generated_letter_id: number;
+    message: string;
+}
+
+export interface ApplicationListItem {
+    id: number;
+    job_title: string;
+    company: string;
+    job_url: string;
+    status: string;
+    created_at: string;
+    header: Record<string, any>;
+    cover_letter_final: Record<string, any>;
+    job_description: string;
+    requirements: string[];
+}
+
+export interface FetchApplicationsResponse {
+    applications: ApplicationListItem[];
+}
+
+export async function saveApplication(
+    request: SaveApplicationRequest
+): Promise<SaveApplicationResponse> {
+    const response = await fetch(`${API_URL}/api/save-application`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to save application');
+    }
+
+    return response.json();
+}
+
+export async function fetchUserApplications(): Promise<FetchApplicationsResponse> {
+    const response = await fetch(`${API_URL}/api/applications`, {
+        method: 'GET',
+        headers: getHeaders(),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to fetch applications');
+    }
+
+    return response.json();
 }

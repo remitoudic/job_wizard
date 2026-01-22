@@ -1,80 +1,28 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, HttpUrl
 from typing import Optional
-import os
 from pathlib import Path
 import uuid
-from datetime import datetime
+import os
 
-from app.services.job_parser import JobParser
 from app.services.llm_service import LLMService
 from app.services.pdf_service import PDFService
 from app.services.pdf_parser import PDFParser
 
-router = APIRouter()
+# Import validation schemas
+from app.api.validation.schemas import (
+    CoverLetterRequest,
+    CoverLetterResponse,
+)
+
+router = APIRouter(tags=["cover_letter"])
 
 # Initialize services
-job_parser = JobParser()
 llm_service = LLMService()
 pdf_service = PDFService()
 pdf_parser = PDFParser()
 
 UPLOAD_DIR = Path("/app/uploads")
-
-
-class JobURLRequest(BaseModel):
-    url: HttpUrl
-    # Optional raw Cookie header string to use for authenticated fetches (Playwright)
-    cookie: Optional[str] = None
-
-
-class JobDescription(BaseModel):
-    title: str
-    company: str
-    description: str
-    requirements: list[str]
-    url: str
-    source: Optional[str] = None
-
-
-class CoverLetterRequest(BaseModel):
-    job_description: JobDescription
-    user_name: Optional[str] = "Applicant"
-    user_skills: Optional[str] = ""
-    context_text: Optional[str] = None
-
-
-class CoverLetterResponse(BaseModel):
-    cover_letter: str
-    job_title: str
-    company: str
-    first_name: Optional[str] = ""
-    surname: Optional[str] = ""
-    email: Optional[str] = ""
-    phone: Optional[str] = ""
-    linkedin: Optional[str] = ""
-    website: Optional[str] = ""
-    address: Optional[str] = ""
-    address_street: Optional[str] = ""
-    address_postcode: Optional[str] = ""
-    address_city: Optional[str] = ""
-    address_country: Optional[str] = ""
-    user_name_detected: Optional[str] = ""
-    source: Optional[str] = "local"
-    alternative_id: Optional[str] = ""
-
-
-@router.post("/parse-job", response_model=JobDescription)
-async def parse_job_description(request: JobURLRequest):
-    """
-    Parse job description from a URL
-    """
-    try:
-        job_data = await job_parser.parse_url(str(request.url), cookies=request.cookie)
-        return job_data
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to parse job URL: {str(e)}")
 
 
 @router.post("/generate-cover-letter", response_model=CoverLetterResponse)

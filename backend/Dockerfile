@@ -11,6 +11,9 @@ COPY backend/pyproject.toml ./
 # Copy database package
 COPY database /database_pkg
 
+# Fix absolute path in pyproject.toml for Docker environment
+RUN sed -i 's|file:///root/job_wizard/database|file:///database_pkg|g' pyproject.toml
+
 # Install dependencies
 RUN uv sync --no-dev
 

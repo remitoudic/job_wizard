@@ -64,7 +64,6 @@ services:
       - "8000:8000"
     volumes:
       - ./backend/app:/app/app
-      - ./backend/pyproject.toml:/app/pyproject.toml
       - backend_uploads:/app/uploads
     networks:
       - jobwizard-network
