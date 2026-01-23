@@ -42,27 +42,27 @@ A web application that generates personalized cover letters from job description
 
 ## Quick Start
 
-1. **Clone and setup**
-   ```bash
-   git clone <your-repo-url>
-   cd job_wizard
-   cp .env.example .env
-   ```
+### Local Development (Your Laptop)
 
-2. **Start all services**
-   ```bash
-   docker-compose up --build
-   ```
+```bash
+git clone git@github.com:remitoudic/job_wizard.git
+cd job_wizard
+./scripts/start_locally.sh
 
-3. **Pull the LLM model** (first time only)
-   ```bash
-   docker-compose exec ollama ollama pull llama3.2:1b
-   ```
+# First time: pull the Ollama model
+docker exec jobwizard-ollama ollama pull llama3.2:1b
+```
 
-4. **Access the application**
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:8000
-   - API Docs: http://localhost:8000/docs
+**Access**: http://localhost:5173
+
+### Production Server
+
+```bash
+# Safe update with auto-backup and rollback
+./scripts/update-production.sh
+```
+
+📖 **Full Development Guide**: See [DEVELOPMENT.md](DEVELOPMENT.md) for complete instructions.
 
 ## Usage
 
