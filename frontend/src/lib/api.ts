@@ -16,13 +16,36 @@ function getHeaders() {
     return headers;
 }
 
+async function handleResponse<T = any>(response: Response, defaultError: string): Promise<T> {
+    const text = await response.text();
+    if (!response.ok) {
+        let msg = defaultError;
+        try {
+            if (text) {
+                const data = JSON.parse(text);
+                if (data.detail) {
+                    msg = typeof data.detail === 'string'
+                        ? data.detail
+                        : JSON.stringify(data.detail);
+                }
+            }
+        } catch { } // Ignore parse errors on error response
+        throw new Error(msg);
+    }
+    if (!text) return {} as T;
+    try {
+        return JSON.parse(text);
+    } catch {
+        throw new Error('Invalid JSON response from server');
+    }
+}
+
 export async function loginUser(formData: FormData) {
     const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         body: formData,
     });
-    if (!response.ok) throw new Error('Login failed');
-    return response.json();
+    return handleResponse<any>(response, 'Login failed');
 }
 
 export async function registerUser(userData: any) {
@@ -31,11 +54,7 @@ export async function registerUser(userData: any) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
     });
-    if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.detail || 'Registration failed');
-    }
-    return response.json();
+    return handleResponse<any>(response, 'Registration failed');
 }
 
 export async function getProfile() {
@@ -43,8 +62,7 @@ export async function getProfile() {
         method: 'GET',
         headers: getHeaders(),
     });
-    if (!response.ok) throw new Error('Failed to fetch profile');
-    return response.json();
+    return handleResponse<any>(response, 'Failed to fetch profile');
 }
 
 export async function updateProfile(userData: any) {
@@ -53,8 +71,7 @@ export async function updateProfile(userData: any) {
         headers: getHeaders(),
         body: JSON.stringify(userData),
     });
-    if (!response.ok) throw new Error('Failed to update profile');
-    return response.json();
+    return handleResponse<any>(response, 'Failed to update profile');
 }
 
 export interface JobDescription {
@@ -101,11 +118,7 @@ export async function getUsers(token: string): Promise<User[]> {
         },
     });
 
-    if (!response.ok) {
-        throw new Error('Failed to fetch users');
-    }
-
-    return response.json();
+    return handleResponse<User[]>(response, 'Failed to fetch users');
 }
 
 export interface CoverLetterResponse {
@@ -174,12 +187,7 @@ export async function parseJobUrl(url: string): Promise<JobDescription> {
         body: JSON.stringify({ url }),
     });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to parse job URL');
-    }
-
-    return response.json();
+    return handleResponse<JobDescription>(response, 'Failed to parse job URL');
 }
 
 export async function generateCoverLetter(
@@ -193,12 +201,7 @@ export async function generateCoverLetter(
         body: JSON.stringify(request),
     });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to generate cover letter');
-    }
-
-    return response.json();
+    return handleResponse<CoverLetterResponse>(response, 'Failed to generate cover letter');
 }
 
 export async function uploadImage(file: File): Promise<UploadImageResponse> {
@@ -210,12 +213,7 @@ export async function uploadImage(file: File): Promise<UploadImageResponse> {
         body: formData,
     });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to upload image');
-    }
-
-    return response.json();
+    return handleResponse<UploadImageResponse>(response, 'Failed to upload image');
 }
 
 export async function uploadContext(file: File): Promise<UploadContextResponse> {
@@ -227,12 +225,7 @@ export async function uploadContext(file: File): Promise<UploadContextResponse> 
         body: formData,
     });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to upload context file');
-    }
-
-    return response.json();
+    return handleResponse<UploadContextResponse>(response, 'Failed to upload context file');
 }
 
 export async function generatePdf(request: GeneratePdfRequest): Promise<GeneratePdfResponse> {
@@ -270,22 +263,13 @@ export async function generatePdf(request: GeneratePdfRequest): Promise<Generate
         body: formData,
     });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to generate PDF');
-    }
-
-    return response.json();
+    return handleResponse<GeneratePdfResponse>(response, 'Failed to generate PDF');
 }
 
 export async function getAlternativeCoverLetter(altId: string) {
     const response = await fetch(`${API_URL}/api/cover-letter/alternative/${altId}`);
 
-    if (!response.ok) {
-        throw new Error('Alternative not ready or not found');
-    }
-
-    return await response.json();
+    return handleResponse<any>(response, 'Alternative not ready or not found');
 }
 
 // Save Application Types
@@ -342,12 +326,7 @@ export async function saveApplication(
         body: JSON.stringify(request),
     });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to save application');
-    }
-
-    return response.json();
+    return handleResponse<SaveApplicationResponse>(response, 'Failed to save application');
 }
 
 export async function fetchUserApplications(): Promise<FetchApplicationsResponse> {
@@ -356,10 +335,5 @@ export async function fetchUserApplications(): Promise<FetchApplicationsResponse
         headers: getHeaders(),
     });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to fetch applications');
-    }
-
-    return response.json();
+    return handleResponse<FetchApplicationsResponse>(response, 'Failed to fetch applications');
 }

@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { readFile } from 'fs/promises';
+import { readFile } from 'node:fs/promises';
 
 export const GET: RequestHandler = async () => {
   try {

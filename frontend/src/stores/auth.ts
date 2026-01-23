@@ -56,8 +56,8 @@ const createAuthStore = () => {
                 const token = localStorage.getItem('token');
                 if (token) {
                     try {
-                        // Construct API URL dynamically based on current host
-                        const apiUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
+                        // Use configured API URL or fallback to relative path for production
+                        const apiUrl = import.meta.env.VITE_API_URL || '';
 
                         // Fetch user profile to get full user data including is_superuser
                         const response = await fetch(`${apiUrl}/api/users/me`, {

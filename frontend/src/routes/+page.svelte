@@ -46,6 +46,7 @@
 
 	let jobData: any = null;
 	let coverLetter = "";
+	let originalCoverLetter = ""; // Store original to allow re-replacing name
 	let pdfUrl = "";
 	let downloaded = false;
 
@@ -85,6 +86,38 @@
 	}> = [];
 	let currentVersionIndex = 0;
 	let isLoadingAlternatives = false;
+
+	// Reactive: Replace [Your Name] placeholder with actual name
+	// Function to replace [Your Name] placeholder with actual name
+	// Function to replace [Your Name] placeholder with actual name
+	function updateNameInCoverLetter() {
+		// If we have an original with placeholder, use that as source
+		// Otherwise fall back to current (but this won't allow re-replacing)
+		const sourceText = originalCoverLetter || coverLetter;
+
+		if (sourceText && (firstName || surname)) {
+			const fullName = `${firstName} ${surname}`.trim();
+			if (fullName) {
+				// Replace [Your Name] with actual name
+				// If original text is available, we can always do a fresh replacement
+				const newText = sourceText.replace(/\[Your Name\]/g, fullName);
+
+				// Only update if it changed
+				if (newText !== coverLetter) {
+					coverLetter = newText;
+
+					// Also update editableName
+					editableName = fullName;
+
+					// Update the current version in the list too
+					if (allCoverLetters[currentVersionIndex]) {
+						allCoverLetters[currentVersionIndex].text = coverLetter;
+					}
+					invalidatePdf();
+				}
+			}
+		}
+	}
 
 	async function handleParseJob(advance = true) {
 		if (!jobUrl) {
@@ -162,6 +195,12 @@
 			});
 
 			coverLetter = result.cover_letter;
+			originalCoverLetter = result.cover_letter; // Save original
+
+			// Auto-replace name if already entered
+			if (firstName || surname) {
+				updateNameInCoverLetter();
+			}
 			// Pre-fill contact info if available
 			if (result.first_name) firstName = result.first_name;
 			if (result.surname) surname = result.surname;
@@ -255,14 +294,14 @@
 				// We want to preserve the selection if possible potentially, or just rebuild.
 
 				// We need to map them to the UI structure
-				const mapped = [];
+				const mapped: any[] = [];
 
 				// Keep the winner (first one in allCoverLetters) if it's there
 				if (allCoverLetters.length > 0) {
 					mapped.push(allCoverLetters[0]);
 				}
 
-				newAlternatives.forEach((alt) => {
+				newAlternatives.forEach((alt: any) => {
 					// Check if it's already the winner?
 					// The backend alternatives list MIGHT contain the winner if logic changed,
 					// but typically it contains "finished alternatives".
@@ -492,15 +531,15 @@
 
 	// Close settings when clicking outside
 	onMount(() => {
-		const handleClickOutside = (event) => {
+		const handleClickOutside = (event: MouseEvent) => {
 			const settingsMenu = document.getElementById("settings-menu");
 			const settingsBtn = document.getElementById("settings-btn");
 			if (
 				showSettings &&
 				settingsMenu &&
 				settingsBtn &&
-				!settingsMenu.contains(event.target) &&
-				!settingsBtn.contains(event.target)
+				!settingsMenu.contains(event.target as Node) &&
+				!settingsBtn.contains(event.target as Node)
 			) {
 				showSettings = false;
 			}
@@ -1559,7 +1598,10 @@
 									<input
 										type="text"
 										bind:value={firstName}
-										on:input={invalidatePdf}
+										on:input={() => {
+											invalidatePdf();
+											updateNameInCoverLetter();
+										}}
 										class="input"
 										disabled={isPdfGenerating}
 									/>
@@ -1572,7 +1614,10 @@
 									<input
 										type="text"
 										bind:value={surname}
-										on:input={invalidatePdf}
+										on:input={() => {
+											invalidatePdf();
+											updateNameInCoverLetter();
+										}}
 										class="input"
 										disabled={isPdfGenerating}
 									/>

@@ -2,7 +2,7 @@ import os
 import logfire
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from typing import Optional
 
@@ -53,14 +53,14 @@ def create_extraction_agent(model_name: str = "llama3.2:1b", base_url: str = "ht
             base_url = f"{base_url}/v1"
             
         provider = OpenAIProvider(base_url=base_url, api_key="ollama") # Dummy key required
-        model = OpenAIModel(model_name=model_name, provider=provider)
+        model = OpenAIChatModel(model_name=model_name, provider=provider)
     else:
         # Remote OpenRouter
         provider = OpenAIProvider(
             base_url="https://openrouter.ai/api/v1",
             api_key=os.getenv("OPENROUTER_API_KEY")
         )
-        model = OpenAIModel(model_name=model_name, provider=provider)
+        model = OpenAIChatModel(model_name=model_name, provider=provider)
 
     agent = Agent(
         model,
@@ -83,13 +83,13 @@ def create_writing_agent(model_name: str, is_remote: bool = False) -> Agent:
             host = f"{host}/v1"
             
         provider = OpenAIProvider(base_url=host, api_key="ollama")
-        model = OpenAIModel(model_name=model_name, provider=provider)
+        model = OpenAIChatModel(model_name=model_name, provider=provider)
     else:
         provider = OpenAIProvider(
             base_url="https://openrouter.ai/api/v1",
             api_key=os.getenv("OPENROUTER_API_KEY")
         )
-        model = OpenAIModel(model_name=model_name, provider=provider)
+        model = OpenAIChatModel(model_name=model_name, provider=provider)
     
     agent = Agent(
         model,

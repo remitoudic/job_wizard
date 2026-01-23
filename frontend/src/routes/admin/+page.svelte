@@ -116,7 +116,7 @@
                                         <div
                                             class="text-sm font-medium text-gray-900"
                                         >
-                                            {user.full_name || "N/A"}
+                                            {user.first_name} {user.surname}
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">

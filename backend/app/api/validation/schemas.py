@@ -2,7 +2,7 @@ from pydantic import BaseModel, HttpUrl
 from typing import Optional, List, Dict, Any
 
 class JobURLRequest(BaseModel):
-    url: HttpUrl
+    url: str
     # Optional raw Cookie header string to use for authenticated fetches (Playwright)
     cookie: Optional[str] = None
 
