@@ -32,8 +32,12 @@ COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
 COPY --from=builder /database_pkg /database_pkg
 
-# Copy application code
-COPY . .
+# Copy application code from backend directory
+COPY backend/app ./app
+COPY backend/pyproject.toml .
+
+# Fix absolute path in pyproject.toml for Docker environment (same as builder)
+RUN sed -i 's|file:///root/job_wizard/database|file:///database_pkg|g' pyproject.toml
 
 # Create uploads directory
 RUN mkdir -p /app/uploads

@@ -150,7 +150,7 @@ docker exec jobwizard-backend pytest tests/test_ollama.py -v -s
 
 - **OpenRouter Test** (`test_openrouter.py`):
   - Verifies connection to OpenRouter API
-  - Tests the configured model (`xiaomi/mimo-v2-flash:free`)
+  - Tests the configured model (`google/gemma-3-27b-it:free`)
   - Validates API key authentication
   - Note: Skipped if `OPENROUTER_API_KEY` is not set
 

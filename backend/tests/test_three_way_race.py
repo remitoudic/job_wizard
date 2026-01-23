@@ -4,6 +4,7 @@ Test the three-way race for cover letter generation
 import pytest
 import asyncio
 from app.services.llm_service import LLMService
+from app.core.config import settings
 
 
 @pytest.mark.asyncio
@@ -17,9 +18,9 @@ async def test_three_way_race():
     assert service.remote_writer_2 is not None, "Remote writer 2 should be initialized"
     
     # Verify model names
-    assert service.ollama_model_name == "llama3.2:1b"
-    assert service.openrouter_model_name == "xiaomi/mimo-v2-flash:free"
-    assert service.openrouter_model_name_2 == "meta-llama/llama-3.3-70b-instruct:free"
+    assert service.ollama_model_name == settings.OLLAMA_MODEL
+    assert service.openrouter_model_name == settings.OPENROUTER_MODEL
+    assert service.openrouter_model_name_2 == settings.OPENROUTER_MODEL_2
     
     print(f"\n✅ Three agents initialized:")
     print(f"   1. Local: {service.ollama_model_name}")

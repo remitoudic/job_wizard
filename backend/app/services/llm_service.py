@@ -4,6 +4,7 @@ import uuid
 from typing import Optional, Dict, Any
 
 from app.services.agents import create_writing_agent, create_extraction_agent, ContactInfo
+from app.core.config import settings
 import logfire
 
 class LLMService:
@@ -11,12 +12,12 @@ class LLMService:
     
     def __init__(self):
         # Configuration
-        self.ollama_host = os.getenv("OLLAMA_HOST", "http://ollama:11434")
-        self.ollama_model_name = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
+        self.ollama_host = settings.OLLAMA_HOST
+        self.ollama_model_name = settings.OLLAMA_MODEL
         
-        self.openrouter_api_key = os.getenv("OPENROUTER_API_KEY")
-        self.openrouter_model_name = os.getenv("OPENROUTER_MODEL", "xiaomi/mimo-v2-flash:free")
-        self.openrouter_model_name_2 = os.getenv("OPENROUTER_MODEL_2", "meta-llama/llama-3.3-70b-instruct:free")
+        self.openrouter_api_key = settings.OPENROUTER_API_KEY
+        self.openrouter_model_name = settings.OPENROUTER_MODEL
+        self.openrouter_model_name_2 = settings.OPENROUTER_MODEL_2
         
         # Initialize Agents
         self.local_writer = create_writing_agent(self.ollama_model_name, is_remote=False)
@@ -59,6 +60,10 @@ class LLMService:
         Generate cover letter with race mode (Local vs Remote)
         """
         import time
+        import logging
+        
+        # Configure logger
+        logger = logging.getLogger("app.services.llm_service")
         
         # Build optimized prompt (concise for speed)
         req_list = ', '.join(requirements[:5]) if requirements else 'See description'
@@ -87,12 +92,18 @@ Candidate skills: {user_skills}
             model_remote_1=self.openrouter_model_name if self.remote_writer else "none",
             model_remote_2=self.openrouter_model_name_2 if self.remote_writer_2 else "none"
         )
+        logger.info(f"Starting generic race with local={self.ollama_model_name}")
         
         race_start = time.perf_counter()
         
+        # Helper to wrap agent run with source info
+        async def run_agent(agent, p, name):
+            res = await agent.run(p)
+            return {"output": res.output, "source": name}
+
         # Task 1: Local
         local_task = asyncio.create_task(
-            self.local_writer.run(prompt), 
+            run_agent(self.local_writer, prompt, f"Ollama ({self.ollama_model_name})"), 
             name=f"Ollama ({self.ollama_model_name})"
         )
         task_start_times[id(local_task)] = time.perf_counter()
@@ -101,7 +112,7 @@ Candidate skills: {user_skills}
         # Task 2: Remote (OpenRouter Model 1)
         if self.remote_writer:
             remote_task = asyncio.create_task(
-                self.remote_writer.run(prompt),
+                 run_agent(self.remote_writer, prompt, f"OpenRouter ({self.openrouter_model_name})"),
                 name=f"OpenRouter ({self.openrouter_model_name})"
             )
             task_start_times[id(remote_task)] = time.perf_counter()
@@ -110,7 +121,7 @@ Candidate skills: {user_skills}
         # Task 3: Remote (OpenRouter Model 2)
         if self.remote_writer_2:
             remote_task_2 = asyncio.create_task(
-                self.remote_writer_2.run(prompt),
+                run_agent(self.remote_writer_2, prompt, f"OpenRouter ({self.openrouter_model_name_2})"),
                 name=f"OpenRouter ({self.openrouter_model_name_2})"
             )
             task_start_times[id(remote_task_2)] = time.perf_counter()
@@ -119,79 +130,170 @@ Candidate skills: {user_skills}
         if not tasks:
             raise Exception("No generation agents available")
 
-        # Race
-        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-        
         race_duration = time.perf_counter() - race_start
         
-        winner_task = done.pop()
-        try:
-            winner_result = await winner_task
-            winner_text = winner_result.output # .output holds the result
-            winner_source = winner_task.get_name()
-            winner_duration = time.perf_counter() - task_start_times[id(winner_task)]
+        winner_text = None
+        winner_source = None
+        failed_attempts = []
+        finished_alternatives = [] # To store successes that weren't the winner (if any)
+        
+        # Race loop
+        while tasks:
+            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
             
-            logfire.info(
-                "Race won", 
-                winner=winner_source,
-                winner_duration_seconds=round(winner_duration, 2),
-                race_duration_seconds=round(race_duration, 2)
-            )
-            print(f"🏁 RACE WINNER: {winner_source} in {winner_duration:.2f}s")
-        except Exception as e:
-            logfire.error("Race winner failed", error=str(e))
-            # If winner failed, try waiting for others or raise
-            raise Exception(f"Winner task failed: {e}")
-            
-        # Process alternatives
-        alt_id = str(uuid.uuid4())
-        if pending:
-            asyncio.create_task(self._process_alternatives(pending, alt_id, task_start_times))
-            return winner_text, winner_source, alt_id
-            
-        return winner_text, winner_source, ""
-
-    async def _process_alternatives(self, pending_tasks, alt_id: str, task_start_times: dict):
-        """Handle the slower tasks"""
-        import time
-        try:
-            done, _ = await asyncio.wait(pending_tasks, return_when=asyncio.ALL_COMPLETED)
-            alternatives = []
             for task in done:
                 try:
-                    res = await task
-                    task_duration = time.perf_counter() - task_start_times.get(id(task), 0)
-                    alternative = {
-                        "text": res.output,
-                        "source": task.get_name(),
-                        "status": "completed"
-                    }
-                    alternatives.append(alternative)
-                    logfire.info(
-                        "Alternative completed", 
-                        id=alt_id, 
-                        source=task.get_name(),
-                        duration_seconds=round(task_duration, 2)
-                    )
-                    print(f"⏱️  Alternative completed: {task.get_name()} in {task_duration:.2f}s")
+                    result = await task
+                    if not winner_text:
+                        # We have our first winner!
+                        winner_text = result["output"]
+                        winner_source = result["source"]
+                        winner_duration = time.perf_counter() - task_start_times[id(task)]
+                        logfire.info(
+                            "Race won", 
+                            winner=winner_source,
+                            winner_duration_seconds=round(winner_duration, 2),
+                            race_duration_seconds=round(race_duration, 2),
+                            failed_attempts=len(failed_attempts)
+                        )
+                        logger.info(f"Race won by {winner_source} in {winner_duration:.2f}s")
+                    else:
+                        # Already have a winner, this is an alternative
+                        finished_alternatives.append({
+                            "text": result["output"],
+                            "source": result["source"],
+                            "status": "completed"
+                        })
+                        
                 except Exception as e:
-                    # Include failed tasks so user sees all participants
-                    task_duration = time.perf_counter() - task_start_times.get(id(task), 0)
-                    alternative = {
-                        "text": f"Generation failed: {str(e)}",
-                        "source": task.get_name(),
-                        "status": "failed"
-                    }
-                    alternatives.append(alternative)
-                    logfire.error("Alternative task failed", source=task.get_name(), error=str(e))
-                    print(f"❌ Alternative task failed [{task.get_name()}]: {e}")
+                    failed_source = task.get_name()
+                    failed_attempts.append({"source": failed_source, "error": str(e)})
+                    logger.warning(f"Model failed: {failed_source} - {e}")
+                    logfire.warning("Model failed", source=failed_source, error=str(e))
             
-            # Store all alternatives
-            if alternatives:
-                self.alternatives_store[alt_id] = alternatives
+            if winner_text:
+                # We have a winner, remainder are pending alternatives
+                # Exit the main race loop
+                break
+            else:
+                # No winner yet (all in 'done' failed), continue with pending
+                tasks = list(pending)
+        
+        # Logic to handle race end (either winner found or all failed)
+
+        if winner_text is None:
+            error_summary = "; ".join([f"{f['source']}: {f['error']}" for f in failed_attempts])
+            logfire.error("All models failed", failures=failed_attempts)
+            raise Exception(f"All models failed. Errors: {error_summary}")
+            
+        # Success!
+        logfire.info(
+            "Race won", 
+            winner=winner_source,
+            winner_duration_seconds=round(winner_duration, 2),
+            race_duration_seconds=round(race_duration, 2)
+        )
+        logger.info(f"Race won by {winner_source} in {winner_duration:.2f}s")
+        
+        # Handle Alternatives
+        # 1. pending tasks (still running)
+        # 2. finished_alternatives (finished successfully but not winner, or failed during fallback)
+        # 3. failed_attempts (failed during initial race) - we can choose to show these or not.
+        
+        alt_id = str(uuid.uuid4())
+        
+        # Populate store initially with what we have
+        current_alts = []
+        for alt in finished_alternatives:
+             current_alts.append(alt)
+             
+        # Add initial failures to alternatives too, for completeness?
+        # The user might want to know if a model failed.
+        for fail in failed_attempts:
+            # Check if not already added (fallback logic adds failures to finished_alternatives)
+            if not any(a["source"] == fail["source"] for a in current_alts):
+                current_alts.append({
+                    "text": f"Generation failed: {fail['error']}",
+                    "source": fail["source"],
+                    "status": "failed"
+                })
+                
+        # Store initial state
+        self.alternatives_store[alt_id] = {
+            "status": "pending" if pending else "completed",
+            "alternatives": current_alts
+        }
+        
+        # If there are still running tasks (pending), wait for them in background
+        if pending:
+            asyncio.create_task(self._process_alternatives(pending, alt_id, task_start_times))
+            
+        return winner_text, winner_source, alt_id
+
+    async def _process_alternatives(self, pending_tasks, alt_id: str, task_start_times: dict):
+        """Handle the slower tasks incrementally"""
+        import time
+        import logging
+        logger = logging.getLogger("app.services.llm_service")
+        
+        # Initialize tasks set
+        tasks = list(pending_tasks)
+        
+        try:
+            while tasks:
+                # Wait for the next one to complete
+                done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+                
+                # Get current state
+                state = self.alternatives_store.get(alt_id, {"status": "pending", "alternatives": []})
+                current_alternatives = state.get("alternatives", [])
+                
+                for task in done:
+                    try:
+                        result = await task
+                        # result is dict because of run_agent wrapper
+                        task_duration = time.perf_counter() - task_start_times.get(id(task), 0)
+                        
+                        alt = {
+                            "text": result["output"],
+                            "source": result["source"],
+                            "status": "completed"
+                        }
+                        current_alternatives.append(alt)
+                        logfire.info(
+                            "Alternative completed", 
+                            id=alt_id, 
+                            source=result["source"],
+                            duration_seconds=round(task_duration, 2)
+                        )
+                        logger.info(f"Alternative completed: {result['source']} in {task_duration:.2f}s")
+                    except Exception as e:
+                        task_duration = time.perf_counter() - task_start_times.get(id(task), 0)
+                        alt = {
+                            "text": f"Generation failed: {str(e)}",
+                            "source": task.get_name(),
+                            "status": "failed"
+                        }
+                        current_alternatives.append(alt)
+                        logger.error(f"Alternative failed: {task.get_name()} - {e}")
+                
+                # Update store incrementally
+                self.alternatives_store[alt_id] = {
+                    "status": "pending" if pending else "completed",
+                    "alternatives": current_alternatives
+                }
+                
+                # Continue with remaining
+                tasks = list(pending)
+            
         except Exception as e:
             logfire.error("Error processing alternatives", error=str(e))
-            print(f"Error processing alternatives: {e}")
+            logger.error(f"Error processing alternatives: {e}")
+            # Ensure we mark as completed even on error, or failed?
+            state = self.alternatives_store.get(alt_id)
+            if state:
+                state["status"] = "completed"
+                self.alternatives_store[alt_id] = state
 
-    def get_alternative(self, alt_id: str) -> Optional[Dict[str, str]]:
+    def get_alternative(self, alt_id: str) -> Optional[Dict]:
         return self.alternatives_store.get(alt_id)

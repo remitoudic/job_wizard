@@ -50,6 +50,13 @@ if [ "$confirm" != "yes" ]; then
 fi
 
 echo ""
+echo "📝 Loading environment variables from .env.production..."
+# Export all variables from .env.production so docker-compose can use them
+set -a  # automatically export all variables
+source .env.production
+set +a  # disable automatic export
+
+echo ""
 echo "🐳 Stopping any existing containers..."
 docker compose -f docker-compose.prod.yml down
 

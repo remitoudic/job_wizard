@@ -217,43 +217,78 @@
 	}
 
 	async function loadAlternatives() {
-		if (!alternativeId || isLoadingAlternatives) return;
+		if (!alternativeId) return;
 
-		isLoadingAlternatives = true;
+		// Don't set isLoadingAlternatives globally if we want silent updates
+		// But for first load we might want it.
+		// Let's keep it simple.
+
 		try {
-			// Wait a bit for alternatives to complete
-			await new Promise((resolve) => setTimeout(resolve, 2000));
-
 			const altResult = await getAlternativeCoverLetter(alternativeId);
+
 			if (altResult) {
-				// altResult is now an array of alternatives
-				if (Array.isArray(altResult)) {
-					// Add all alternatives to the list
-					altResult.forEach((alt) => {
-						if (alt.text && alt.source) {
-							allCoverLetters.push({
-								text: alt.text,
-								source: alt.source,
-								status: alt.status || "completed",
-							});
-						}
-					});
-					allCoverLetters = allCoverLetters; // Trigger reactivity
-				} else if (altResult.text) {
-					// Single alternative (old format)
-					allCoverLetters.push({
-						text: altResult.text,
-						source: altResult.source,
-					});
-					allCoverLetters = allCoverLetters;
+				let newAlternatives = [];
+				let isComplete = true;
+
+				// Handle new format { status, alternatives }
+				if (
+					altResult.alternatives &&
+					Array.isArray(altResult.alternatives)
+				) {
+					newAlternatives = altResult.alternatives;
+					isComplete = altResult.status === "completed";
+				}
+				// Handle legacy array format (just in case)
+				else if (Array.isArray(altResult)) {
+					newAlternatives = altResult;
+					isComplete = true; // Assume complete if legacy array
+				}
+				// Handle legacy single object
+				else if (altResult.text) {
+					newAlternatives = [altResult];
+					isComplete = true;
+				}
+
+				// Process alternatives
+				// Clear existing and replace, or generic update.
+				// Replacing is safest for now to ensure we have latest status of each.
+				// We want to preserve the selection if possible potentially, or just rebuild.
+
+				// We need to map them to the UI structure
+				const mapped = [];
+
+				// Keep the winner (first one in allCoverLetters) if it's there
+				if (allCoverLetters.length > 0) {
+					mapped.push(allCoverLetters[0]);
+				}
+
+				newAlternatives.forEach((alt) => {
+					// Check if it's already the winner?
+					// The backend alternatives list MIGHT contain the winner if logic changed,
+					// but typically it contains "finished alternatives".
+					// LLMService now puts all non-winner results into alternatives.
+
+					// Add if not duplicate (checks source)
+					if (!mapped.some((m) => m.source === alt.source)) {
+						mapped.push({
+							text: alt.text,
+							source: alt.source,
+							status: alt.status || "completed",
+						});
+					}
+				});
+
+				allCoverLetters = mapped;
+
+				if (!isComplete) {
+					// Poll again
+					setTimeout(() => loadAlternatives(), 2000);
 				}
 			}
 		} catch (e) {
-			console.log("Alternatives not ready yet, will retry...");
-			// Retry after a delay
+			console.log("Error loading alternatives or not ready:", e);
+			// Retry on error too (maybe 404 not ready yet)
 			setTimeout(() => loadAlternatives(), 3000);
-		} finally {
-			isLoadingAlternatives = false;
 		}
 	}
 
@@ -305,23 +340,33 @@
 			};
 
 			// Saving application to database
-			await saveApplication({
-				job_url: jobUrl,
-				job_title: jobData.title,
-				job_company: jobData.company,
-				job_description:
-					jobData.full_description || jobData.description, // Use full description if available
-				job_requirements: jobData.requirements,
-				job_source: jobData.source || "unknown",
-				generated_letters: allCoverLetters.map((l) => ({
-					model: l.source.includes("GPT") ? "gpt-4o" : "llama-3.2-1b", // precise mapping if possible, else approximation
-					letter: l.text,
-					timestamp: new Date().toISOString(), // API expects this
-				})),
-				selected_letter_index: currentVersionIndex,
-				header: header,
-				cover_letter_body: coverLetter,
-			});
+			// Saving application to database (only if logged in)
+			if ($auth.isAuthenticated) {
+				try {
+					await saveApplication({
+						job_url: jobUrl,
+						job_title: jobData.title,
+						job_company: jobData.company,
+						job_description:
+							jobData.full_description || jobData.description, // Use full description if available
+						job_requirements: jobData.requirements,
+						job_source: jobData.source || "unknown",
+						generated_letters: allCoverLetters.map((l) => ({
+							model: l.source.includes("GPT")
+								? "gpt-4o"
+								: "llama-3.2-1b", // precise mapping if possible, else approximation
+							letter: l.text,
+							timestamp: new Date().toISOString(), // API expects this
+						})),
+						selected_letter_index: currentVersionIndex,
+						header: header,
+						cover_letter_body: coverLetter,
+					});
+				} catch (err) {
+					console.warn("Failed to save application to history:", err);
+					// Continue to PDF generation even if save fails
+				}
+			}
 
 			const result = await generatePdf({
 				cover_letter: coverLetter,
