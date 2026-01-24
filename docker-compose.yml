@@ -26,10 +26,7 @@ services:
       - OLLAMA_DEBUG=0
       - OLLAMA_ORIGINS=*
     logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      driver: "none"
     ports:
       - "11434:11434"
     volumes:
@@ -53,7 +50,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://jobwizard:changeme123@postgres:5432/jobwizard}
       OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:1b}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2:0.5b}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       LOGFIRE_TOKEN: ${LOGFIRE_TOKEN}
       BACKEND_HOST: ${BACKEND_HOST:-0.0.0.0}
@@ -63,6 +60,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend/app:/app/app
+      - ./backend/tests:/app/tests
       - backend_uploads:/app/uploads
     networks:
       - jobwizard-network

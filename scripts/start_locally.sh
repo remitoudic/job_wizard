@@ -48,7 +48,11 @@ echo ""
 
 # Use docker-compose if available, else docker compose
 if command -v docker-compose > /dev/null 2>&1; then
-    docker-compose up --build
+    docker-compose up --build -d
+    echo "Logs:"
+    docker-compose logs -f backend frontend
 else
-    docker compose up --build
+    docker compose up --build -d
+    echo "Logs:"
+    docker compose logs -f backend frontend
 fi

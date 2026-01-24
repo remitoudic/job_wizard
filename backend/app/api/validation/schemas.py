@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 
 class JobURLRequest(BaseModel):
     url: str
-    # Optional raw Cookie header string to use for authenticated fetches (Playwright)
+    # Optional raw Cookie header string for authenticated fetches
     cookie: Optional[str] = None
 
 

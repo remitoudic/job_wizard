@@ -8,20 +8,6 @@ from httpx import Response
 from app.services.job_parser import JobParser
 
 
-@pytest.mark.asyncio
-@respx.mock
-@pytest.mark.asyncio
-@respx.mock
-async def test_parse_url_403_without_playwright():
-    url = "https://de.indeed.com/jobs?q=Full+Stack+Developer"
-    respx.get(url).respond(status_code=403)
-
-    parser = JobParser()
-
-    with pytest.raises(Exception) as exc:
-        await parser.parse_url(url)
-
-    assert "playwright" in str(exc.value).lower()
 
 def test_linkedin_parsing_accuracy():
     """Test parsing accuracy against a ground truth fixture"""

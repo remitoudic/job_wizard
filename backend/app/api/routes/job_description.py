@@ -43,8 +43,6 @@ async def parse_job_description(request: JobURLRequest):
             user_message = "Too many requests. Please wait a moment and try again."
         elif "dns" in error_msg.lower() or "resolve" in error_msg.lower():
             user_message = "Could not reach the website. Please check the URL and your internet connection."
-        elif "playwright" in error_msg.lower():
-            user_message = f"Browser automation failed: {error_msg}"
         elif "parse" in error_msg.lower() or "extract" in error_msg.lower():
             user_message = "Could not extract job details from this page. The page structure may not be supported."
         else:

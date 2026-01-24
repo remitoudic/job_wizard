@@ -93,67 +93,9 @@ class JobParser:
                 logfire.error("Connection error", url=url, error=str(e))
                 raise Exception(f"Could not connect to the website. Please check the URL and your internet connection.")
                 
+                    
             except Exception as e:
                 logfire.error("Unexpected error during fetch", url=url, error=str(e), error_type=type(e).__name__)
-                last_exc = e
-                break
+                raise Exception(f"Failed to fetch job URL: {str(e)}")
 
-        # Fallback: Headless Browser
-        try:
-            logfire.info("Attempting Playwright fallback", url=url)
-            content = await self._fetch_with_playwright(url, cookies=cookies)
-            soup = BeautifulSoup(content, "lxml")
-            try:
-                result = parser.extract_job_data(soup, url)
-                logfire.info("Job data extracted via Playwright", url=url)
-                return result
-            except Exception as e:
-                logfire.error("Playwright extraction failed", url=url, error=str(e))
-                raise Exception(f"Could not extract job details even with browser automation: {str(e)}")
-        except ImportError:
-            logfire.error("Playwright not available", url=url)
-            raise Exception("Failed to fetch URL. Browser automation is unavailable.") from last_exc
-        except Exception as e:
-            logfire.error("Playwright fallback failed", url=url, error=str(e))
-            raise Exception(f"Browser automation failed: {str(e)}") from e
 
-    async def _fetch_with_playwright(self, url: str, cookies: str | None = None) -> str:
-        """Fetch page content using Playwright (headless browser)."""
-        try:
-            from playwright.async_api import async_playwright
-        except ImportError:
-            raise ImportError("Playwright library not installed. Please run 'pip install playwright'.")
-        except Exception as e:
-            raise ImportError(f"Failed to import Playwright: {e}")
-
-        try:
-            async with async_playwright() as pw:
-                browser = None
-                try:
-                    browser = await pw.chromium.launch(headless=True, args=["--no-sandbox"]) 
-                except Exception as e:
-                    if "executable" in str(e).lower():
-                        raise Exception("Playwright browser binaries missing. Run 'playwright install chromium'.")
-                    raise Exception(f"Failed to launch browser: {e}")
-                
-                try:
-                    page = await browser.new_page(user_agent=self.headers.get("User-Agent"))
-                    if cookies:
-                        try:
-                            await page.set_extra_http_headers({"cookie": cookies})
-                        except Exception:
-                            pass
-                    await page.goto(url, timeout=30000)
-                    try:
-                        await page.wait_for_load_state("networkidle", timeout=10000)
-                    except Exception:
-                        await asyncio.sleep(1)
-                    content = await page.content()
-                    return content
-                finally:
-                    if browser:
-                        await browser.close()
-        except Exception as e:
-            if "Playwright" in str(e): # Preserve our custom messages
-                raise
-            raise Exception(f"Playwright execution failed: {e}")

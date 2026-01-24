@@ -14,18 +14,19 @@ async def test_three_way_race():
     
     # Verify all three agents are initialized
     assert service.local_writer is not None, "Local writer should be initialized"
-    assert service.remote_writer is not None, "Remote writer 1 should be initialized"
-    assert service.remote_writer_2 is not None, "Remote writer 2 should be initialized"
+    # Verify local agent is initialized
+    assert service.local_writer is not None, "Local writer should be initialized"
     
-    # Verify model names
-    assert service.ollama_model_name == settings.OLLAMA_MODEL
-    assert service.openrouter_model_name == settings.OPENROUTER_MODEL
-    assert service.openrouter_model_name_2 == settings.OPENROUTER_MODEL_2
+    # Remote writers are now dynamic, so they start as None
+    assert service.remote_writer is None
+    assert service.remote_writer_2 is None
     
     print(f"\n✅ Three agents initialized:")
     print(f"   1. Local: {service.ollama_model_name}")
-    print(f"   2. Remote 1: {service.openrouter_model_name}")
-    print(f"   3. Remote 2: {service.openrouter_model_name_2}")
+    
+    config = service.provider_service.get_provider_config()
+    print(f"   2. Remote 1 ({config['name']}): {config['model_1']}")
+    print(f"   3. Remote 2 ({config['name']}): {config['model_2']}")
     
     # Test actual race
     result, winner, alt_id = await service.generate_cover_letter(
@@ -50,10 +51,11 @@ async def test_three_way_race():
         print(f"\n⏳ Waiting for alternatives to complete...")
         await asyncio.sleep(10)
         
-        alternatives = service.get_alternative(alt_id)
-        if alternatives:
-            print(f"   Alternatives completed: {len(alternatives)}")
-            for alt in alternatives:
+        alternatives_data = service.get_alternative(alt_id)
+        if alternatives_data and "alternatives" in alternatives_data:
+            alts_list = alternatives_data["alternatives"]
+            print(f"   Alternatives completed: {len(alts_list)}")
+            for alt in alts_list:
                 print(f"   - {alt['source']}")
     
     print("\n✅ Three-way race test passed!")

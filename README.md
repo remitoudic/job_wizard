@@ -86,9 +86,6 @@ uv sync
 # Run tests
 uv run pytest
 
-# Install Playwright browsers (Required for job parsing)
-uv run playwright install chromium
-
 # Run locally (without Docker)
 uv run uvicorn app.main:app --reload
 ```
@@ -209,27 +206,4 @@ Check CORS settings in `.env` and ensure `VITE_API_URL` is correct.
 
 MIT
 
-Parser improvements and headless fallback
----------------------------------------
 
-If you hit 403 Forbidden errors when parsing job pages (some job sites actively block programmatic requests), the backend parser now:
-
-- Sends realistic browser-like headers and retries transient 403/429/5xx responses with exponential backoff ✅
-- Attempts a headless-browser fallback using Playwright if the HTTP approach fails (optional) 🔁
-
-To enable the fallback in your environment:
-
-```bash
-# From the backend folder
-pip install -e .[browser]
-# Then install browser binaries
-playwright install
-```
-
-To run the tests locally:
-
-```bash
-cd backend
-pip install -e .[dev]
-pytest -q
-```

@@ -16,7 +16,7 @@
 
 	// SvelteKit automatically passes these props - declare them to avoid warnings
 	export let data: any = {};
-	export let params: Record<string, string> = {};
+
 
 	let jobUrl = "";
 	let userName = "";
