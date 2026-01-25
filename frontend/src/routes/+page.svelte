@@ -17,7 +17,6 @@
 	// SvelteKit automatically passes these props - declare them to avoid warnings
 	export let data: any = {};
 
-
 	let jobUrl = "";
 	let userName = "";
 	let imageFile: File | null = null;
@@ -102,12 +101,12 @@
 				// If original text is available, we can always do a fresh replacement
 				const newText = sourceText.replace(/\[Your Name\]/g, fullName);
 
-				// Only update if it changed
+				// Always update editableName for the header preview
+				editableName = fullName;
+
+				// Only update body if it changed (e.g. placeholder found and replaced)
 				if (newText !== coverLetter) {
 					coverLetter = newText;
-
-					// Also update editableName
-					editableName = fullName;
 
 					// Update the current version in the list too
 					if (allCoverLetters[currentVersionIndex]) {
@@ -232,6 +231,7 @@
 
 			// Load alternatives in background
 			if (alternativeId) {
+				isLoadingAlternatives = true;
 				loadAlternatives();
 			}
 
@@ -322,6 +322,8 @@
 				if (!isComplete) {
 					// Poll again
 					setTimeout(() => loadAlternatives(), 2000);
+				} else {
+					isLoadingAlternatives = false;
 				}
 			}
 		} catch (e) {

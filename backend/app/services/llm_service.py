@@ -48,7 +48,23 @@ class LLMService:
             # Agent.run is async
             logfire.info("Starting contact extraction")
             result = await self.extractor.run(text)
-            return result.output.model_dump()
+            data = result.output.model_dump()
+            
+            # Robustness: Backfill first/surname from name if missing
+            full_name = data.get("name", "").strip()
+            if full_name:
+                if not data.get("first_name"):
+                    parts = full_name.split(" ")
+                    if parts:
+                        data["first_name"] = parts[0]
+                
+                if not data.get("surname"):
+                    parts = full_name.split(" ")
+                    if len(parts) > 1:
+                        # Join all remaining parts as surname
+                        data["surname"] = " ".join(parts[1:])
+            
+            return data
         except Exception as e:
             print(f"Extraction failed: {e}")
             return {}
@@ -85,14 +101,22 @@ IMPORTANT:
 4. Use a very  formal tone.
 5. Keep the letter between 200 and 400 words.
 6. Maintain a formal, business-appropriate tone. 
-7. finish with "Sincerely," or "Best regards," and the candidate's name.
+7. Finish with "Sincerely," followed by the placeholder "[Your Name]" exactly. Do NOT use the candidate's real name in the signature.
 
 Key requirements: {req_list}
 Candidate skills: {user_skills}
 """
         if context_text:
             # Reduced from 3000 to 1500 chars for faster processing
+            # Reduced from 3000 to 1500 chars for faster processing
             prompt += f"\nCandidate background:\n{context_text[:1500]}"
+            
+        # Create a highly optimized prompt for local/CPU models
+        local_prompt = prompt
+        if context_text:
+            # Drastically reduce context for local model to improve speed (max 500 chars)
+            local_context = context_text[:500]
+            local_prompt = base_prompt + f"\nKey requirements: {req_list}\nCandidate skills: {user_skills}\n\nCandidate background:\n{local_context}"
 
         # Retry loop for failover
         max_retries = 1
@@ -129,7 +153,7 @@ Candidate skills: {user_skills}
 
             # Task 1: Local
             local_task = asyncio.create_task(
-                run_agent(self.local_writer, prompt, f"Ollama ({self.ollama_model_name})"), 
+                run_agent(self.local_writer, local_prompt, f"Ollama ({self.ollama_model_name})"), 
                 name=f"Ollama ({self.ollama_model_name})"
             )
             task_start_times[id(local_task)] = time.perf_counter()

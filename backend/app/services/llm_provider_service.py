@@ -28,7 +28,7 @@ class LLMProviderService:
                 logfire.info("Groq is rate limited, using OpenRouter")
                 return "openrouter"
         
-        # If we were in openrouter mode, check if we can switch back to Cerebras (Primary)
+        # If we were in openrouter mode, check if we can switch back to Groq (Primary)
         if self._active_provider == "openrouter":
             if current_time >= self._groq_rate_limit_until:
                 # Cooldown expired, switch back to Groq
@@ -57,9 +57,8 @@ class LLMProviderService:
                 downtime_seconds=self._groq_rate_limit_until - current_time
             )
         elif provider == "openrouter":
-             # If OpenRouter also fails, we might just log it 
-             # or maybe switch back to Cerebras if we think it might be up?
-             # For now, let's just log it.
+             # If OpenRouter also fails, we just log it.
+             # We rely on Groq being available after cooldown.
              logfire.error("OpenRouter (Secondary) also reported rate limit!")
 
     def get_provider_config(self) -> Dict[str, Any]:

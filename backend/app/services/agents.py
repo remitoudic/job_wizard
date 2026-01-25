@@ -60,6 +60,39 @@ class CoverLetterResult(BaseModel):
     content: str = Field(..., description="The generated cover letter text")
     model_name: str = Field("unknown", description="Name of the model that generated this")
 
+# --- Prompts ---
+
+SIMPLE_SYSTEM_PROMPT = (
+    "You are a professional Career Coach. Write a concise, professional cover letter based on the job details.\n"
+    "Structure:\n"
+    "1. Salutation (e.g. 'Dear Hiring Manager,')\n"
+    "2. Hook: State role and company.\n"
+    "3. Body: 2 paragraphs matching skills to requirements.\n"
+    "4. Closing: Professional sign-off.\n"
+    "5. Signature: 'Sincerely,' followed by '[Your Name]'.\n\n"
+    "Constraints:\n"
+    "- Tone: Professional and direct.\n"
+    "- Format: PLAIN TEXT ONLY. No placeholders.\n"
+    "- Length: 150-250 words.\n"
+    "- Output: The cover letter ONLY. No intro/outro.\n"
+    "- Finish with: 'Sincerely,\n[Your Name]'"
+)
+
+FEW_SHOT_EXAMPLE = """
+Dear Hiring Manager,
+
+I am writing to express my strong interest in the Senior Software Engineer position at TechFlow, as advertised. With over six years of experience building scalable distributed systems and a deep expertise in Python and cloud architecture, I am confident in my ability to hit the ground running and contribute immediately to your engineering team.
+
+In my current role at DataSystems, I led the migration of a monolithic legacy application to a microservices architecture using Python and AWS, which helped reduce deployment time by 40% and improved system reliability. I also spearheaded the adoption of Docker for our development environments, ensuring consistent testing and production deployments. My technical background in high-performance computing directly aligns with TechFlow's mission to process real-time data at scale.
+
+Beyond my technical skills, I pride myself on being a proactive collaborator. I have successfully mentored three junior developers, guiding them through complex architectural decisions and code reviews. I am eager to bring this same dedication to technical excellence and team growth to TechFlow.
+
+Thank you for considering my application. I welcome the opportunity to discuss how my background in backend engineering and cloud infrastructure can support TechFlow’s upcoming product roadmap.
+
+Sincerely,
+[Your Name]
+"""
+
 # --- Agents ---
 
 def create_extraction_agent(model_name: str = "llama3.2:1b", base_url: str = "http://ollama:11434/v1") -> Agent:
@@ -115,7 +148,7 @@ def create_writing_agent(model_name: str, is_remote: bool = False, provider_conf
         provider = create_custom_openai_provider(base_url=host, api_key="ollama")
         model = OpenAIChatModel(model_name=model_name, provider=provider)
     elif provider_config:
-        # Dynamic Remote Provider (OpenRouter or Cerebras)
+        # Dynamic Remote Provider (Groq or OpenRouter)
         # provider = OpenAIProvider(
         #     base_url=provider_config["base_url"],
         #     api_key=provider_config["api_key"]
@@ -137,28 +170,44 @@ def create_writing_agent(model_name: str, is_remote: bool = False, provider_conf
         )
         model = OpenAIChatModel(model_name=model_name, provider=provider)
     
+    # Define default system prompt (Complex/Few-Shot)
+    system_prompt = (
+        "You are an expert Career Coach and Professional Writer. Your task is to write a persuasive, "
+        "highly tailored cover letter based on the provided job details and candidate profile.\n\n"
+        "Structure:\n"
+        "1. Salutation: Professional greeting (e.g., 'Dear Hiring Manager,').\n"
+        "2. Opening: Hook the reader by stating the role/company and a key value proposition immediately.\n"
+        "3. Body: 2-3 concise paragraphs mapping the candidate's skills and experience directly to the job requirements. Use specific accomplishments.\n"
+        "4. Closing: Professional call to action and sign-off.\n"
+        "5. Signature: 'Sincerely,' followed by the placeholder '[Your Name]'.\n\n"
+        "EXAMPLE OF HIGH QUALITY (Mimic the tone and structure, do NOT copy content):\n"
+        "--------------------------------------------------\n"
+        f"{FEW_SHOT_EXAMPLE}\n"
+        "--------------------------------------------------\n\n"
+        "Constraints:\n"
+        "- Tone: Professional, confident, and business-appropriate. Avoid robotic phrases.\n"
+        "- Format: PLAIN TEXT ONLY. No Markdown, no bolding, no headers, and no placeholders.\n"
+        "- Length: 200-400 words.\n"
+        "- Quality: Focus on impact and specific achievements. Avoid generic fluff.\n"
+        "- Output: Return ONLY the cover letter text. No introductory remarks or meta-commentary. Use '[Your Name]' as the signature."
+    )
+
+    # Optimized system prompt - more concise and direct
+    model_settings = {
+        "temperature": 0.7,
+        "max_tokens": 500,
+        "top_p": 0.9,
+    }
+
+    if not is_remote:
+        system_prompt = SIMPLE_SYSTEM_PROMPT
+        # Reduce max tokens for local model to speed up generation (shorter letter)
+        model_settings["max_tokens"] = 300
+
     agent = Agent(
         model,
         output_type=str,
-        # Optimized system prompt - more concise and direct
-        system_prompt=(
-            "You are a professional career coach. Generate a cover letter body following this EXACT structure:\n"
-            "1. Salutation (e.g. 'Dear Hiring Manager,')\n"
-            "2. Opening: State role and company.\n"
-            "3. Body Paragraphs: 2-3 paragraphs highlighting relevance of candidate skills to requirements.\n"
-            "4. Closing: Professional sign-off.\n"
-            "5. Signature: 'Sincerely,' followed by the candidate's name on a new line.\n\n"
-            "Constraints:\n"
-            "- Tone: Formal and business-appropriate.\n"
-            "- Length: 200–400 words.\n"
-            "- Content: Clarity and impact. No verbosity.\n"
-            "- Formatting: Plain text only. NO markdown. NO headings. NO meta commentary."
-        ),
-        # Speed optimization parameters
-        model_settings={
-            "temperature": 0.2,      # Lower temperature for better instruction following
-            "max_tokens": 500,       # Limit output length
-            "top_p": 0.9,           # Nucleus sampling for speed
-        }
+        system_prompt=system_prompt,
+        model_settings=model_settings
     )
     return agent

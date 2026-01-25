@@ -37,8 +37,6 @@ IMPORTANT:
 6. Maintain a formal, business-appropriate tone.
 7. finish with "Sincerely," or "Best regards," and the candidate's name.
 
-Key requirements: Python, React, AWS
-Candidate skills: Python, React, AWS, Docker
 """
 
 # Hook to fix Groq compatibility issue (unexpected service_tier field)

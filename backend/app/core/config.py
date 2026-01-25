@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Groq Settings
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     GROQ_MODEL_1: str = "llama-3.3-70b-versatile"
-    GROQ_MODEL_2: str = "openai/gpt-oss-120b"
+    GROQ_MODEL_2: str = "moonshotai/kimi-k2-instruct-0905"
 
     # App Settings
     API_V1_STR: str = "/api"
