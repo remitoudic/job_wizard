@@ -1,11 +1,12 @@
-import sys
+import os
 from sqlmodel import Session, create_engine, select, SQLModel
 from app.core.security import get_password_hash
 from src.models.user import User
 
 # Connect to exposed port 5434 on localhost
 # DB Credentials from .env
-DATABASE_URL = "postgresql://jobwizard:jobwizard123@localhost:5434/jobwizard"
+# Default to localhost for local development, but allow override via env var
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://jobwizard:jobwizard123@localhost:5434/jobwizard")
 
 def check_and_create():
     try:

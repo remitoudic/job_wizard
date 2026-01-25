@@ -34,11 +34,76 @@ class LLMService:
         self.alternatives_store = {} # Simple in-memory store
         self.background_tasks = set()
 
+    
     def cleanup(self):
         """Cancel all running background tasks"""
         for task in self.background_tasks:
             task.cancel()
         self.background_tasks.clear()
+
+    @staticmethod
+    def clean_model_output(text: str) -> str:
+        """
+        Heuristically clean the model output to remove headers, addresses, 
+        and signatures that the model might have hallucinated.
+        """
+        import re
+        
+        lines = text.strip().split('\n')
+        cleaned_lines = []
+        
+        # 1. Strip Header Junk (Addresses, Dates, Names at the top)
+        # Strategy: Skip lines until we find a likely Salutation or the Body start
+        # Heuristics for lines to skip:
+        # - Short lines with digits (dates, phone numbers)
+        # - Lines with email patterns
+        # - Lines that look like names (short, capitalized)
+        # - "Subject:" lines
+        
+        start_index = 0
+        for i, line in enumerate(lines[:15]): # Only check first 15 lines
+            line_str = line.strip()
+            if not line_str:
+                continue
+                
+            # Stop if we hit a Salutation
+            if re.match(r"^(Dear|To|Hi|Hello)\s+", line_str, re.IGNORECASE):
+                start_index = i
+                break
+            
+            # Stop if we hit a paragraph that looks like a body (long enough)
+            if len(line_str) > 100:
+                start_index = i
+                break
+                
+            # Otherwise, assume it's header junk and skip
+            # (aggressive, but tailored for the prompt 'OUTPUT BODY ONLY')
+            pass
+            # If we went through all 15 lines without finding a clear start, 
+            # maybe the whole thing is the body? Fallback to 0.
+            if i == 14:
+                start_index = 0
+
+        # If we found a specific start point, use it. 
+        # But if start_index > 0, we effectively stripped the header.
+        if start_index > 0:
+             lines = lines[start_index:]
+             
+        # 2. Strip Footer/Signature
+        # Find "Sincerely" or equivalents and cut
+        joined_text = "\n".join(lines).strip()
+        
+        # Regex to find signature block and removing it
+        # Matches "Sincerely," followed by anything until end of string
+        sig_pattern = re.compile(r"(Sincerely|Best regards|Yours truly|Respectfully|Kind regards)[\s,]*(\n|$)[\s\S]*$", re.IGNORECASE)
+        match = sig_pattern.search(joined_text)
+        if match:
+             joined_text = joined_text[:match.start()].strip()
+             
+        # double check for trailing names if signature keyword was missing but name persists?
+        # Hard to do without killing valid text. The strict signature append will cover most cases.
+        
+        return joined_text
     
     async def extract_contact_info(self, text: str) -> Dict[str, Any]:
         """
@@ -91,32 +156,35 @@ class LLMService:
         # Build optimized prompt (concise for speed)
         req_list = ', '.join(requirements[:5]) if requirements else 'See description'
         
-        name_placeholder = f"for {user_name}" if user_name else ""
-        prompt = f"""Write a professional cover letter {name_placeholder} applying to {company} as {job_title}.
+        # Shared base instructions
+        base_prompt = f"""Write a professional cover letter applying to {company} as {job_title}.
 
-IMPORTANT: 
-1. If you don't know the candidate's name, DO NOT use a placeholder like "[Your Name]". Start directly with the address/salutation.
-2. DO NOT use placeholders for date like "[Date]".
-3. Return ONLY the letter body. Do not use markdown code blocks or introductory text.
-4. Use a very  formal tone.
+IMPORTANT INSTRUCTIONS:
+1. OUTPUT BODY ONLY. Do NOT include a header, address block, date, or contact info.
+2. Start directly with "Dear Hiring Manager," (or similar).
+3. Do NOT include a signature (e.g., "Sincerely", "Best regards"). I will add this programmatically.
+4. Do NOT include your name or any placeholders like "[Your Name]" or "[Date]".
 5. Keep the letter between 200 and 400 words.
-6. Maintain a formal, business-appropriate tone. 
-7. Finish with "Sincerely," followed by the placeholder "[Your Name]" exactly. Do NOT use the candidate's real name in the signature.
+6. Maintain a formal, business-appropriate tone.
 
 Key requirements: {req_list}
 Candidate skills: {user_skills}
 """
+        # Remote prompt gets more context
+        prompt = base_prompt
         if context_text:
-            # Reduced from 3000 to 1500 chars for faster processing
             # Reduced from 3000 to 1500 chars for faster processing
             prompt += f"\nCandidate background:\n{context_text[:1500]}"
             
-        # Create a highly optimized prompt for local/CPU models
-        local_prompt = prompt
+        # Local prompt gets reduced context
+        local_prompt = base_prompt
         if context_text:
             # Drastically reduce context for local model to improve speed (max 500 chars)
             local_context = context_text[:500]
-            local_prompt = base_prompt + f"\nKey requirements: {req_list}\nCandidate skills: {user_skills}\n\nCandidate background:\n{local_context}"
+            local_prompt += f"\nCandidate background:\n{local_context}"
+
+        # Standard signature to append to ALL outputs
+        STANDARD_SIGNATURE = "\n\nSincerely,\n\n[Your Name]"
 
         # Retry loop for failover
         max_retries = 1
@@ -149,7 +217,12 @@ Candidate skills: {user_skills}
             # Helper to wrap agent run with source info
             async def run_agent(agent, p, name):
                 res = await agent.run(p)
-                return {"output": res.output, "source": name}
+                # Post-process: Aggressive cleaning using heuristic cleaner
+                clean_text = LLMService.clean_model_output(res.output)
+                
+                # Append standard signature
+                final_text = f"{clean_text}{STANDARD_SIGNATURE}"
+                return {"output": final_text, "source": name}
 
             # Task 1: Local
             local_task = asyncio.create_task(

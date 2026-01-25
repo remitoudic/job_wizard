@@ -93,17 +93,6 @@
 
         <form on:submit|preventDefault={handleSave} class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
-                        >Username</label
-                    >
-                    <input
-                        type="text"
-                        bind:value={user.username}
-                        class="input w-full"
-                        placeholder="johndoe"
-                    />
-                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1"
                         >First Name</label

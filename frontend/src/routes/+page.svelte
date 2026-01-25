@@ -80,6 +80,7 @@
 	// Multiple cover letter versions
 	let allCoverLetters: Array<{
 		text: string;
+		rawText: string; // Store original with [Your Name]
 		source: string;
 		status?: string;
 	}> = [];
@@ -90,16 +91,33 @@
 	// Function to replace [Your Name] placeholder with actual name
 	// Function to replace [Your Name] placeholder with actual name
 	function updateNameInCoverLetter() {
-		// If we have an original with placeholder, use that as source
-		// Otherwise fall back to current (but this won't allow re-replacing)
-		const sourceText = originalCoverLetter || coverLetter;
+		// Use the raw text of the current version as source
+		const currentVersion = allCoverLetters[currentVersionIndex];
+		const sourceText = currentVersion
+			? currentVersion.rawText
+			: originalCoverLetter || coverLetter;
 
 		if (sourceText && (firstName || surname)) {
 			const fullName = `${firstName} ${surname}`.trim();
 			if (fullName) {
 				// Replace [Your Name] with actual name
-				// If original text is available, we can always do a fresh replacement
-				const newText = sourceText.replace(/\[Your Name\]/g, fullName);
+				// Always do a fresh replacement from raw source
+				// Try case-insensitive and optional brackets
+				let newText = sourceText.replace(/\[?Your Name\]?/gi, fullName);
+
+				// Fallback: If no replacement happened, try to find "Sincerely," and replace the line after
+				if (
+					newText === sourceText &&
+					(newText.includes("Sincerely,") ||
+						newText.includes("Best regards,"))
+				) {
+					// Regex to find Sincerely, followed by newlines and then ANY text to the end or double newline
+					// This assumes the signature is the last thing or separated
+					newText = newText.replace(
+						/(Sincerely,|Best regards,)\s+[\s\S]+?$/i,
+						`$1\n\n${fullName}`,
+					);
+				}
 
 				// Always update editableName for the header preview
 				editableName = fullName;
@@ -108,7 +126,7 @@
 				if (newText !== coverLetter) {
 					coverLetter = newText;
 
-					// Update the current version in the list too
+					// Update the current version in the list too (processed text)
 					if (allCoverLetters[currentVersionIndex]) {
 						allCoverLetters[currentVersionIndex].text = coverLetter;
 					}
@@ -193,13 +211,27 @@
 				context_text: contextText,
 			});
 
+			// Initialize
 			coverLetter = result.cover_letter;
 			originalCoverLetter = result.cover_letter; // Save original
 
+			// Initialize all cover letters with the winner
+			allCoverLetters = [
+				{
+					text: result.cover_letter,
+					rawText: result.cover_letter,
+					source: result.source || "AI",
+				},
+			];
+			currentVersionIndex = 0;
+
 			// Auto-replace name if already entered
 			if (firstName || surname) {
+				// This acts on currentVersionIndex 0
 				updateNameInCoverLetter();
+				// updateNameInCoverLetter updates 'coverLetter' and 'allCoverLetters[0].text'
 			}
+
 			// Pre-fill contact info if available
 			if (result.first_name) firstName = result.first_name;
 			if (result.surname) surname = result.surname;
@@ -218,12 +250,6 @@
 			if (result.user_name_detected && !userName) {
 				userName = result.user_name_detected;
 			}
-
-			// Initialize all cover letters with the winner
-			allCoverLetters = [
-				{ text: result.cover_letter, source: result.source || "AI" },
-			];
-			currentVersionIndex = 0;
 
 			// Capture race result
 			if (result.alternative_id) alternativeId = result.alternative_id;
@@ -311,13 +337,24 @@
 					if (!mapped.some((m) => m.source === alt.source)) {
 						mapped.push({
 							text: alt.text,
+							rawText: alt.text, // Assume incoming is raw
 							source: alt.source,
 							status: alt.status || "completed",
 						});
 					}
 				});
 
+				// Re-apply current name if we have loaded new ones
+				// But we need to be careful not to overwrite user edits if we were editing?
+				// For now, let's assume rawText is source of truth.
+
+				// Update list
 				allCoverLetters = mapped;
+
+				// If we have a name set, re-run update for current index to ensure it's processed
+				if (firstName || surname) {
+					updateNameInCoverLetter();
+				}
 
 				if (!isComplete) {
 					// Poll again
@@ -336,8 +373,20 @@
 	function switchVersion(index: number) {
 		if (index >= 0 && index < allCoverLetters.length) {
 			currentVersionIndex = index;
-			coverLetter = allCoverLetters[index].text;
+
+			// Start with raw text
+			coverLetter = allCoverLetters[index].rawText;
 			source = allCoverLetters[index].source;
+
+			// If we have name set, apply it immediately
+			if (firstName || surname) {
+				// This function uses currentVersionIndex and updates coverLetter and allCoverLetters[i].text
+				updateNameInCoverLetter();
+			} else {
+				// Just update text
+				allCoverLetters[index].text = coverLetter;
+			}
+
 			// Invalidate PDF when switching versions
 			invalidatePdf();
 		}
