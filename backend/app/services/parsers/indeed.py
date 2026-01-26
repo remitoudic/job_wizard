@@ -9,20 +9,23 @@ class IndeedParser(GenericParser):
     def normalize_url(self, url: str) -> str:
         """
         Converts Indeed search URLs to canonical job URLs.
-        Example: https://www.indeed.com/q-germany-jobs.html?vjk=482f46774f12078f
-        To: https://www.indeed.com/viewjob?jk=482f46774f12078f
+        Preserves the country subdomain (e.g. de.indeed.com).
         """
         try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            domain = parsed.netloc or "www.indeed.com"
+            
             # Try vjk parameter (often in search results)
             vjk_match = re.search(r"[?&]vjk=([a-zA-Z0-9]+)", url)
             if vjk_match:
                 jk = vjk_match.group(1)
-                return f"https://www.indeed.com/viewjob?jk={jk}"
+                return f"https://{domain}/viewjob?jk={jk}"
 
             # Try jk parameter
             jk_match = re.search(r"[?&]jk=([a-zA-Z0-9]+)", url)
             if jk_match:
-                return f"https://www.indeed.com/viewjob?jk={jk_match.group(1)}"
+                return f"https://{domain}/viewjob?jk={jk_match.group(1)}"
             
             return url
         except Exception:
