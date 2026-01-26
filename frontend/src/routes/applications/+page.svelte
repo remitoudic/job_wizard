@@ -169,212 +169,216 @@
             </div>
         {/if}
 
-        <!-- Applications List -->
+        <!-- Applications Table -->
         {#if !isLoading && !error && applications.length > 0}
-            <div class="space-y-4">
-                {#each applications as app (app.id)}
-                    <div
-                        class="bg-white rounded-lg border border-[#E2E8F0] shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden"
-                        on:click={() => toggleExpand(app.id)}
-                        on:keydown={(e) =>
-                            e.key === "Enter" && toggleExpand(app.id)}
-                        role="button"
-                        tabindex="0"
-                    >
-                        <!-- Card Header -->
-                        <div class="p-6">
-                            <div class="flex items-start justify-between">
-                                <div class="flex-1">
-                                    <h3
-                                        class="text-xl font-bold text-[#0F172A] mb-1"
+            <div
+                class="bg-white rounded-lg border border-[#E2E8F0] shadow-sm overflow-hidden"
+            >
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th
+                                    class="p-4 font-semibold text-slate-600 text-sm whitespace-nowrap"
+                                    >Date</th
+                                >
+                                <th
+                                    class="p-4 font-semibold text-slate-600 text-sm"
+                                    >Company</th
+                                >
+                                <th
+                                    class="p-4 font-semibold text-slate-600 text-sm"
+                                    >Status</th
+                                >
+                                <th
+                                    class="p-4 font-semibold text-slate-600 text-sm text-right"
+                                    >Details</th
+                                >
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            {#each applications as app (app.id)}
+                                <!-- Main Row -->
+                                <tr
+                                    class="hover:bg-slate-50 transition-colors cursor-pointer"
+                                    on:click={() => toggleExpand(app.id)}
+                                >
+                                    <td
+                                        class="p-4 text-slate-600 whitespace-nowrap align-top"
                                     >
-                                        {app.job_title}
-                                    </h3>
-                                    <p class="text-[#64748B] mb-3">
-                                        {app.company}
-                                    </p>
-                                    <div
-                                        class="flex items-center gap-3 text-sm"
-                                    >
-                                        <span class="text-[#64748B]">
-                                            {formatDate(app.created_at)}
-                                        </span>
+                                        {formatDate(app.created_at)}
+                                    </td>
+                                    <td class="p-4 align-top">
+                                        <div class="font-bold text-slate-900">
+                                            {app.company}
+                                        </div>
+                                        <div class="text-sm text-slate-500">
+                                            {app.job_title}
+                                        </div>
+                                    </td>
+                                    <td class="p-4 align-top">
                                         <span
-                                            class="px-3 py-1 rounded-full text-xs font-semibold uppercase {getStatusColor(
+                                            class="inline-flex px-3 py-1 rounded-full text-xs font-semibold uppercase {getStatusColor(
                                                 app.status,
                                             )}"
                                         >
                                             {app.status}
                                         </span>
-                                    </div>
-                                </div>
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="h-6 w-6 text-[#64748B] transition-transform {expandedId ===
-                                    app.id
-                                        ? 'rotate-180'
-                                        : ''}"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M19 9l-7 7-7-7"
-                                    />
-                                </svg>
-                            </div>
-                        </div>
-
-                        <!-- Expanded Content -->
-                        {#if expandedId === app.id}
-                            <div
-                                class="px-6 pb-6 border-t border-[#E2E8F0] pt-6 space-y-6"
-                            >
-                                <!-- Cover Letter -->
-                                <div>
-                                    <h4
-                                        class="text-sm font-bold uppercase tracking-wider text-[#64748B] mb-3"
-                                    >
-                                        Cover Letter
-                                    </h4>
-                                    <div
-                                        class="bg-[#F8FAFC] rounded-lg p-4 border border-[#E2E8F0]"
-                                    >
-                                        <p
-                                            class="text-[#334155] whitespace-pre-wrap leading-relaxed"
-                                        >
-                                            {app.cover_letter_final.body ||
-                                                "No cover letter body available"}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <!-- Header Information -->
-                                {#if app.header && Object.keys(app.header).length > 0}
-                                    <div>
-                                        <h4
-                                            class="text-sm font-bold uppercase tracking-wider text-[#64748B] mb-3"
-                                        >
-                                            Contact Information
-                                        </h4>
+                                    </td>
+                                    <td class="p-4 align-top text-right">
                                         <div
-                                            class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-[#F8FAFC] rounded-lg p-4 border border-[#E2E8F0]"
+                                            class="inline-block transition-transform duration-200 {expandedId ===
+                                            app.id
+                                                ? 'rotate-180'
+                                                : ''}"
                                         >
-                                            {#if app.header.name}
-                                                <div>
-                                                    <span
-                                                        class="text-xs font-semibold text-[#64748B]"
-                                                        >Name:</span
-                                                    >
-                                                    <p class="text-[#0F172A]">
-                                                        {app.header.name}
-                                                    </p>
-                                                </div>
-                                            {/if}
-                                            {#if app.header.email}
-                                                <div>
-                                                    <span
-                                                        class="text-xs font-semibold text-[#64748B]"
-                                                        >Email:</span
-                                                    >
-                                                    <p class="text-[#0F172A]">
-                                                        {app.header.email}
-                                                    </p>
-                                                </div>
-                                            {/if}
-                                            {#if app.header.phone}
-                                                <div>
-                                                    <span
-                                                        class="text-xs font-semibold text-[#64748B]"
-                                                        >Phone:</span
-                                                    >
-                                                    <p class="text-[#0F172A]">
-                                                        {app.header.phone}
-                                                    </p>
-                                                </div>
-                                            {/if}
-                                            {#if app.header.address}
-                                                <div>
-                                                    <span
-                                                        class="text-xs font-semibold text-[#64748B]"
-                                                        >Address:</span
-                                                    >
-                                                    <p class="text-[#0F172A]">
-                                                        {app.header.address}
-                                                    </p>
-                                                </div>
-                                            {/if}
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                class="h-5 w-5 text-slate-400"
+                                                viewBox="0 0 20 20"
+                                                fill="currentColor"
+                                            >
+                                                <path
+                                                    fill-rule="evenodd"
+                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                    clip-rule="evenodd"
+                                                />
+                                            </svg>
                                         </div>
-                                    </div>
-                                {/if}
+                                    </td>
+                                </tr>
 
-                                <!-- Job Description -->
-                                <div>
-                                    <h4
-                                        class="text-sm font-bold uppercase tracking-wider text-[#64748B] mb-3"
-                                    >
-                                        Job Description
-                                    </h4>
-                                    <p
-                                        class="text-[#334155] bg-[#F8FAFC] rounded-lg p-4 border border-[#E2E8F0] leading-relaxed"
-                                    >
-                                        {app.job_description}
-                                    </p>
-                                </div>
-
-                                <!-- Requirements -->
-                                {#if app.requirements && app.requirements.length > 0}
-                                    <div>
-                                        <h4
-                                            class="text-sm font-bold uppercase tracking-wider text-[#64748B] mb-3"
+                                <!-- Expanded Row -->
+                                {#if expandedId === app.id}
+                                    <tr class="bg-slate-50/50">
+                                        <td
+                                            colspan="4"
+                                            class="p-0 border-b border-slate-100"
                                         >
-                                            Requirements
-                                        </h4>
-                                        <div class="flex flex-wrap gap-2">
-                                            {#each app.requirements as req}
-                                                <span
-                                                    class="px-3 py-1 bg-[#0369A1]/10 text-[#0369A1] rounded-full text-sm font-medium"
+                                            <div class="p-6 space-y-6">
+                                                <!-- Cover Letter -->
+                                                <div>
+                                                    <h4
+                                                        class="text-sm font-bold uppercase tracking-wider text-[#64748B] mb-3"
+                                                    >
+                                                        Cover Letter
+                                                    </h4>
+                                                    <div
+                                                        class="bg-white rounded-lg p-4 border border-[#E2E8F0]"
+                                                    >
+                                                        <p
+                                                            class="text-[#334155] whitespace-pre-wrap leading-relaxed"
+                                                        >
+                                                            {app
+                                                                .cover_letter_final
+                                                                .body ||
+                                                                "No cover letter body available"}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Contact Info Grid -->
+                                                {#if app.header && Object.keys(app.header).length > 0}
+                                                    <div>
+                                                        <h4
+                                                            class="text-sm font-bold uppercase tracking-wider text-[#64748B] mb-3"
+                                                        >
+                                                            Contact Information
+                                                        </h4>
+                                                        <div
+                                                            class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white rounded-lg p-4 border border-[#E2E8F0]"
+                                                        >
+                                                            {#each Object.entries(app.header) as [key, value]}
+                                                                {#if value}
+                                                                    <div>
+                                                                        <span
+                                                                            class="text-xs font-semibold text-[#64748B] uppercase"
+                                                                            >{key}:</span
+                                                                        >
+                                                                        <p
+                                                                            class="text-[#0F172A]"
+                                                                        >
+                                                                            {value}
+                                                                        </p>
+                                                                    </div>
+                                                                {/if}
+                                                            {/each}
+                                                        </div>
+                                                    </div>
+                                                {/if}
+
+                                                <!-- Job Info & Requirements -->
+                                                <div
+                                                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
                                                 >
-                                                    {req}
-                                                </span>
-                                            {/each}
-                                        </div>
-                                    </div>
-                                {/if}
+                                                    <div>
+                                                        <h4
+                                                            class="text-sm font-bold uppercase tracking-wider text-[#64748B] mb-3"
+                                                        >
+                                                            Job Description
+                                                        </h4>
+                                                        <div
+                                                            class="bg-white rounded-lg p-4 border border-[#E2E8F0] max-h-60 overflow-y-auto text-sm text-[#334155]"
+                                                        >
+                                                            {app.job_description}
+                                                        </div>
+                                                    </div>
 
-                                <!-- Job URL -->
-                                <div class="pt-4">
-                                    <a
-                                        href={app.job_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="inline-flex items-center gap-2 text-[#0369A1] hover:text-[#0284C7] font-semibold transition-colors"
-                                        on:click|stopPropagation
-                                    >
-                                        View Original Job Posting
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            class="h-4 w-4"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                            />
-                                        </svg>
-                                    </a>
-                                </div>
-                            </div>
-                        {/if}
-                    </div>
-                {/each}
+                                                    {#if app.requirements?.length}
+                                                        <div>
+                                                            <h4
+                                                                class="text-sm font-bold uppercase tracking-wider text-[#64748B] mb-3"
+                                                            >
+                                                                Requirements
+                                                            </h4>
+                                                            <div
+                                                                class="flex flex-wrap gap-2"
+                                                            >
+                                                                {#each app.requirements as req}
+                                                                    <span
+                                                                        class="px-2 py-1 bg-white border border-slate-200 rounded text-xs text-slate-600"
+                                                                    >
+                                                                        {req}
+                                                                    </span>
+                                                                {/each}
+                                                            </div>
+                                                        </div>
+                                                    {/if}
+                                                </div>
+
+                                                <!-- Link -->
+                                                <div class="pt-2">
+                                                    <a
+                                                        href={app.job_url}
+                                                        target="_blank"
+                                                        class="text-sm text-[#0369A1] hover:underline font-medium inline-flex items-center gap-1"
+                                                    >
+                                                        View Original Job
+                                                        Posting
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            class="h-3 w-3"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            stroke="currentColor"
+                                                        >
+                                                            <path
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                                            />
+                                                        </svg>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {/if}
+                            {/each}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         {/if}
     </div>
