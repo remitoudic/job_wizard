@@ -6,6 +6,7 @@ from app.api.deps import CurrentUser, SessionDep
 from app.api.validation.schemas import (
     SaveApplicationRequest,
     SaveApplicationResponse,
+    UpdateApplicationStatusRequest,
 )
 
 # Import database models
@@ -154,4 +155,50 @@ async def get_user_applications(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to fetch applications: {str(e)}"
+        )
+
+
+@router.patch("/application/{application_id}/status")
+async def update_application_status(
+    application_id: int,
+    request: UpdateApplicationStatusRequest,
+    session: SessionDep,
+    current_user: CurrentUser,
+):
+    """
+    Update application status.
+    Requires JWT authentication.
+    """
+    try:
+        # Verify application exists and belongs to user
+        statement = select(Application).where(
+            Application.id == application_id,
+            Application.user_id == current_user.id
+        )
+        application = session.exec(statement).first()
+        
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+            
+        # Validate status enum
+        try:
+            new_status = ApplicationStatus(request.status)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid status: {request.status}")
+            
+        # Update status
+        application.status = new_status
+        session.add(application)
+        session.commit()
+        session.refresh(application)
+        
+        return {"success": True, "status": application.status.value}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update status: {str(e)}"
         )

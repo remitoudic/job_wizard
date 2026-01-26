@@ -337,3 +337,13 @@ export async function fetchUserApplications(): Promise<FetchApplicationsResponse
 
     return handleResponse<FetchApplicationsResponse>(response, 'Failed to fetch applications');
 }
+
+export async function updateApplicationStatus(id: number, status: string): Promise<any> {
+    const response = await fetch(`${API_URL}/api/application/${id}/status`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify({ status }),
+    });
+
+    return handleResponse<any>(response, 'Failed to update status');
+}

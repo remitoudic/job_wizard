@@ -1,6 +1,10 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { fetchUserApplications, type ApplicationListItem } from "$lib/api";
+    import {
+        fetchUserApplications,
+        updateApplicationStatus,
+        type ApplicationListItem,
+    } from "$lib/api";
     import { auth } from "../../stores/auth";
     import { goto } from "$app/navigation";
 
@@ -32,6 +36,25 @@
 
     function toggleExpand(id: number) {
         expandedId = expandedId === id ? null : id;
+    }
+
+    async function handleStatusChange(id: number, newStatus: string) {
+        // Optimistic update
+        const originalApplications = [...applications];
+        applications = applications.map((app) =>
+            app.id === id ? { ...app, status: newStatus } : app,
+        );
+
+        try {
+            await updateApplicationStatus(id, newStatus);
+        } catch (e) {
+            console.error("Failed to update status:", e);
+            // Revert on failure
+            applications = originalApplications;
+            error = "Failed to update status. Please try again.";
+            // Clear error after 3 seconds
+            setTimeout(() => (error = ""), 3000);
+        }
     }
 
     function formatDate(isoString: string): string {
@@ -216,14 +239,61 @@
                                             {app.job_title}
                                         </div>
                                     </td>
-                                    <td class="p-4 align-top">
-                                        <span
-                                            class="inline-flex px-3 py-1 rounded-full text-xs font-semibold uppercase {getStatusColor(
-                                                app.status,
-                                            )}"
+                                    <td
+                                        class="p-4 align-top"
+                                        on:click|stopPropagation
+                                    >
+                                        <div
+                                            class="relative group inline-block"
                                         >
-                                            {app.status}
-                                        </span>
+                                            <select
+                                                class="appearance-none pl-3 pr-8 py-1 rounded-full text-xs font-semibold uppercase cursor-pointer border-0 outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 transition-all {getStatusColor(
+                                                    app.status,
+                                                )}"
+                                                value={app.status}
+                                                on:change={(e) =>
+                                                    handleStatusChange(
+                                                        app.id,
+                                                        e.currentTarget.value,
+                                                    )}
+                                            >
+                                                <option value="applied"
+                                                    >Applied</option
+                                                >
+                                                <option value="waiting"
+                                                    >Waiting</option
+                                                >
+                                                <option value="interview"
+                                                    >Interview</option
+                                                >
+                                                <option value="refused"
+                                                    >Refused</option
+                                                >
+                                                <option value="accepted"
+                                                    >Accepted</option
+                                                >
+                                                <option value="finish"
+                                                    >Finish</option
+                                                >
+                                            </select>
+                                            <div
+                                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2"
+                                            >
+                                                <svg
+                                                    class="h-3 w-3 opacity-60"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="3"
+                                                        d="M19 9l-7 7-7-7"
+                                                    />
+                                                </svg>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="p-4 align-top text-right">
                                         <div

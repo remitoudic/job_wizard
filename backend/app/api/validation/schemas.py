@@ -59,6 +59,11 @@ class TokenData(BaseModel):
     username: Optional[str] = None
 
 
+class UpdateApplicationStatusRequest(BaseModel):
+    status: str
+
+
+
 
 class SaveApplicationRequest(BaseModel):
     """Request model for saving complete application workflow."""
