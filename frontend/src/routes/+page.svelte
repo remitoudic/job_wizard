@@ -491,23 +491,45 @@
 		}
 	}
 
-	function handleDownload() {
+	async function handleDownload() {
 		if (!pdfUrl) return;
 
 		const fullUrl = `${API_URL}${pdfUrl}`;
 
-		// Create temporary link to force download
-		const link = document.createElement("a");
-		link.href = fullUrl;
-		link.download = `Cover_Letter_${jobData.company.replace(/\s+/g, "_")}.pdf`; // Suggest a nice filename
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
+		try {
+			// Fetch blob to enforce filename
+			const response = await fetch(fullUrl);
+			const blob = await response.blob();
+			const blobUrl = window.URL.createObjectURL(blob);
 
-		// Update UI state
-		setTimeout(() => {
-			downloaded = true;
-		}, 1000);
+			const link = document.createElement("a");
+			link.href = blobUrl;
+			const company = jobData.company
+				? jobData.company.replace(/[^a-zA-Z0-9]/g, "_")
+				: "Company";
+			const name =
+				firstName || surname
+					? `${firstName}_${surname}`.replace(/[^a-zA-Z0-9_]/g, "_")
+					: (userName || "Applicant").replace(/[^a-zA-Z0-9_]/g, "_");
+			const date = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+			link.download = `cover_letter_${company}_${name}_${date}.pdf`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+
+			// Cleanup
+			window.URL.revokeObjectURL(blobUrl);
+
+			// Update UI state
+			setTimeout(() => {
+				downloaded = true;
+			}, 1000);
+		} catch (e) {
+			console.error("Download failed:", e);
+			// Fallback to direct link if fetch fails
+			window.open(fullUrl, "_blank");
+		}
 	}
 
 	function invalidatePdf() {
