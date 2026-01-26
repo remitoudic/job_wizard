@@ -16,8 +16,8 @@ def check_and_create():
             print("Connected to database successfully.")
         
         with Session(engine) as session:
-            email = "remitoudic@gmail.com"
-            password = "remitoudic"
+            email = os.getenv("ADMIN_EMAIL", "remitoudic@gmail.com")
+            password = os.getenv("ADMIN_PASSWORD", "remitoudic")
             
             # Check if user exists
             statement = select(User).where(User.email == email)

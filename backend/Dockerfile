@@ -37,6 +37,7 @@ COPY --from=builder /database_pkg /database_pkg
 
 # Copy application code from backend directory
 COPY backend/app ./app
+COPY backend/seed_user.py ./seed_user.py
 COPY backend/pyproject.toml .
 
 # Fix absolute path in pyproject.toml for Docker environment (same as builder)

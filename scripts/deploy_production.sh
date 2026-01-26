@@ -72,6 +72,18 @@ else
 fi
 
 echo ""
+echo "🌱 Seeding initial data..."
+# Wait for backend to be ready (naive sleep)
+sleep 10
+if command -v docker-compose > /dev/null 2>&1; then
+    docker-compose -f docker-compose.prod.yml exec -T backend python seed_user.py || echo "⚠️ Seeding failed or user already exists"
+else
+    # Try to copy script just in case getting 502/not found
+    docker cp backend/seed_user.py jobwizard-backend-prod:/app/seed_user.py >/dev/null 2>&1 || true
+    docker compose -f docker-compose.prod.yml exec -T backend python seed_user.py || echo "⚠️ Seeding failed or user already exists"
+fi
+
+echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ Production deployment complete!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
