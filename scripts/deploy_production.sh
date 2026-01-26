@@ -57,8 +57,17 @@ source .env.production
 set +a  # disable automatic export
 
 echo ""
+# Optional: Ask to wipe database (fresh start)
+read -p "⚠️  Wipe database (clear all user data)? (y/N): " wipe_db
+echo ""
 echo "🐳 Stopping any existing containers..."
-docker compose -f docker-compose.prod.yml down
+
+if [ "$wipe_db" == "y" ] || [ "$wipe_db" == "Y" ]; then
+    echo "🧹 Wiping database volume..."
+    docker compose -f docker-compose.prod.yml down -v
+else
+    docker compose -f docker-compose.prod.yml down
+fi
 
 echo ""
 echo "🏗️  Building and starting production services..."
