@@ -738,7 +738,7 @@
 					<span class="flex-1">{error}</span>
 				</div>
 
-				{#if error.includes("restricted") || error.includes("automated access") || error.includes("blocked")}
+				{#if error}
 					<div class="pl-8">
 						<button
 							on:click={() => {
