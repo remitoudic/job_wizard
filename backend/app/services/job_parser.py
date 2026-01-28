@@ -3,7 +3,10 @@ from bs4 import BeautifulSoup
 from typing import Dict
 import asyncio
 from app.services.parsers import ParserRegistry
+from app.core.config import settings
 import logfire
+from app.services.browser_service import BrowserService
+from app.services.proxy_manager import ProxyManager
 
 class JobParser:
     """Service for parsing job descriptions using strategy pattern"""
@@ -46,62 +49,94 @@ class JobParser:
             logfire.error("URL normalization failed", url=url, error=str(e))
             raise Exception(f"Invalid job URL format: {str(e)}")
 
-        # 3. Fetch Content (Shared Logic)
-        last_exc: Exception | None = None
-        for attempt in range(1, self.max_retries + 1):
-            try:
-                async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:
-                    response = await client.get(url, headers=self.headers)
-                    response.raise_for_status()
+        # 3. Fetch Content (Browser or HTTPX)
+        try:
+            content = ""
+            
+            # Check if we should use Browser Service (Playwright)
+            if parser.should_use_browser and settings.USE_PLAYWRIGHT:
+                try:
+                    logfire.info("Attempting to fetch with BrowserService", url=url)
+                    browser_service = BrowserService()
+                    content = await browser_service.fetch_page(url)
+                except Exception as e:
+                    logfire.warn("BrowserService fetch failed, falling back to HTTPX", url=url, error=str(e))
+                    # Fallback to HTTPX if browser fails? Or re-raise?
+                    # For now, let's fall back to HTTPX as a safety net, or re-raise if strict.
+                    # Given the user wants to avoid 429, fallback might just hit the same 429.
+                    # But let's keep the flow simple: if content is empty, try HTTPX.
+                    pass
 
-                    soup = BeautifulSoup(response.text, "lxml")
-                    
-                    # 4. Extract Data (Strategy Delegate)
+            if not content:
+                # HTTPX Fallback (Original Logic)
+                last_exc: Exception | None = None
+                
+                # Get proxy if available
+                proxy_manager = ProxyManager()
+                proxy_url = proxy_manager.get_next_proxy()
+                
+                for attempt in range(1, self.max_retries + 1):
                     try:
-                        result = parser.extract_job_data(soup, url)
-                        logfire.info("Job data extracted successfully", url=url)
-                        return result
-                    except Exception as e:
-                        logfire.error("Data extraction failed", url=url, error=str(e))
-                        raise Exception(f"Could not extract job details from page: {str(e)}")
+                        async with httpx.AsyncClient(
+                            follow_redirects=True, 
+                            timeout=60.0, 
+                            proxy=proxy_url,
+                            verify=False # Required for some unblocker proxies
+                        ) as client:
+                            response = await client.get(url, headers=self.headers)
+                            response.raise_for_status()
+                            content = response.text
+                            break
 
-            except httpx.TimeoutException as e:
-                logfire.warn("Request timeout", url=url, attempt=attempt)
-                last_exc = e
-                if attempt == self.max_retries:
-                    raise Exception(f"Request timeout after {self.max_retries} attempts. The page may be slow or unreachable.")
-                wait = self.backoff_factor * (2 ** (attempt - 1))
-                await asyncio.sleep(wait)
-                continue
-                
-            except httpx.HTTPStatusError as e:
-                status = e.response.status_code if e.response is not None else None
-                logfire.warn("HTTP error", url=url, status=status, attempt=attempt)
-                last_exc = e
-                
-                # Provide specific error messages for common HTTP errors
-                if status == 403:
-                    raise Exception("Access forbidden (403). The site may require login or has blocked automated access.")
-                elif status == 404:
-                    raise Exception("Job posting not found (404). The URL may be incorrect or the posting may have been removed.")
-                elif status == 429:
-                    raise Exception("Rate limited (429). Too many requests. Please wait a moment and try again.")
-                elif status and 500 <= status < 600:
-                    if attempt == self.max_retries:
-                        raise Exception(f"Server error ({status}). The job board's server is experiencing issues. Please try again later.")
-                    wait = self.backoff_factor * (2 ** (attempt - 1))
-                    await asyncio.sleep(wait)
-                    continue
-                else:
-                    raise Exception(f"HTTP error {status}: {str(e)}")
-                    
-            except httpx.ConnectError as e:
-                logfire.error("Connection error", url=url, error=str(e))
-                raise Exception(f"Could not connect to the website. Please check the URL and your internet connection.")
-                
-                    
+                    except httpx.TimeoutException as e:
+                        logfire.warn("Request timeout", url=url, attempt=attempt)
+                        last_exc = e
+                        if attempt == self.max_retries:
+                            raise Exception(f"Request timeout after {self.max_retries} attempts.")
+                        wait = self.backoff_factor * (2 ** (attempt - 1))
+                        await asyncio.sleep(wait)
+                        continue
+                        
+                    except httpx.HTTPStatusError as e:
+                        status = e.response.status_code if e.response is not None else None
+                        logfire.warn("HTTP error", url=url, status=status, attempt=attempt)
+                        last_exc = e
+                        
+                        if status == 403:
+                            raise Exception("Access forbidden (403). Automated access blocked.")
+                        elif status == 404:
+                            raise Exception("Job posting not found (404).")
+                        elif status == 429:
+                            raise Exception("Rate limited (429). Too many requests.")
+                        elif status and 500 <= status < 600:
+                            if attempt == self.max_retries:
+                                raise Exception(f"Server error ({status}).")
+                            wait = self.backoff_factor * (2 ** (attempt - 1))
+                            await asyncio.sleep(wait)
+                            continue
+                        else:
+                            raise Exception(f"HTTP error {status}: {str(e)}")
+                            
+                    except Exception as e:
+                        logfire.error("Unexpected error during fetch", url=url, error=str(e))
+                        raise Exception(f"Failed to fetch job URL: {str(e)}")
+
+            if not content:
+                 raise Exception("Failed to retrieve content from URL")
+
+            # 4. Extract Data
+            soup = BeautifulSoup(content, "lxml")
+            
+            try:
+                result = parser.extract_job_data(soup, url)
+                logfire.info("Job data extracted successfully", url=url)
+                return result
             except Exception as e:
-                logfire.error("Unexpected error during fetch", url=url, error=str(e), error_type=type(e).__name__)
-                raise Exception(f"Failed to fetch job URL: {str(e)}")
+                logfire.error("Data extraction failed", url=url, error=str(e))
+                raise Exception(f"Could not extract job details: {str(e)}")
+
+        except Exception as e:
+             raise e
+
 
 

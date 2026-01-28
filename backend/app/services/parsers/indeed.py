@@ -6,11 +6,20 @@ from .generic import GenericParser
 class IndeedParser(GenericParser):
     """Specialized parser for Indeed.com"""
 
+    @property
+    def should_use_browser(self) -> bool:
+        return False
+        # return True
+
     def normalize_url(self, url: str) -> str:
         """
         Converts Indeed search URLs to canonical job URLs.
         Preserves the country subdomain (e.g. de.indeed.com).
         """
+        # Deactivate automatic parsing for Indeed
+        raise Exception("Indeed does not allow automatic extracting of job descriptions. Please manually paste the job description content.")
+
+        # Original logic retained for future implementation
         try:
             from urllib.parse import urlparse
             parsed = urlparse(url)

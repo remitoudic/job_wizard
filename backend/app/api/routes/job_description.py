@@ -33,7 +33,9 @@ async def parse_job_description(request: JobURLRequest):
         logfire.error("Job parsing failed", url=str(request.url), error=error_msg, error_type=type(e).__name__)
         
         # Categorize errors for better user feedback
-        if "timeout" in error_msg.lower():
+        if "manually paste" in error_msg.lower():
+            user_message = error_msg
+        elif "timeout" in error_msg.lower():
             user_message = "The job page took too long to load. Please try again or check if the URL is accessible."
         elif "403" in error_msg or "forbidden" in error_msg.lower():
             user_message = "Access to this job posting is restricted. The site may require login or have blocked automated access."

@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
     PROJECT_NAME: str = "Job Wizard API"
     
+    # Scraping Settings
+    PROXY_FILE_PATH: str = "proxies.json"
+    USE_PLAYWRIGHT: bool = True
+    
     class Config:
         env_file = [".env", "../.env"]
         case_sensitive = True

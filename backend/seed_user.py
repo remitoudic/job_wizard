@@ -1,7 +1,7 @@
-import os
+import sys
 from sqlmodel import Session, create_engine, select, SQLModel
 from app.core.security import get_password_hash
-from src.models.user import User
+from src.models.user import User 
 
 # Connect to exposed port 5434 on localhost
 # DB Credentials from .env

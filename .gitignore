@@ -75,3 +75,6 @@ backend/uploads/*
 # Shared
 .shared/
 backups/
+USER_TESTING_GUIDE.md
+backend/proxies.json
+certbot/

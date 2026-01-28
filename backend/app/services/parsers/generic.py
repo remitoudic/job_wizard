@@ -6,6 +6,11 @@ from .base import BaseParser
 class GenericParser(BaseParser):
     """Fallback parser for any website"""
 
+    @property
+    def should_use_browser(self) -> bool:
+        """Whether this parser requires a browser (Playwright) to fetch content"""
+        return False
+
     def normalize_url(self, url: str) -> str:
         return url
 
