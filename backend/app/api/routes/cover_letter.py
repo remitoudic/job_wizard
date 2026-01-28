@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Depends
 from fastapi.responses import FileResponse
 from typing import Optional
 from pathlib import Path
@@ -8,6 +8,8 @@ import os
 from app.services.llm_service import LLMService
 from app.services.pdf_service import PDFService
 from app.services.pdf_parser import PDFParser
+from app.services.backup_service import BackupService
+from app.api.deps import CurrentUser
 
 # Import validation schemas
 from app.api.validation.schemas import (
@@ -21,6 +23,7 @@ router = APIRouter(tags=["cover_letter"])
 llm_service = LLMService()
 pdf_service = PDFService()
 pdf_parser = PDFParser()
+backup_service = BackupService()
 
 UPLOAD_DIR = Path("/app/uploads")
 
@@ -151,6 +154,7 @@ async def upload_image(file: UploadFile = File(...)):
 
 @router.post("/generate-pdf")
 async def generate_pdf(
+    current_user: CurrentUser,
     cover_letter: str = Form(...),
     job_title: str = Form(...),
     company: str = Form(...),
@@ -209,6 +213,16 @@ async def generate_pdf(
             address_country=address_country,
         )
         
+        # Perform Backup
+        # We try to use the most relevant date for the filename
+        # Prioritize system date for consistent chronological sorting, or date of creation.
+        # Requirement: "name of the cover letter should have the the user_id, date and company_applied"
+        backup_service.backup_cover_letter_pdf(
+            source_path=str(pdf_path),
+            user_id=str(current_user.id),
+            company=company
+        )
+        
         return {
             "filename": pdf_filename,
             "url": f"/api/download/{pdf_filename}",
@@ -233,3 +247,4 @@ async def download_file(filename: str):
         filename=filename,
         media_type='application/pdf'
     )
+

@@ -66,6 +66,7 @@ services:
     # NO PORT MAPPING - only accessible via nginx
     volumes:
       - backend_uploads:/app/uploads
+      - ./backups:/app/backups
     networks:
       - jobwizard-network
     depends_on:

@@ -31,8 +31,17 @@ echo "   Database: $POSTGRES_DB"
 echo "   File: $BACKUP_FILE"
 echo ""
 
+# Determine container name (try prod first, then dev)
+if docker ps --format '{{.Names}}' | grep -q "^jobwizard-postgres-prod$"; then
+    CONTAINER_NAME="jobwizard-postgres-prod"
+else
+    CONTAINER_NAME="jobwizard-postgres"
+fi
+
+echo "   Container: $CONTAINER_NAME"
+
 # Create backup using docker exec
-docker exec jobwizard-postgres pg_dump \
+docker exec "$CONTAINER_NAME" pg_dump \
     -U "$POSTGRES_USER" \
     -d "$POSTGRES_DB" \
     > "$BACKUP_FILE"
