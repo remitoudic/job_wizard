@@ -5,7 +5,6 @@ import asyncio
 from app.services.parsers import ParserRegistry
 from app.core.config import settings
 import logfire
-from app.services.browser_service import BrowserService
 from app.services.proxy_manager import ProxyManager
 
 class JobParser:
@@ -49,23 +48,13 @@ class JobParser:
             logfire.error("URL normalization failed", url=url, error=str(e))
             raise Exception(f"Invalid job URL format: {str(e)}")
 
-        # 3. Fetch Content (Browser or HTTPX)
+        # 3. Fetch Content (HTTPX)
         try:
             content = ""
             
-            # Check if we should use Browser Service (Playwright)
-            if parser.should_use_browser and settings.USE_PLAYWRIGHT:
-                try:
-                    logfire.info("Attempting to fetch with BrowserService", url=url)
-                    browser_service = BrowserService()
-                    content = await browser_service.fetch_page(url)
-                except Exception as e:
-                    logfire.warn("BrowserService fetch failed, falling back to HTTPX", url=url, error=str(e))
-                    # Fallback to HTTPX if browser fails? Or re-raise?
-                    # For now, let's fall back to HTTPX as a safety net, or re-raise if strict.
-                    # Given the user wants to avoid 429, fallback might just hit the same 429.
-                    # But let's keep the flow simple: if content is empty, try HTTPX.
-                    pass
+            # Browser Service logic removed as per request to remove Playwright dependency.
+            # We fall back to standard HTTPX request.
+
 
             if not content:
                 # HTTPX Fallback (Original Logic)

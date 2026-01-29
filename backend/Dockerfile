@@ -46,10 +46,8 @@ RUN sed -i 's|file:///root/job_wizard/database|file:///database_pkg|g' pyproject
 # Create uploads directory
 RUN mkdir -p /app/uploads
 
-# Set environment variables
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
-
 
 
 # Expose port
