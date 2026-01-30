@@ -4,8 +4,8 @@ A web application that generates personalized cover letters from job description
 
 ## Features
 
-- 🔗 **Job Description Parsing**: Automatically extracts job details from URLs
-- 🤖 **AI-Powered Generation**: Uses Ollama LLM to create personalized cover letters
+- 🔗 **Smart Job Parsing**: Extracts job details from URLs using customizable proxies (no browser required)
+- 🚀 **Hybrid LLM Engine**: "Race Mode" runs local (Ollama) and remote (Groq/OpenRouter) models in parallel for maximum speed
 - 📄 **PDF Export**: Professional PDF format with embedded photo
 - 🎨 **Modern UI**: Beautiful, responsive SvelteKit interface
 - 🐳 **Docker Ready**: Complete multi-service architecture
@@ -13,26 +13,28 @@ A web application that generates personalized cover letters from job description
 ## Architecture
 
 ```
-                                          ┌─────────────┐
-                                     ┌───▶│   Ollama    │
-┌─────────────┐      ┌─────────────┐ │    │   (Local)   │
-│  SvelteKit  │─────▶│   FastAPI   │─┤    └─────────────┘
-│  Frontend   │      │   Backend   │ │    ┌─────────────┐
-└─────────────┘      └─────────────┘ └───▶│ OpenRouter  │
-                            │             │   (Remote)  │
-                            ▼             └─────────────┘
-                     ┌─────────────┐
-                     │ PostgreSQL  │
-                     │  Database   │
-                     └─────────────┘
+                                      ┌─────────────┐
+                                 ┌───▶│   Ollama    │
+┌─────────────┐      ┌───────────┴─┐  │   (Local)   │
+│  SvelteKit  │─────▶│   FasAPI    │  └─────────────┘
+│  Frontend   │      │   Backend   │  ┌─────────────┐
+└─────────────┘      └───────────┬─┘─▶│    Groq     │
+                           │     │    │  (Primary)  │
+                           │     │    └─────────────┘
+                           ▼     │    ┌─────────────┐
+                    ┌────────────┴┐──▶│ OpenRouter  │
+                    │ PostgreSQL  │   │ (Failover)  │
+                    │  Database   │   └─────────────┘
+                    └─────────────┘
 ```
 
 ## Tech Stack
 
 - **Backend**: FastAPI + Python 3.11 + uv (dependency management)
 - **Frontend**: SvelteKit + TailwindCSS
-- **LLM**: Ollama (llama3.2:1b)
-- **Database**: PostgreSQL 16
+- **LLM Strategy**: Hybrid (Ollama + Groq + OpenRouter)
+- **Scraping**: httpx + BeautifulSoup4 + Smart Proxy Rotation
+- **Database**: PostgreSQL 16 + SQLModel
 - **Orchestration**: Docker Compose
 
 ## Prerequisites
@@ -42,11 +44,13 @@ A web application that generates personalized cover letters from job description
 
 ## Quick Start
 
-### Local Development (Your Laptop)
+### Local Development
 
 ```bash
 git clone git@github.com:remitoudic/job_wizard.git
 cd job_wizard
+
+# Start services
 ./scripts/start_locally.sh
 
 # First time: pull the Ollama model
@@ -67,9 +71,9 @@ docker exec jobwizard-ollama ollama pull llama3.2:1b
 ## Usage
 
 1. Open http://localhost:5173 in your browser
-2. Paste a job description URL (LinkedIn, Indeed, etc.)
-3. Upload your CV/PDF for context (and optional photo)
-4. Click "Generate Cover Letter"
+2. Paste a job description URL (LinkedIn, Indeed, etc.) or paste text manually
+3. Upload your CV/PDF for context
+4. Click "Generate Cover Letter" (Watch the race between AI models!)
 5. Review the AI-generated content
 6. Download your PDF
 
@@ -86,7 +90,7 @@ uv sync
 # Run tests
 uv run pytest
 
-# Run locally (without Docker)
+# Run locally
 uv run uvicorn app.main:app --reload
 ```
 
@@ -95,69 +99,21 @@ uv run uvicorn app.main:app --reload
 ```bash
 cd frontend
 
-# Install dependencies (using Bun in the container)
+# Install dependencies
 bun install
 
 # Run dev server
 bun run dev -- --host 0.0.0.0 --port 5173
-
-# Build for production
-bun run build
 ```
 
-### Testing
+## Environment Variables
 
-The project includes tests for both local (Ollama) and remote (OpenRouter) LLM providers.
+See `.env.example` for all configuration options. Key variables include:
 
-#### Prerequisites
-
-- Docker containers must be running (`docker compose up -d`)
-- For OpenRouter tests: Set `OPENROUTER_API_KEY` in your `.env` file
-
-#### Running Tests
-
-**Run all tests:**
-```bash
-docker exec jobwizard-backend pytest tests/ -v
-```
-
-**Run specific tests:**
-```bash
-# Test Ollama connectivity
-docker exec jobwizard-backend pytest tests/test_ollama.py -v
-
-# Test OpenRouter connectivity
-docker exec jobwizard-backend pytest tests/test_openrouter.py -v
-
-# Test both LLM providers
-docker exec jobwizard-backend pytest tests/test_ollama.py tests/test_openrouter.py -v
-```
-
-**Run with detailed output (see model responses):**
-```bash
-docker exec jobwizard-backend pytest tests/test_ollama.py -v -s
-```
-
-#### What the Tests Verify
-
-- **Ollama Test** (`test_ollama.py`):
-  - Verifies connection to local Ollama service
-  - Checks that the configured model (`llama3.2:1b`) is available
-  - Tests text generation capability
-
-- **OpenRouter Test** (`test_openrouter.py`):
-  - Verifies connection to OpenRouter API
-  - Tests the configured model (`google/gemma-3-27b-it:free`)
-  - Validates API key authentication
-  - Note: Skipped if `OPENROUTER_API_KEY` is not set
-
-#### Expected Output
-
-```
-tests/test_ollama.py::test_ollama_connection PASSED
-tests/test_openrouter.py::test_openrouter_connection PASSED
-======================== 2 passed in X.XXs ========================
-```
+- `GROQ_API_KEY`: Primary remote LLM provider (Fastest)
+- `OPENROUTER_API_KEY`: Backup remote LLM provider
+- `PROXY_FILE_PATH`: Path to standard JSON proxy list (ip, port, un, pw)
+- `LOGFIRE_TOKEN`: (Optional) For observability and structured logging
 
 ## Project Structure
 
@@ -165,42 +121,23 @@ tests/test_openrouter.py::test_openrouter_connection PASSED
 job_wizard/
 ├── backend/
 │   ├── app/
-│   │   ├── api/
-│   │   │   └── routes.py
 │   │   ├── services/
-│   │   │   ├── job_parser.py
-│   │   │   ├── llm_service.py
-│   │   │   └── pdf_service.py
-│   │   └── main.py
-│   ├── pyproject.toml
-│   └── Dockerfile
+│   │   │   ├── job_parser.py    # httpx + proxy logic
+│   │   │   ├── llm_service.py   # Hybrid race logic
+│   │   │   └── ...
+│   ├── database/                # SQLModel definitions & migrations
+│   └── ...
 ├── frontend/
-│   ├── src/
-│   │   ├── routes/
-│   │   │   └── +page.svelte
-│   │   └── lib/
-│   │       └── api.ts
-│   ├── package.json
-│   └── Dockerfile
-└── docker-compose.yml
+│   ├── src/lib/components/      # Svelte components
+│   └── ...
+└── scripts/                     # Deployment & Utility scripts
 ```
-
-## Environment Variables
-
-See `.env.example` for all configuration options.
 
 ## Troubleshooting
 
-**Ollama model not found?**
-```bash
-docker-compose exec ollama ollama pull llama3.2:1b
-```
-
-**Port conflicts?**
-Edit `.env` to change default ports.
-
-**Frontend can't connect to backend?**
-Check CORS settings in `.env` and ensure `VITE_API_URL` is correct.
+- **Ollama model not found?** Run `docker exec jobwizard-ollama ollama pull llama3.2:1b`
+- **Scraping failed?** Check `proxies.json` or ensure the target URL is accessible.
+- **Race mode issues?** Ensure at least one remote API key is set in `.env`.
 
 ## License
 
