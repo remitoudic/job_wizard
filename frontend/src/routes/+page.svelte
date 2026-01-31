@@ -494,7 +494,10 @@
 	async function handleDownload() {
 		if (!pdfUrl) return;
 
-		const fullUrl = `${API_URL}${pdfUrl}`;
+		// Check if it's a static upload path or API endpoint
+		const fullUrl = pdfUrl.startsWith('/uploads/') 
+			? `${window.location.origin}${pdfUrl}` 
+			: `${API_URL}${pdfUrl}`;
 
 		try {
 			// Fetch blob to enforce filename
