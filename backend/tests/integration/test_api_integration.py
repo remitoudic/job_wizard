@@ -1,9 +1,8 @@
 from fastapi.testclient import TestClient
 from app.main import app
-import pytest
 
 client = TestClient(app)
-from app.api.routes.cover_letter import llm_service
+from app.api.routes.cover_letter import llm_service  # noqa: E402
 
 def test_generate_cover_letter_endpoint():
     """

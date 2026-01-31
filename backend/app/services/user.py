@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Any
+from typing import Optional
 from sqlmodel import Session, select
 from src.models.user import User, UserCreate, UserUpdate
 from app.core.security import get_password_hash, verify_password

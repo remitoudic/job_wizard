@@ -3,9 +3,8 @@ from bs4 import BeautifulSoup
 
 # Skip this test if respx isn't installed in the environment
 respx = pytest.importorskip("respx")
-from httpx import Response
 
-from app.services.job_parser import JobParser
+from app.services.job_parser import JobParser  # noqa: E402
 
 
 
@@ -41,7 +40,7 @@ def test_linkedin_parsing_accuracy():
     # Calculate Similarity for Description
     # Normalize whitespace for fair comparison
     matcher = SequenceMatcher(None, extracted_data["description"], expected_description_start)
-    similarity = matcher.ratio() # This might be low because we match against partial start text, let's fix the logic
+    matcher.ratio() # This might be low because we match against partial start text, let's fix the logic
     
     # Better: specific check for full content presence if we had the full expected text
     # But user provided "Should to 80% return this content", implying we want to match against the BLOCK provided.

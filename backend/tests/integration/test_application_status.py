@@ -1,9 +1,8 @@
 """Integration tests for update-application-status endpoint."""
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, create_engine, SQLModel, select
+from sqlmodel import Session, create_engine, SQLModel
 from sqlalchemy.pool import StaticPool
-from datetime import datetime
 from unittest.mock import patch
 from pathlib import Path
 

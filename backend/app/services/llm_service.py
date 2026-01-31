@@ -1,9 +1,8 @@
-import os
 import asyncio
 import uuid
 from typing import Optional, Dict, Any
 
-from app.services.agents import create_writing_agent, create_extraction_agent, ContactInfo
+from app.services.agents import create_writing_agent, create_extraction_agent
 from app.core.config import settings
 import logfire
 
@@ -50,7 +49,6 @@ class LLMService:
         import re
         
         lines = text.strip().split('\n')
-        cleaned_lines = []
         
         # 1. Strip Header Junk (Addresses, Dates, Names at the top)
         # Strategy: Skip lines until we find a likely Salutation or the Body start

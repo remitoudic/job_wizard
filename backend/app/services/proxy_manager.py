@@ -20,7 +20,7 @@ class ProxyManager:
         """Load proxies from the JSON file specified in config"""
         try:
             # Handle relative path from config
-            base_path = os.getcwd()
+            os.getcwd()
             # If running from root, it might be in backend/proxies.json
             # settings.PROXY_FILE_PATH is "proxies.json" by default, or "backend/proxies.json"
             

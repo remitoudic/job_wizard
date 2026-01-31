@@ -4,7 +4,6 @@ Test the three-way race for cover letter generation
 import pytest
 import asyncio
 from app.services.llm_service import LLMService
-from app.core.config import settings
 
 
 @pytest.mark.asyncio
@@ -21,7 +20,7 @@ async def test_three_way_race():
     assert service.remote_writer is None
     assert service.remote_writer_2 is None
     
-    print(f"\n✅ Three agents initialized:")
+    print("\n✅ Three agents initialized:")
     print(f"   1. Local: {service.ollama_model_name}")
     
     config = service.provider_service.get_provider_config()
@@ -42,13 +41,13 @@ async def test_three_way_race():
     assert winner is not None, "Winner should be identified"
     assert len(result) > 0, "Cover letter should not be empty"
     
-    print(f"\n🏁 Race completed!")
+    print("\n🏁 Race completed!")
     print(f"   Winner: {winner}")
     print(f"   Cover letter length: {len(result)} characters")
     
     # Wait a bit for alternatives to complete
     if alt_id:
-        print(f"\n⏳ Waiting for alternatives to complete...")
+        print("\n⏳ Waiting for alternatives to complete...")
         await asyncio.sleep(10)
         
         alternatives_data = service.get_alternative(alt_id)

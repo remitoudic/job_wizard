@@ -1,4 +1,3 @@
-import pytest
 import os
 from app.services.pdf_service import PDFService
 from app.services.templates import TemplateRegistry

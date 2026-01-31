@@ -1,5 +1,4 @@
 import re
-from typing import Dict, Any
 from bs4 import BeautifulSoup
 from .generic import GenericParser
 

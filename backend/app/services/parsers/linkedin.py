@@ -1,4 +1,3 @@
-from typing import Dict, Any
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, parse_qs
 from .generic import GenericParser

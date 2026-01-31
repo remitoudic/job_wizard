@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from app.api.deps import SessionDep
-from app.core.security import create_access_token, verify_password, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.core.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.api.validation.schemas import Token
 from src.models.user import UserCreate, User
 from app.services.user import user_service

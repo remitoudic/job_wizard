@@ -2,7 +2,6 @@ import asyncio
 import json
 import httpx
 import time
-from concurrent.futures import ThreadPoolExecutor
 
 # Load proxies from the file
 INPUT_FILE = "uploads/proxies_uploaded.json"

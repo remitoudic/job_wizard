@@ -1,4 +1,4 @@
-from typing import Generator, Annotated
+from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -9,8 +9,8 @@ from app.api.validation.schemas import TokenData
 from src.models.user import User
 from app.services.user import user_service
 
-reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"/api/auth/login")
-reusable_oauth2_optional = OAuth2PasswordBearer(tokenUrl=f"/api/auth/login", auto_error=False)
+reusable_oauth2 = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+reusable_oauth2_optional = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 SessionDep = Annotated[Session, Depends(get_session)]
 

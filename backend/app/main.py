@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 import logfire
 
-from app.api import routes
 
 # Handle empty token from docker-compose
 if os.getenv("LOGFIRE_TOKEN") == "":

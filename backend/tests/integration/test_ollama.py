@@ -1,9 +1,7 @@
 
 import pytest
 import os
-import asyncio
 from app.services.agents import create_writing_agent
-from pydantic_ai import Agent
 
 @pytest.mark.asyncio
 async def test_ollama_connection():

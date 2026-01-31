@@ -1,7 +1,7 @@
 """Integration tests for save-application endpoint."""
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session, select, create_engine, SQLModel
+from sqlmodel import Session, create_engine, SQLModel
 from sqlalchemy.pool import StaticPool
 from datetime import datetime
 from unittest.mock import patch

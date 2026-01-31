@@ -1,5 +1,6 @@
 import sys
-from sqlmodel import Session, create_engine, select, SQLModel
+import os
+from sqlmodel import Session, create_engine, select
 from app.core.security import get_password_hash
 from src.models.user import User 
 
@@ -12,7 +13,7 @@ def check_and_create():
     try:
         engine = create_engine(DATABASE_URL)
         # Ensure we can connect
-        with engine.connect() as conn:
+        with engine.connect():
             print("Connected to database successfully.")
         
         with Session(engine) as session:

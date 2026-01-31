@@ -12,7 +12,8 @@ async def check_proxy_quality():
     
     for i in range(5):
         proxy = pm.get_next_proxy()
-        if not proxy: continue
+        if not proxy:
+            continue
         
         print(f"\nTesting Proxy {i+1}: {proxy}")
         test_url = "http://ip-api.com/json"

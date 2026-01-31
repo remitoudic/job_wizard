@@ -1,9 +1,8 @@
 from typing import List, Optional
 from datetime import datetime
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
-from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
-from reportlab.lib.colors import HexColor
+from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.styles import ParagraphStyle
 
 from .base import BaseTemplate

@@ -1,9 +1,7 @@
-import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 from reportlab.pdfgen import canvas
 import io
-import os
 
 client = TestClient(app)
 
@@ -57,7 +55,7 @@ def test_upload_image_regression():
 # We mock LLM service to avoid needing actual Ollama for this unit/integration test logic
 # because calling real Ollama is slow and might fail if model not pulled.
 # But if we want to test the *arguments* passing, we can mock the method.
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock  # noqa: E402
 
 @patch("app.services.llm_service.LLMService.generate_cover_letter", new_callable=AsyncMock)
 def test_generate_cover_letter_with_context(mock_generate):

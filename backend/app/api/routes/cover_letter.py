@@ -3,13 +3,11 @@ from fastapi.responses import FileResponse
 from typing import Optional
 from pathlib import Path
 import uuid
-import os
 
 from app.services.llm_service import LLMService
 from app.services.pdf_service import PDFService
 from app.services.pdf_parser import PDFParser
 from app.services.backup_service import BackupService
-from app.api.deps import CurrentUser
 
 # Import validation schemas
 from app.api.validation.schemas import (
@@ -152,7 +150,7 @@ async def upload_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
 
 
-from app.api.deps import CurrentUser, get_current_user_optional
+from app.api.deps import get_current_user_optional
 from src.models.user import User
 
 @router.post("/generate-pdf")

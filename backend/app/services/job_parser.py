@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from typing import Dict
 import asyncio
 from app.services.parsers import ParserRegistry
-from app.core.config import settings
 import logfire
 from app.services.proxy_manager import ProxyManager
 
@@ -58,7 +57,6 @@ class JobParser:
 
             if not content:
                 # HTTPX Fallback (Original Logic)
-                last_exc: Exception | None = None
                 
                 # Get proxy if available
                 proxy_manager = ProxyManager()
@@ -78,9 +76,8 @@ class JobParser:
                             content = response.text
                             break
 
-                    except httpx.TimeoutException as e:
+                    except httpx.TimeoutException:
                         logfire.warn("Request timeout", url=url, attempt=attempt)
-                        last_exc = e
                         if attempt == self.max_retries:
                             raise Exception(f"Request timeout after {self.max_retries} attempts.")
                         wait = self.backoff_factor * (2 ** (attempt - 1))
@@ -90,7 +87,6 @@ class JobParser:
                     except httpx.HTTPStatusError as e:
                         status = e.response.status_code if e.response is not None else None
                         logfire.warn("HTTP error", url=url, status=status, attempt=attempt)
-                        last_exc = e
                         
                         if status == 403:
                             raise Exception("Access forbidden (403). Automated access blocked.")

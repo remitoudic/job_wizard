@@ -8,7 +8,6 @@ from app.api.validation.schemas import (
 )
 
 # Import database models
-from src.models import JobDescription as DBJobDescription
 
 router = APIRouter(tags=["job_description"])
 

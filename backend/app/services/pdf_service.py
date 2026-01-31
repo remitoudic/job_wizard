@@ -1,12 +1,7 @@
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.enums import TA_LEFT, TA_CENTER
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
-from reportlab.lib.colors import HexColor
-from PIL import Image as PILImage
+from reportlab.platypus import SimpleDocTemplate
 from typing import Optional
-import os
 import logfire
 
 
