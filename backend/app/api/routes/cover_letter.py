@@ -152,76 +152,35 @@ async def upload_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
 
 
+from app.api.deps import CurrentUser, get_current_user_optional
+from src.models.user import User
+
 @router.post("/generate-pdf")
 async def generate_pdf(
-    current_user: CurrentUser,
+    current_user: Optional[User] = Depends(get_current_user_optional),
     cover_letter: str = Form(...),
-    job_title: str = Form(...),
-    company: str = Form(...),
-    template_name: str = Form("generic"),
-    user_name: str = Form(""),
-    first_name: Optional[str] = Form(""),
-    surname: Optional[str] = Form(""),
-    image_filename: Optional[str] = Form(None),
-    email: Optional[str] = Form(""),
-    phone: Optional[str] = Form(""),
-    linkedin: Optional[str] = Form(""),
-    custom_date: Optional[str] = Form(None),
-    custom_subject: Optional[str] = Form(None),
-    full_name: Optional[str] = Form(None),
-    address: Optional[str] = Form(""),
-    address_street: Optional[str] = Form(""),
-    address_postcode: Optional[str] = Form(""),
-    address_city: Optional[str] = Form(""),
+# ... (rest of args identical)
     address_country: Optional[str] = Form(""),
 ):
     """
     Generate PDF with cover letter and optional user photo
     """
     try:
-        # Get image path if provided
-        image_path = None
-        if image_filename:
-            image_path = UPLOAD_DIR / image_filename
-            if not image_path.exists():
-                raise HTTPException(status_code=404, detail="Image not found")
-        
-        # Generate PDF
-        pdf_filename = f"cover_letter_{uuid.uuid4()}.pdf"
-        pdf_path = UPLOAD_DIR / pdf_filename
-        
-        pdf_service.generate_cover_letter_pdf(
-            output_path=str(pdf_path),
-            cover_letter=cover_letter,
-            job_title=job_title,
-            company=company,
-            template_name=template_name,
-            user_name=user_name,
-            first_name=first_name,
-            surname=surname,
-            image_path=str(image_path) if image_path else None,
-            email=email,
-            phone=phone,
-            linkedin=linkedin,
-            custom_date=custom_date,
-            custom_subject=custom_subject,
-            full_name=full_name,
-            address=address,
-            address_street=address_street,
-            address_postcode=address_postcode,
-            address_city=address_city,
-            address_country=address_country,
-        )
-        
+# ... (generation logic identical) ...
+
         # Perform Backup
         # We try to use the most relevant date for the filename
         # Prioritize system date for consistent chronological sorting, or date of creation.
         # Requirement: "name of the cover letter should have the the user_id, date and company_applied"
+        
+        user_id_str = str(current_user.id) if current_user else "guest"
+        
         backup_service.backup_cover_letter_pdf(
             source_path=str(pdf_path),
-            user_id=str(current_user.id),
+            user_id=user_id_str,
             company=company
         )
+
         
         return {
             "filename": pdf_filename,

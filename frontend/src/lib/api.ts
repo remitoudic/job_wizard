@@ -258,8 +258,15 @@ export async function generatePdf(request: GeneratePdfRequest): Promise<Generate
     if (request.address_city) formData.append('address_city', request.address_city);
     if (request.address_country) formData.append('address_country', request.address_country);
 
+    const headers: Record<string, string> = {};
+    const token = get(auth).token;
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_URL}/api/generate-pdf`, {
         method: 'POST',
+        headers: headers,
         body: formData,
     });
 

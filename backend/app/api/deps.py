@@ -10,6 +10,7 @@ from src.models.user import User
 from app.services.user import user_service
 
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl=f"/api/auth/login")
+reusable_oauth2_optional = OAuth2PasswordBearer(tokenUrl=f"/api/auth/login", auto_error=False)
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
@@ -31,6 +32,24 @@ def get_current_user(session: SessionDep, token: Annotated[str, Depends(reusable
     user = user_service.get_by_email(session, email=token_data.username) # Using email as sub
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+def get_current_user_optional(
+    session: SessionDep, 
+    token: Annotated[str | None, Depends(reusable_oauth2_optional)]
+) -> User | None:
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return None
+        token_data = TokenData(username=username)
+    except JWTError:
+        return None
+    
+    user = user_service.get_by_email(session, email=token_data.username)
     return user
 
 
