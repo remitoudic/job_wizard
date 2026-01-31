@@ -6,11 +6,13 @@ set -euo pipefail
 
 # Default values
 FORCE_YES=false
+FORCE_REBUILD=false
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -y|--yes) FORCE_YES=true ;;
+        -f|--force) FORCE_REBUILD=true ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
@@ -83,15 +85,14 @@ fi
 NEW_COMMIT=$(git rev-parse HEAD)
 if [ "$CURRENT_COMMIT" = "$NEW_COMMIT" ]; then
     echo "ℹ️  Already up to date. No changes to deploy."
-    # We continue anyway to ensure infrastructure matches code (rebuild)
-    # or exit? Usually for an "update" script, if code hasn't changed, we might still want to rebuild if env vars changed.
-    # But usually we exit. Let's ask user? Or just exit.
-    # The original script exited. I'll keep it, but maybe print a message.
-    echo "   (Re-run with --rebuild-only if you want to force rebuild without code changes - feature not yet implemented, continuing to rebuild anyway to be safe? No, let's respect original logic but maybe we want to rebuild if env changed? For now, I'll stick to original logic but allow forcing via -y if I executed it? No, if git is same, usually no deploy needed.)"
-    # Actually, let's just proceed to rebuild if the user explicitly wants to ensure state?
-    # Original script: exits 0.
-    echo "   Exiting."
-    exit 0
+    
+    if [ "$FORCE_REBUILD" = true ]; then
+        echo "⚠️  Forcing rebuild due to --force flag..."
+    else
+        echo "   (Use --force to force rebuild without code changes)"
+        echo "   Exiting."
+        exit 0
+    fi
 fi
 
 echo "✅ Updated to commit: ${NEW_COMMIT:0:8}"
