@@ -36,6 +36,7 @@ A web application that generates personalized cover letters from job description
 - **Scraping**: httpx + BeautifulSoup4 + Smart Proxy Rotation
 - **Database**: PostgreSQL 16 + SQLModel
 - **Orchestration**: Docker Compose
+- **Analytics**: Microsoft Clarity
 
 ## Prerequisites
 
