@@ -225,7 +225,7 @@ async def generate_pdf(
         
         return {
             "filename": pdf_filename,
-            "url": f"/api/download/{pdf_filename}",
+            "url": f"/uploads/{pdf_filename}",
         }
     except HTTPException:
         raise
