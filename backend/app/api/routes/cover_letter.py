@@ -159,14 +159,63 @@ from src.models.user import User
 async def generate_pdf(
     current_user: Optional[User] = Depends(get_current_user_optional),
     cover_letter: str = Form(...),
-# ... (rest of args identical)
+    job_title: str = Form(...),
+    company: str = Form(...),
+    user_name: Optional[str] = Form(""),
+    first_name: Optional[str] = Form(""),
+    surname: Optional[str] = Form(""),
+    image_filename: Optional[str] = Form(None),
+    email: Optional[str] = Form(""),
+    phone: Optional[str] = Form(""),
+    linkedin: Optional[str] = Form(""),
+    template_name: str = Form("british"),
+    custom_date: Optional[str] = Form(None),
+    custom_subject: Optional[str] = Form(None),
+    full_name: Optional[str] = Form(None),
+    address: Optional[str] = Form(""),
+    address_street: Optional[str] = Form(""),
+    address_postcode: Optional[str] = Form(""),
+    address_city: Optional[str] = Form(""),
     address_country: Optional[str] = Form(""),
 ):
     """
     Generate PDF with cover letter and optional user photo
     """
     try:
-# ... (generation logic identical) ...
+        # Generate filename
+        pdf_filename = f"{uuid.uuid4()}.pdf"
+        pdf_path = UPLOAD_DIR / pdf_filename
+
+        # Resolve image path if provided
+        image_path = None
+        if image_filename:
+            img_p = UPLOAD_DIR / image_filename
+            if img_p.exists():
+                image_path = str(img_p)
+
+        # Generate PDF
+        pdf_service.generate_cover_letter_pdf(
+            output_path=str(pdf_path),
+            cover_letter=cover_letter,
+            job_title=job_title,
+            company=company,
+            template_name=template_name,
+            user_name=user_name,
+            first_name=first_name,
+            surname=surname,
+            image_path=image_path,
+            email=email,
+            phone=phone,
+            linkedin=linkedin,
+            custom_date=custom_date,
+            custom_subject=custom_subject,
+            full_name=full_name,
+            address=address,
+            address_street=address_street,
+            address_postcode=address_postcode,
+            address_city=address_city,
+            address_country=address_country,
+        )
 
         # Perform Backup
         # We try to use the most relevant date for the filename
