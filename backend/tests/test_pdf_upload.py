@@ -57,11 +57,11 @@ def test_upload_image_regression():
 # We mock LLM service to avoid needing actual Ollama for this unit/integration test logic
 # because calling real Ollama is slow and might fail if model not pulled.
 # But if we want to test the *arguments* passing, we can mock the method.
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
-@patch("app.services.llm_service.LLMService.generate_cover_letter")
+@patch("app.services.llm_service.LLMService.generate_cover_letter", new_callable=AsyncMock)
 def test_generate_cover_letter_with_context(mock_generate):
-    mock_generate.return_value = "Dear Hiring Manager, this is a generated letter."
+    mock_generate.return_value = ("Dear Hiring Manager, this is a generated letter.", "MockSource", "mock-alt-id")
     
     response = client.post(
         "/api/generate-cover-letter",

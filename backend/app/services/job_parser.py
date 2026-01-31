@@ -72,6 +72,7 @@ class JobParser:
                             proxy=proxy_url,
                             verify=False # Required for some unblocker proxies
                         ) as client:
+                            logfire.instrument_httpx(client)
                             response = await client.get(url, headers=self.headers)
                             response.raise_for_status()
                             content = response.text

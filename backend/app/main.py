@@ -30,7 +30,7 @@ app = FastAPI(
 )
 
 # Instrument FastAPI with Logfire
-logfire.instrument_fastapi(app)
+logfire.instrument_fastapi(app, capture_headers=True)
 
 # Configure CORS
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
