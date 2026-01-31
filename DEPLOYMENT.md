@@ -141,6 +141,13 @@ git pull
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
+### Automated Update Script
+We have provided a safe update script that handles backup, git pull, and rollback on failure:
+
+```bash
+./scripts/update-production.sh
+```
+
 ### Stop Services
 ```bash
 docker compose -f docker-compose.prod.yml down

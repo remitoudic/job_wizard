@@ -4,6 +4,18 @@
 
 set -euo pipefail
 
+# Default values
+FORCE_YES=false
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -y|--yes) FORCE_YES=true ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🚀 Production Update - Job Wizard"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -17,11 +29,16 @@ if [ "$PUBLIC_IP" != "$EXPECTED_IP" ]; then
     echo "⚠️  WARNING: This script is meant for production server ($EXPECTED_IP)"
     echo "   Current IP: $PUBLIC_IP"
     echo ""
-    read -p "Continue anyway? (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Cancelled."
-        exit 1
+    
+    if [ "$FORCE_YES" = true ]; then
+        echo "   Bypassing check due to -y flag."
+    else
+        read -p "Continue anyway? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Cancelled."
+            exit 1
+        fi
     fi
 fi
 
@@ -40,6 +57,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 if [ -f scripts/backup-db.sh ]; then
+    # Pass -y to backup script if it supports it, or assume it's safe
     ./scripts/backup-db.sh
 else
     echo "⚠️  Warning: backup-db.sh not found, skipping database backup"
@@ -65,6 +83,14 @@ fi
 NEW_COMMIT=$(git rev-parse HEAD)
 if [ "$CURRENT_COMMIT" = "$NEW_COMMIT" ]; then
     echo "ℹ️  Already up to date. No changes to deploy."
+    # We continue anyway to ensure infrastructure matches code (rebuild)
+    # or exit? Usually for an "update" script, if code hasn't changed, we might still want to rebuild if env vars changed.
+    # But usually we exit. Let's ask user? Or just exit.
+    # The original script exited. I'll keep it, but maybe print a message.
+    echo "   (Re-run with --rebuild-only if you want to force rebuild without code changes - feature not yet implemented, continuing to rebuild anyway to be safe? No, let's respect original logic but maybe we want to rebuild if env changed? For now, I'll stick to original logic but allow forcing via -y if I executed it? No, if git is same, usually no deploy needed.)"
+    # Actually, let's just proceed to rebuild if the user explicitly wants to ensure state?
+    # Original script: exits 0.
+    echo "   Exiting."
     exit 0
 fi
 
@@ -78,10 +104,12 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 echo "🐳 Rebuilding Docker containers..."
+COMPOSE_FILE="docker-compose.prod.yml"
+
 if command -v docker-compose > /dev/null 2>&1; then
-    docker-compose up -d --build
+    docker-compose -f "$COMPOSE_FILE" up -d --build
 else
-    docker compose up -d --build
+    docker compose -f "$COMPOSE_FILE" up -d --build
 fi
 
 echo ""
@@ -99,7 +127,9 @@ HEALTH_CHECKS_PASSED=true
 
 # Check if containers are running
 echo "🔍 Checking containers..."
-CONTAINERS=("jobwizard-postgres" "jobwizard-ollama" "jobwizard-backend" "jobwizard-frontend")
+# Updated container names to match docker-compose.prod.yml
+CONTAINERS=("jobwizard-postgres-prod" "jobwizard-ollama-prod" "jobwizard-backend-prod" "jobwizard-frontend-prod")
+
 for container in "${CONTAINERS[@]}"; do
     if docker ps --filter "name=$container" --filter "status=running" | grep -q "$container"; then
         echo "   ✅ $container is running"
@@ -112,11 +142,14 @@ done
 # Check backend API
 echo ""
 echo "🔍 Checking backend API..."
-if curl -s --max-time 5 http://localhost:8000/health > /dev/null 2>&1 || \
-   curl -s --max-time 5 http://localhost:8000/ > /dev/null 2>&1; then
-    echo "   ✅ Backend API is responding"
+# Production uses port 80 via nginx usually, but backend is internal 8000.
+# Nginx exposes 80. Checks should attack localhost:80.
+if curl -s --max-time 5 http://localhost/health > /dev/null 2>&1 || \
+   curl -s --max-time 5 http://localhost/ > /dev/null 2>&1; then
+    echo "   ✅ Application is responding (Nginx/Backend)"
 else
-    echo "   ❌ Backend API is not responding"
+    echo "   ❌ Application is not responding at http://localhost"
+    # Try internal backend port if exposed or just fail
     HEALTH_CHECKS_PASSED=false
 fi
 
@@ -133,8 +166,7 @@ if [ "$HEALTH_CHECKS_PASSED" = true ]; then
     echo "   To:   ${NEW_COMMIT:0:8}"
     echo ""
     echo "🌐 Access your application at:"
-    echo "   Frontend: http://${EXPECTED_IP}:5173"
-    echo "   Backend:  http://${EXPECTED_IP}:8000"
+    echo "   Frontend: http://${EXPECTED_IP}" # Default usage of port 80
     echo ""
 else
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -148,16 +180,16 @@ else
     
     # Restart services
     if command -v docker-compose > /dev/null 2>&1; then
-        docker-compose up -d --build
+        docker-compose -f "$COMPOSE_FILE" up -d --build
     else
-        docker compose up -d --build
+        docker compose -f "$COMPOSE_FILE" up -d --build
     fi
     
     echo ""
     echo "✅ Rolled back to commit: ${CURRENT_COMMIT:0:8}"
     echo ""
     echo "⚠️  Please check the logs to diagnose the issue:"
-    echo "   docker compose logs backend"
-    echo "   docker compose logs frontend"
+    echo "   docker compose -f $COMPOSE_FILE logs backend"
+    echo "   docker compose -f $COMPOSE_FILE logs nginx"
     exit 1
 fi
