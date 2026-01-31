@@ -495,8 +495,8 @@
 		if (!pdfUrl) return;
 
 		// Check if it's a static upload path or API endpoint
-		const fullUrl = pdfUrl.startsWith('/uploads/') 
-			? `${window.location.origin}${pdfUrl}` 
+		const fullUrl = pdfUrl.startsWith("/uploads/")
+			? `${window.location.origin}${pdfUrl}`
 			: `${API_URL}${pdfUrl}`;
 
 		try {
@@ -626,7 +626,7 @@
 </script>
 
 <svelte:head>
-	<title>Job Wizard - AI Cover Letter Generator</title>
+	<title>Vite a Job - AI Cover Letter Generator</title>
 </svelte:head>
 
 <div class="min-h-screen py-16 px-4">
@@ -635,7 +635,7 @@
 			<h1
 				class="text-5xl font-extrabold text-[#0F172A] tracking-tight mb-4"
 			>
-				Job Wizard
+				Vite a Job
 			</h1>
 			<p class="text-lg text-[#334155] max-w-lg mx-auto leading-relaxed">
 				Craft professional, personalized cover letters in seconds. Just

@@ -80,7 +80,7 @@
 </script>
 
 <svelte:head>
-    <title>My Applications - Job Wizard</title>
+    <title>My Applications - Vite a Job</title>
 </svelte:head>
 
 <div class="min-h-screen py-16 px-4 bg-gradient-to-b from-white to-slate-50">
@@ -105,7 +105,7 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"
                     />
                 </svg>
-                <span class="font-semibold">Back to Job Wizard</span>
+                <span class="font-semibold">Back to Vite a Job</span>
             </a>
             <h1 class="text-4xl font-extrabold text-[#0F172A] mb-2">
                 My Applications
@@ -187,7 +187,7 @@
                     No Applications Yet
                 </h2>
                 <p class="text-[#64748B] mb-6">
-                    Start applying to jobs with Job Wizard to see them here
+                    Start applying to jobs with Vite a Job to see them here
                 </p>
             </div>
         {/if}

@@ -74,13 +74,13 @@
 </script>
 
 <svelte:head>
-    <title>Register - Job Wizard</title>
+    <title>Register - Vite a Job</title>
 </svelte:head>
 
 <div class="max-w-md mx-auto mt-20 p-10 card">
     <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-[#0F172A] mb-2">Create Account</h1>
-        <p class="text-[#334155] text-sm">Get started with Job Wizard today</p>
+        <p class="text-[#334155] text-sm">Get started with Vite a Job today</p>
     </div>
 
     {#if error}

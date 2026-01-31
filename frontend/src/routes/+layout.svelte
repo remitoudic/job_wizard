@@ -52,7 +52,7 @@
 						</div>
 						<span
 							class="font-bold text-xl text-[#0F172A] tracking-tight transition-colors group-hover:text-[#0369A1]"
-							>Job Wizard</span
+							>Vite a Job</span
 						>
 					</a>
 				</div>
@@ -133,11 +133,11 @@
 				<div class="flex items-center gap-2 grayscale opacity-50">
 					<span class="text-xl">🧙‍♂️</span>
 					<span class="font-bold text-gray-900 tracking-tight"
-						>Job Wizard</span
+						>Vite a Job</span
 					>
 				</div>
 				<p class="text-sm text-[#64748B]">
-					&copy; 2026 Job Wizard AI. All rights reserved.
+					&copy; 2026 Vite a Job. All rights reserved.
 				</p>
 				<div class="flex gap-6">
 					<a
