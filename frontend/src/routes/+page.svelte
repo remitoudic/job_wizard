@@ -976,26 +976,12 @@
 								<div>
 									<label
 										class="block text-sm font-semibold text-[#334155] mb-2"
-										>Your Name</label
-									>
-									<input
-										type="text"
-										bind:value={userName}
-										placeholder="Full Name"
-										class="input"
-										disabled={isParsing}
-									/>
-								</div>
-
-								<div>
-									<label
-										class="block text-sm font-semibold text-[#334155] mb-2"
-										>Upload Profile (CV or Photo)</label
+										>Upload info</label
 									>
 									<p class="text-xs text-[#64748B] mb-3">
-										Add your CV (PDF) to personalize the
-										cover letter content, or a photo to
-										embed it in the final PDF.
+										Upload information about yourself so
+										that we can personalize your cover
+										letter (for example, your CV).
 									</p>
 									<div class="flex items-center gap-4">
 										<input

@@ -3,6 +3,7 @@
     import {
         fetchUserApplications,
         updateApplicationStatus,
+        deleteApplication,
         type ApplicationListItem,
     } from "$lib/api";
     import { auth } from "../../stores/auth";
@@ -36,6 +37,28 @@
 
     function toggleExpand(id: number) {
         expandedId = expandedId === id ? null : id;
+    }
+
+    function handleDelete(id: number) {
+        if (
+            !confirm(
+                "Are you sure you want to delete this application? This action cannot be undone.",
+            )
+        ) {
+            return;
+        }
+
+        // Optimistic update
+        const originalApplications = [...applications];
+        applications = applications.filter((app) => app.id !== id);
+
+        deleteApplication(id).catch((e) => {
+            console.error("Failed to delete application:", e);
+            // Revert on failure
+            applications = originalApplications;
+            error = "Failed to delete application. Please try again.";
+            setTimeout(() => (error = ""), 3000);
+        });
     }
 
     async function handleStatusChange(id: number, newStatus: string) {
@@ -215,7 +238,7 @@
                                 >
                                 <th
                                     class="p-4 font-semibold text-slate-600 text-sm text-right"
-                                    >Details</th
+                                    >Actions</th
                                 >
                             </tr>
                         </thead>
@@ -297,23 +320,48 @@
                                     </td>
                                     <td class="p-4 align-top text-right">
                                         <div
-                                            class="inline-block transition-transform duration-200 {expandedId ===
-                                            app.id
-                                                ? 'rotate-180'
-                                                : ''}"
+                                            class="flex items-center justify-end gap-3 transition-transform duration-200"
                                         >
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                class="h-5 w-5 text-slate-400"
-                                                viewBox="0 0 20 20"
-                                                fill="currentColor"
+                                            <button
+                                                class="text-slate-400 hover:text-red-500 transition-colors p-1"
+                                                on:click|stopPropagation={() =>
+                                                    handleDelete(app.id)}
+                                                title="Delete Application"
                                             >
-                                                <path
-                                                    fill-rule="evenodd"
-                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                    clip-rule="evenodd"
-                                                />
-                                            </svg>
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    class="h-5 w-5"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                    />
+                                                </svg>
+                                            </button>
+                                            <div
+                                                class="transition-transform duration-200 {expandedId ===
+                                                app.id
+                                                    ? 'rotate-180'
+                                                    : ''}"
+                                            >
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    class="h-5 w-5 text-slate-400"
+                                                    viewBox="0 0 20 20"
+                                                    fill="currentColor"
+                                                >
+                                                    <path
+                                                        fill-rule="evenodd"
+                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                        clip-rule="evenodd"
+                                                    />
+                                                </svg>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>

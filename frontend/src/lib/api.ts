@@ -354,3 +354,12 @@ export async function updateApplicationStatus(id: number, status: string): Promi
 
     return handleResponse<any>(response, 'Failed to update status');
 }
+
+export async function deleteApplication(id: number): Promise<any> {
+    const response = await fetch(`${API_URL}/api/application/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+    });
+
+    return handleResponse<any>(response, 'Failed to delete application');
+}

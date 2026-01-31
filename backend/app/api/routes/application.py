@@ -202,3 +202,39 @@ async def update_application_status(
             status_code=500,
             detail=f"Failed to update status: {str(e)}"
         )
+
+
+@router.delete("/application/{application_id}")
+async def delete_application(
+    application_id: int,
+    session: SessionDep,
+    current_user: CurrentUser,
+):
+    """
+    Delete an application.
+    Requires JWT authentication.
+    """
+    try:
+        # Verify application exists and belongs to user
+        statement = select(Application).where(
+            Application.id == application_id,
+            Application.user_id == current_user.id
+        )
+        application = session.exec(statement).first()
+        
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+            
+        session.delete(application)
+        session.commit()
+        
+        return {"success": True, "message": "Application deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete application: {str(e)}"
+        )
