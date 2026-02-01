@@ -13,19 +13,24 @@ A web application that generates personalized cover letters from job description
 ## Architecture
 
 ```
-                                      ┌─────────────┐
-                                 ┌───▶│   Ollama    │
-┌─────────────┐      ┌───────────┴─┐  │   (Local)   │
-│  SvelteKit  │─────▶│   FasAPI    │  └─────────────┘
-│  Frontend   │      │   Backend   │  ┌─────────────┐
-└─────────────┘      └───────────┬─┘─▶│    Groq     │
-                           │     │    │  (Primary)  │
-                           │     │    └─────────────┘
-                           ▼     │    ┌─────────────┐
-                    ┌────────────┴┐──▶│ OpenRouter  │
-                    │ PostgreSQL  │   │ (Failover)  │
-                    │  Database   │   └─────────────┘
-                    └─────────────┘
+┌─────────────┐
+│   Certbot   │
+└──────┬──────┘
+       │ SSL
+       ▼
+┌─────────────┐                                      ┌─────────────┐
+│    Nginx    │                                 ┌───▶│   Ollama    │
+│  (Gateway)  │         ┌─────────────┐         │    │   (Local)   │
+└───┬──────┬──┘         │   FastAPI   │         │    └─────────────┘
+    │      └───────────▶│   Backend   │─────────┤
+    ▼                   └─────┬───────┘         │    ┌─────────────┐
+┌─────────────┐               │                 ├───▶│    Groq     │
+│  SvelteKit  │               │                 │    │  (Primary)  │
+│  Frontend   │               ▼                 │    └─────────────┘
+└─────────────┘         ┌─────────────┐         │    ┌─────────────┐
+                        │ PostgreSQL  │         └───▶│ OpenRouter  │
+                        │  Database   │              │ (Failover)  │
+                        └─────────────┘              └─────────────┘
 ```
 
 ## Tech Stack
