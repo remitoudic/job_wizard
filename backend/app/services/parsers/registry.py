@@ -3,7 +3,9 @@ from urllib.parse import urlparse
 from .base import BaseParser
 from .generic import GenericParser
 from .linkedin import LinkedInParser
+from .linkedin import LinkedInParser
 from .indeed import IndeedParser
+from .stepstone import StepStoneParser
 
 class ParserRegistry:
     """Registry to manage and retrieve job parsers"""
@@ -13,7 +15,11 @@ class ParserRegistry:
         "www.linkedin.com": LinkedInParser,
         "indeed.com": IndeedParser,
         "www.indeed.com": IndeedParser,
-        "de.indeed.com": IndeedParser, # Support German Indeed as well
+        "indeed.com": IndeedParser,
+        "www.indeed.com": IndeedParser,
+        "de.indeed.com": IndeedParser,
+        "stepstone.de": StepStoneParser,
+        "www.stepstone.de": StepStoneParser,
     }
     
     @classmethod
