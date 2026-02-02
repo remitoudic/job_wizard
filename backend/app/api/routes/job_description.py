@@ -24,7 +24,7 @@ async def parse_job_description(request: JobURLRequest):
     
     try:
         logfire.info("Job parsing requested", url=str(request.url))
-        job_data = await job_parser.parse_url(str(request.url), cookies=request.cookie)
+        job_data = await job_parser.parse_url(str(request.url).strip(), cookies=request.cookie)
         logfire.info("Job parsing successful", url=str(request.url), title=job_data.get("title"))
         return job_data
     except Exception as e:

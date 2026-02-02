@@ -137,6 +137,7 @@
 	}
 
 	async function handleParseJob(advance = true) {
+		jobUrl = jobUrl.trim();
 		if (!jobUrl) {
 			error = "Please enter a job URL";
 			return;
@@ -953,7 +954,7 @@
 								class="flex justify-between items-center py-4 cursor-pointer text-[#334155] hover:text-[#0F172A] transition-colors focus:outline-none"
 							>
 								<span class="text-sm font-semibold"
-									>Personalize with your context</span
+									>Personalize your letter</span
 								>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"

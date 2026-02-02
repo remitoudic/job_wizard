@@ -31,8 +31,11 @@ async def generate_cover_letter(request: CoverLetterRequest):
     """
     Generate a personalized cover letter using LLM
     """
+    import asyncio
+    
     try:
-        cover_letter, source, alternative_id = await llm_service.generate_cover_letter(
+        # Create tasks for parallel execution
+        generation_task = llm_service.generate_cover_letter(
             job_description=request.job_description.description,
             job_title=request.job_description.title,
             company=request.job_description.company,
@@ -41,14 +44,36 @@ async def generate_cover_letter(request: CoverLetterRequest):
             user_skills=request.user_skills,
             context_text=request.context_text,
         )
-        
-        # Extract contact info if context provided
-        contact_info = {"email": "", "phone": "", "linkedin": "", "name": "", "first_name": "", "surname": "", "address": "", "website": ""}
+
+        extraction_task = None
         if request.context_text:
-            try:
-                contact_info = await llm_service.extract_contact_info(request.context_text)
-            except Exception:
-                pass # Fail silently on extraction
+            extraction_task = asyncio.wait_for(
+                llm_service.extract_contact_info(request.context_text), 
+                timeout=20.0
+            )
+
+        # Execute tasks
+        if extraction_task:
+            results = await asyncio.gather(generation_task, extraction_task, return_exceptions=True)
+            gen_result = results[0]
+            extract_result = results[1]
+        else:
+            gen_result = await generation_task
+            extract_result = {}
+
+        # Handle Generation Result
+        if isinstance(gen_result, Exception):
+            raise gen_result
+        
+        cover_letter, source, alternative_id = gen_result
+
+        # Handle Extraction Result
+        contact_info = {"email": "", "phone": "", "linkedin": "", "name": "", "first_name": "", "surname": "", "address": "", "website": ""}
+        if isinstance(extract_result, dict):
+            contact_info = extract_result
+        elif isinstance(extract_result, Exception):
+             # Fail silently on extraction error, just log it if we had a logger
+             pass
 
         return CoverLetterResponse(
             cover_letter=cover_letter,
