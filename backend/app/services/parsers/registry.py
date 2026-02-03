@@ -6,6 +6,7 @@ from .linkedin import LinkedInParser
 from .linkedin import LinkedInParser
 from .indeed import IndeedParser
 from .stepstone import StepStoneParser
+from .arbeitnow import ArbeitnowParser
 
 class ParserRegistry:
     """Registry to manage and retrieve job parsers"""
@@ -15,11 +16,11 @@ class ParserRegistry:
         "www.linkedin.com": LinkedInParser,
         "indeed.com": IndeedParser,
         "www.indeed.com": IndeedParser,
-        "indeed.com": IndeedParser,
-        "www.indeed.com": IndeedParser,
         "de.indeed.com": IndeedParser,
         "stepstone.de": StepStoneParser,
         "www.stepstone.de": StepStoneParser,
+        "arbeitnow.com": ArbeitnowParser,
+        "www.arbeitnow.com": ArbeitnowParser,
     }
     
     @classmethod

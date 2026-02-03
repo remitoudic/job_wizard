@@ -55,6 +55,21 @@ class JobParser:
             # We fall back to standard HTTPX request.
 
 
+
+            if hasattr(parser, "fetch_content"):
+                try:
+                    # Allow parser to implement its own fetching (e.g. for bypassing protections)
+                    if asyncio.iscoroutinefunction(parser.fetch_content):
+                        content = await parser.fetch_content(url)
+                    else:
+                        content = await asyncio.to_thread(parser.fetch_content, url)
+                except Exception as e:
+                     logfire.warn("Custom fetch strategy failed", url=url, error=str(e))
+                     # If the custom fetch specifically says "BLOCKED", re-raise it to trigger manual mode in UI
+                     if "block" in str(e).lower() or "forbidden" in str(e).lower():
+                         raise Exception("System is blocked by the job site. Please enter details manually.")
+                     # Otherwise fall through to standard HTTPX (or just fail if we want strictness)
+
             if not content:
                 # HTTPX Fallback (Original Logic)
                 
@@ -89,7 +104,8 @@ class JobParser:
                         logfire.warn("HTTP error", url=url, status=status, attempt=attempt)
                         
                         if status == 403:
-                            raise Exception("Access forbidden (403). Automated access blocked.")
+                            # Specific message to trigger manual mode
+                            raise Exception("Access forbidden (403). System is blocked. Please enter details manually.")
                         elif status == 404:
                             raise Exception("Job posting not found (404).")
                         elif status == 429:

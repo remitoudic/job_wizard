@@ -15,6 +15,48 @@ class StepStoneParser(BaseParser):
         base_url = url.split("?")[0]
         return base_url
 
+    def fetch_content(self, url: str) -> str:
+        """
+        Fetch content using curl_cffi to bypass TLS fingerprinting.
+        Mimics Chrome 120+ to pass Imperva/Incapsula checks.
+        """
+        try:
+            from curl_cffi import requests
+            
+            # Impersonate Chrome to pass TLS check
+            response = requests.get(
+                url,
+                impersonate="chrome120",
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                    "Upgrade-Insecure-Requests": "1",
+                    "Sec-Fetch-Dest": "document",
+                    "Sec-Fetch-Mode": "navigate",
+                    "Sec-Fetch-Site": "none",
+                    "Sec-Fetch-User": "?1",
+                },
+                timeout=30
+            )
+            
+            # Check for blocking page specifically
+            if "sec-overlay" in response.text or "incap_ses" in response.text:
+                raise Exception("Imperva/Incapsula blocking detected.")
+                
+            if response.status_code == 403:
+                raise Exception("Access Forbidden (Blocking detected).")
+                
+            response.raise_for_status()
+            return response.text
+            
+        except ImportError:
+            # If curl_cffi is missing, let it fall back to httpx in JobParser
+            # expecting JobParser to catch this and try fallback
+            raise Exception("curl_cffi not installed")
+        except Exception as e:
+            raise Exception(f"Stepstone fetch failed: {str(e)}")
+
     def _extract_json_ld(self, soup: BeautifulSoup) -> Optional[Dict]:
         """Extract job data from JSON-LD structured data"""
         import json
