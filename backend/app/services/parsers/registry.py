@@ -3,10 +3,11 @@ from urllib.parse import urlparse
 from .base import BaseParser
 from .generic import GenericParser
 from .linkedin import LinkedInParser
-from .linkedin import LinkedInParser
+
 from .indeed import IndeedParser
 from .stepstone import StepStoneParser
 from .arbeitnow import ArbeitnowParser
+from .wwr import WWRParser
 
 class ParserRegistry:
     """Registry to manage and retrieve job parsers"""
@@ -21,6 +22,8 @@ class ParserRegistry:
         "www.stepstone.de": StepStoneParser,
         "arbeitnow.com": ArbeitnowParser,
         "www.arbeitnow.com": ArbeitnowParser,
+        "weworkremotely.com": WWRParser,
+        "www.weworkremotely.com": WWRParser,
     }
     
     @classmethod
