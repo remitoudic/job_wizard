@@ -62,3 +62,38 @@ def test_extract_job_data_fallback(parser):
     assert data["title"] == "Fallback Job Title"
     assert data["company"] == "Fallback Company"
     assert data["description"] == "Fallback Description"
+
+def test_extract_job_data_json_ld(parser):
+    # Test JSON-LD extraction without specific HTML selectors
+    html = """
+    <html>
+        <head>
+            <script type="application/ld+json">
+            {
+                "@context": "https://schema.org/",
+                "@type": "JobPosting",
+                "title": "JSON-LD Engineer",
+                "hiringOrganization": {
+                    "@type": "Organization",
+                    "name": "Structured Data Co."
+                },
+                "description": "<p>We need structured data.</p><p>Requirements: JSON.</p>",
+                "datePosted": "2023-01-01"
+            }
+            </script>
+        </head>
+        <body>
+            <div class="messy-html">
+                Some unstructured content that shouldn't be picked up.
+            </div>
+        </body>
+    </html>
+    """
+    soup = BeautifulSoup(html, "lxml")
+    data = parser.extract_job_data(soup, "http://test.url")
+    
+    assert data["title"] == "JSON-LD Engineer"
+    assert data["company"] == "Structured Data Co."
+    assert "We need structured data." in data["description"]
+    assert "Requirements: JSON." in data["description"]
+    assert data["source"] == "StepStone"

@@ -15,8 +15,60 @@ class StepStoneParser(BaseParser):
         base_url = url.split("?")[0]
         return base_url
 
+    def _extract_json_ld(self, soup: BeautifulSoup) -> Optional[Dict]:
+        """Extract job data from JSON-LD structured data"""
+        import json
+        
+        scripts = soup.find_all("script", type="application/ld+json")
+        for script in scripts:
+            try:
+                data = json.loads(script.get_text())
+                # JSON-LD can be a list or a single object
+                if isinstance(data, list):
+                    for item in data:
+                        if item.get("@type") == "JobPosting":
+                            return item
+                elif isinstance(data, dict):
+                     if data.get("@type") == "JobPosting":
+                        return data
+            except (json.JSONDecodeError, AttributeError):
+                continue
+        return None
+
     def extract_job_data(self, soup: BeautifulSoup, url: str) -> Dict:
         """Extract job data from Method Stepstone HTML"""
+        
+        # Try JSON-LD first (Most reliable)
+        json_ld_data = self._extract_json_ld(soup)
+        
+        if json_ld_data:
+            # Extract fields from JSON-LD
+            title = json_ld_data.get("title")
+            
+            company_data = json_ld_data.get("hiringOrganization", {})
+            if isinstance(company_data, dict):
+                 company = company_data.get("name")
+            else:
+                company = str(company_data)
+                
+            description = json_ld_data.get("description", "")
+            
+            # Clean up the description if it contains HTML
+            if description:
+                # Reuse BeautifulSoup to clean HTML in description
+                desc_soup = BeautifulSoup(description, "html.parser")
+                description = desc_soup.get_text(separator="\n\n", strip=True)
+
+            return {
+                "title": title or "Unknown Job",
+                "company": company or "Unknown Company",
+                "description": description,
+                "requirements": [],
+                "url": self.normalize_url(url),
+                "source": "StepStone"
+            }
+
+        # Fallback to scraping (Old method)
         
         # 1. Title extraction
         # Try specific data attributes first, then fallbacks
@@ -59,10 +111,10 @@ class StepStoneParser(BaseParser):
         # Stepstone often wraps content in a specific container
         description = ""
         desc_selectors = [
-             '[data-at="job-content"]',
-             '.js-app-ld-ContentBlock',
-             '.listing-content',
-             'div.job-ad-container'
+            '[data-at="job-content"]',
+            '.js-app-ld-ContentBlock',
+            '.listing-content',
+            'div.job-ad-container'
         ]
         
         for selector in desc_selectors:
