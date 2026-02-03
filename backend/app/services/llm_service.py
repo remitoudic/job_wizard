@@ -141,6 +141,7 @@ class LLMService:
         user_name: str = "",
         user_skills: str = "",
         context_text: Optional[str] = None,
+        custom_instructions: Optional[str] = None,
     ) -> tuple[str, str, str]:
         """
         Generate cover letter with race mode (Local vs Remote)
@@ -167,6 +168,9 @@ IMPORTANT INSTRUCTIONS:
 
 Key requirements: {req_list}
 Candidate skills: {user_skills}
+
+CUSTOM USER GUIDANCE:
+{custom_instructions if custom_instructions else 'None provided.'}
 """
         # Remote prompt gets more context
         prompt = base_prompt

@@ -88,6 +88,7 @@ export interface CoverLetterRequest {
     user_name?: string;
     user_skills?: string;
     context_text?: string;
+    custom_instructions?: string;
 }
 
 export interface User {

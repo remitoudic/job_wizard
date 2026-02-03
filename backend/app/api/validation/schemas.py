@@ -21,6 +21,7 @@ class CoverLetterRequest(BaseModel):
     user_name: Optional[str] = "Applicant"
     user_skills: Optional[str] = ""
     context_text: Optional[str] = None
+    custom_instructions: Optional[str] = None
 
 
 class CoverLetterResponse(BaseModel):
