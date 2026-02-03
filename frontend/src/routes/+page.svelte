@@ -980,6 +980,23 @@
 								<div>
 									<label
 										class="block text-sm font-semibold text-[#334155] mb-2"
+										>Custom Guidance</label
+									>
+									<p class="text-xs text-[#64748B] mb-3">
+										Add specific instructions for the AI
+										(e.g., "Focus on my leadership
+										experience").
+									</p>
+									<textarea
+										bind:value={customInstructions}
+										placeholder="Optional: Enter custom instructions here..."
+										class="w-full px-4 py-3 rounded-lg border border-[#E2E8F0] focus:border-[#0369A1] focus:ring-2 focus:ring-[#0369A1]/20 outline-none transition-all resize-y min-h-[80px] text-sm"
+									></textarea>
+								</div>
+
+								<div>
+									<label
+										class="block text-sm font-semibold text-[#334155] mb-2"
 										>Upload info</label
 									>
 									<p class="text-xs text-[#64748B] mb-3">
@@ -1201,24 +1218,6 @@
 							</div>
 						</details>
 					{/if}
-				</div>
-
-				<!-- Custom Guidance -->
-				<div class="mb-6">
-					<label
-						class="block text-sm font-medium text-[#334155] mb-2 flex items-center gap-2"
-					>
-						Custom Guidance
-						<span
-							class="text-xs text-[#64748B] font-normal bg-gray-100 px-2 py-0.5 rounded-full"
-							>Optional</span
-						>
-					</label>
-					<textarea
-						bind:value={customInstructions}
-						placeholder="e.g., 'Focus explicitly on my experience with Kubernetes' or 'Use a very enthusiastic tone'"
-						class="w-full px-4 py-3 rounded-lg border border-[#E2E8F0] focus:border-[#0369A1] focus:ring-2 focus:ring-[#0369A1]/20 outline-none transition-all resize-y min-h-[80px] text-sm"
-					></textarea>
 				</div>
 
 				<div class="flex flex-col sm:flex-row gap-4">
