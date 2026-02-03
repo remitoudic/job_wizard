@@ -42,9 +42,40 @@ class WWRParser(BaseParser):
     def extract_job_data(self, soup: BeautifulSoup, url: str) -> Dict:
         """Extract job data from We Work Remotely HTML"""
         
-        # We Work Remotely Structure
+        # 1. Try JSON-LD (Primary)
+        # WWR often has unescaped chars, so we need strict=False
+        try:
+            scripts = soup.find_all("script", type="application/ld+json")
+            for script in scripts:
+                try:
+                    text = script.get_text()
+                    if not text.strip():
+                        continue
+                        
+                    data = json.loads(text, strict=False)
+                    
+                    if isinstance(data, dict) and data.get("@type") == "JobPosting":
+                         description = data.get("description", "")
+                         if description:
+                             desc_soup = BeautifulSoup(description, "html.parser")
+                             description = desc_soup.get_text(separator="\n\n", strip=True)
+                             
+                         return {
+                            "title": data.get("title", "Unknown Job"),
+                            "company": data.get("hiringOrganization", {}).get("name", "Unknown Company"),
+                            "description": description,
+                            "requirements": [],
+                            "url": self.normalize_url(url),
+                            "source": "WeWorkRemotely"
+                         }
+                except Exception:
+                    continue
+        except Exception:
+            pass
+
+        # 2. HTML Fallback (Secondary)
         
-        # 1. Title & Company (Header Layer)
+        # Title & Company (Header Layer)
         header_container = soup.find("div", class_="listing-header-container")
         
         title_text = "Unknown Job"
@@ -59,8 +90,6 @@ class WWRParser(BaseParser):
             if company_card:
                 company_elem = company_card.find("h2")
                 if company_elem:
-                    # Often "Company Name" is the text, possibly with "at " prefix cleanup if needed?
-                    # WWR usually just has the name.
                     company_text = company_elem.get_text(strip=True)
         else:
             # Fallback for some old layouts
@@ -68,8 +97,7 @@ class WWRParser(BaseParser):
             if h1:
                 title_text = h1.get_text(strip=True)
 
-        # 2. Description
-        # Standard ID for content
+        # Description
         description_div = soup.find("div", id="job-listing-show-container")
         
         desc_text = ""
@@ -89,7 +117,7 @@ class WWRParser(BaseParser):
             "title": title_text,
             "company": company_text,
             "description": desc_text,
-            "requirements": [], # WWR doesn't have a structured requirements section usually
+            "requirements": [],
             "url": self.normalize_url(url),
             "source": "WeWorkRemotely"
         }
