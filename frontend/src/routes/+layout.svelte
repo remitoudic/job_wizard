@@ -4,6 +4,7 @@
 	import { auth } from "../stores/auth";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
+	import Sidebar from "$lib/components/Sidebar.svelte";
 
 	export let data: any = {};
 	export let params: Record<string, string> = {};
@@ -18,7 +19,16 @@
 	}
 </script>
 
-<div class="min-h-screen bg-[#F8FAFC] flex flex-col font-body">
+<!-- Sidebar for authenticated users -->
+{#if $auth.isAuthenticated}
+	<Sidebar />
+{/if}
+
+<div
+	class="min-h-screen bg-[#F8FAFC] flex flex-col font-body {$auth.isAuthenticated
+		? 'md:ml-16'
+		: ''}"
+>
 	<!-- Navbar -->
 	<nav
 		class="bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] sticky top-0 z-50"
@@ -57,48 +67,9 @@
 					</a>
 				</div>
 
-				<!-- Right Side Menu -->
+				<!-- Right Side Menu - Empty for authenticated users, normal for guests -->
 				<div class="flex items-center gap-6">
-					{#if $auth.isAuthenticated}
-						<div class="flex items-center gap-6">
-							<a
-								href="/applications"
-								class="text-sm font-semibold transition-all {$page
-									.url.pathname === '/applications'
-									? 'text-[#0369A1]'
-									: 'text-[#64748B] hover:text-[#0F172A]'}"
-							>
-								Applications
-							</a>
-							<a
-								href="/profile"
-								class="text-sm font-semibold transition-all {$page
-									.url.pathname === '/profile'
-									? 'text-[#0369A1]'
-									: 'text-[#64748B] hover:text-[#0F172A]'}"
-							>
-								Profile
-							</a>
-							{#if $auth.user?.is_superuser}
-								<a
-									href="/admin"
-									class="text-sm font-semibold transition-all {$page
-										.url.pathname === '/admin'
-										? 'text-[#0369A1]'
-										: 'text-[#64748B] hover:text-[#0F172A]'}"
-								>
-									Admin
-								</a>
-							{/if}
-							<div class="h-4 w-[1px] bg-[#E2E8F0]"></div>
-							<button
-								on:click={handleLogout}
-								class="text-sm font-semibold text-red-500 hover:text-red-600 transition-colors"
-							>
-								Logout
-							</button>
-						</div>
-					{:else}
+					{#if !$auth.isAuthenticated}
 						<div class="flex items-center gap-4">
 							<a
 								href="/login"
@@ -120,7 +91,7 @@
 	</nav>
 
 	<!-- Main Content -->
-	<main class="flex-grow">
+	<main class="flex-grow {$auth.isAuthenticated ? 'mb-16 md:mb-0' : ''}">
 		<slot />
 	</main>
 
