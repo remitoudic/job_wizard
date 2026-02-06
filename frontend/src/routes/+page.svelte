@@ -643,7 +643,7 @@
 			</h1>
 			<p class="text-lg text-[#334155] max-w-lg mx-auto leading-relaxed">
 				Craft professional, personalized cover letters in seconds. Just
-				paste a job URL and let AI do the heavy lifting.
+				paste a LinkedIn job URL and let AI do the heavy lifting.
 			</p>
 		</div>
 
