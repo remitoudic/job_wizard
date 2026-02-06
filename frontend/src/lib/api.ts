@@ -65,6 +65,13 @@ export async function getProfile() {
     return handleResponse<any>(response, 'Failed to fetch profile');
 }
 
+export async function getHealth() {
+    const response = await fetch(`${API_URL}/health`, {
+        method: 'GET',
+    });
+    return handleResponse<any>(response, 'Health check failed');
+}
+
 export async function updateProfile(userData: any) {
     const response = await fetch(`${API_URL}/api/users/me`, {
         method: 'PATCH',
