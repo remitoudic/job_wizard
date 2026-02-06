@@ -97,12 +97,11 @@
 
 	<!-- Footer -->
 	<footer class="bg-white border-t border-[#E2E8F0] mt-auto">
-		<div class="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+		<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 			<div
-				class="flex flex-col md:flex-row justify-between items-center gap-6"
+				class="flex flex-col md:flex-row justify-between items-center gap-4"
 			>
 				<div class="flex items-center gap-2 grayscale opacity-50">
-					<span class="text-xl">🧙‍♂️</span>
 					<span class="font-bold text-gray-900 tracking-tight"
 						>Vite a Job</span
 					>
