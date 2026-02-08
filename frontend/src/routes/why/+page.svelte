@@ -58,7 +58,9 @@
                         Why Use Vite a Job?
                     </h1>
                     <p class="text-xl text-white/90 leading-relaxed">
-                        <strong>75% of resumes are rejected by ATS bots</strong>
+                        <strong
+                            >Most of applications are rejected by ATS bots</strong
+                        >
                         before a human ever sees them. Vite a Job uses AI to ensure
                         your cover letter speaks the exact language of the job description,
                         helping you pass the automated filters.

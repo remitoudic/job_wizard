@@ -31,11 +31,14 @@ echo "   Database: $POSTGRES_DB"
 echo "   File: $BACKUP_FILE"
 echo ""
 
-# Determine container name (try prod first, then dev)
+# Determine container name (check both prod and dev)
 if docker ps --format '{{.Names}}' | grep -q "^jobwizard-postgres-prod$"; then
     CONTAINER_NAME="jobwizard-postgres-prod"
-else
+elif docker ps --format '{{.Names}}' | grep -q "^jobwizard-postgres$"; then
     CONTAINER_NAME="jobwizard-postgres"
+else
+    echo "⚠️  No running database container found, skipping backup."
+    exit 0
 fi
 
 echo "   Container: $CONTAINER_NAME"

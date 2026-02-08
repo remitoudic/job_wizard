@@ -160,6 +160,45 @@
                 Why use this?
             </span>
         </a>
+
+        <!-- Admin (Superuser only) -->
+        {#if $auth.user?.is_superuser}
+            <a
+                href="/admin"
+                class="relative p-2 text-[#64748B] hover:text-[#0369A1] transition-all duration-200 hover:scale-110 group {isActive(
+                    '/admin',
+                )
+                    ? 'text-[#0369A1]'
+                    : ''}"
+                title="Admin"
+            >
+                {#if isActive("/admin")}
+                    <div
+                        class="absolute left-0 top-0 bottom-0 w-1 bg-[#0369A1] rounded-r"
+                    ></div>
+                {/if}
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                    />
+                </svg>
+                <!-- Tooltip -->
+                <span
+                    class="absolute left-full ml-4 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none"
+                >
+                    Admin
+                </span>
+            </a>
+        {/if}
     </nav>
 
     <!-- Logout (at bottom) -->
@@ -273,6 +312,34 @@
             </svg>
             <span class="text-[10px] font-medium">Why</span>
         </a>
+
+        <!-- Admin (Superuser only) -->
+        {#if $auth.user?.is_superuser}
+            <a
+                href="/admin"
+                class="flex flex-col items-center gap-1 p-2 text-[#64748B] hover:text-[#0369A1] transition-colors {isActive(
+                    '/admin',
+                )
+                    ? 'text-[#0369A1]'
+                    : ''}"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                    />
+                </svg>
+                <span class="text-[10px] font-medium">Admin</span>
+            </a>
+        {/if}
 
         <!-- Logout -->
         <button

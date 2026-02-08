@@ -111,12 +111,12 @@
 				</p>
 				<div class="flex gap-6">
 					<a
-						href="#"
+						href="/privacy"
 						class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]"
 						>Privacy</a
 					>
 					<a
-						href="#"
+						href="/terms"
 						class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]"
 						>Terms</a
 					>

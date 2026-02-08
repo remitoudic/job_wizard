@@ -26,11 +26,11 @@ def check_and_create():
             
             if user:
                 print(f"User {email} already exists.")
-                # Optional: Update password to be sure
-                # user.hashed_password = get_password_hash(password)
-                # session.add(user)
-                # session.commit()
-                # print("Password updated.")
+                if not user.is_superuser:
+                    user.is_superuser = True
+                    session.add(user)
+                    session.commit()
+                    print(f"Updated {email} to be a superuser.")
             else:
                 print(f"User {email} not found. Creating...")
                 new_user = User(
