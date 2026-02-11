@@ -14,7 +14,7 @@ async def test_openrouter_connection():
         pytest.skip("OPENROUTER_API_KEY not set")
 
     # Use a cheap/free model for testing
-    model_name = os.getenv("OPENROUTER_MODEL", "xiaomi/mimo-v2-flash:free")
+    model_name = os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-lite-001")
     
     print(f"\nTesting with model: {model_name}")
 

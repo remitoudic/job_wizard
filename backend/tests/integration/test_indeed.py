@@ -11,15 +11,15 @@ from app.services.parsers.registry import ParserRegistry
 async def test_indeed():
     parser = IndeedParser()
     
-    # 1. Test Normalization
+    # 1. Test Normalization - Expecting it to fail as Indeed parsing is disabled
     test_url = "https://www.indeed.com/q-germany-jobs.html?vjk=482f46774f12078f"
-    normalized = parser.normalize_url(test_url)
-    expected = "https://www.indeed.com/viewjob?jk=482f46774f12078f"
     
-    print(f"Original:   {test_url}")
-    print(f"Normalized: {normalized}")
-    assert normalized == expected, f"Expected {expected}, got {normalized}"
-    print("✅ Normalization OK")
+    try:
+        parser.normalize_url(test_url)
+        assert False, "Should have raised Exception because Indeed parsing is disabled"
+    except Exception as e:
+        assert "Indeed does not allow automatic extracting" in str(e)
+        print("✅ Indeed disabled check passed")
 
     # 2. Test Registry
     registry_parser = ParserRegistry.get_parser(test_url)
