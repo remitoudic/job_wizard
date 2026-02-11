@@ -226,13 +226,41 @@ CUSTOM USER GUIDANCE:
                 final_text = f"{clean_text}{STANDARD_SIGNATURE}"
                 return {"output": final_text, "source": name}
 
-            # Task 1: Local
-            local_task = asyncio.create_task(
-                run_agent(self.local_writer, local_prompt, f"Ollama ({self.ollama_model_name})"), 
-                name=f"Ollama ({self.ollama_model_name})"
-            )
-            task_start_times[id(local_task)] = time.perf_counter()
-            tasks.append(local_task)
+            # Task 1: Logic to prefer Local but Failover if Busy
+            
+            # Application-level throttling for Local Ollama
+            # We allow 2 concurrent requests to match OLLAMA_NUM_PARALLEL in docker-compose
+            if not hasattr(self, "ollama_semaphore"):
+                self.ollama_semaphore = asyncio.Semaphore(2)
+
+            # Check if local is busy
+            if self.ollama_semaphore.locked():
+                 # Local is busy (2 slots taken).
+                 # User requested IMMEDIATE failover to cloud.
+                 logfire.warn("Local model busy (2/2 active). Failover to cloud immediately.")
+                 logger.warning("Local model busy. Skipping local generation task.")
+                 
+                 # We simply don't start the local task. 
+                 # The code below will ensure at least one remote task is started.
+                 # If no remote is configured, we must raise an error here or let the empty task list raise it.
+                 
+                 # Check if we have remote config
+                 remote_config = self.provider_service.get_provider_config()
+                 if not remote_config or not remote_config.get("api_key"):
+                     raise Exception("System is currently busy (Local capacity full) and no Cloud provider is configured for failover.")
+                     
+            else:
+                # Local slot available, start local task wrapped in semaphore
+                async def run_local_with_semaphore():
+                    async with self.ollama_semaphore:
+                        return await run_agent(self.local_writer, local_prompt, f"Ollama ({self.ollama_model_name})")
+
+                local_task = asyncio.create_task(
+                    run_local_with_semaphore(), 
+                    name=f"Ollama ({self.ollama_model_name})"
+                )
+                task_start_times[id(local_task)] = time.perf_counter()
+                tasks.append(local_task)
             
             # Create Remote Agents dynamically
             try:
