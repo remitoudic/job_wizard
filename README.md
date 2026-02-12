@@ -4,7 +4,12 @@ A web application that generates personalized cover letters from job description
 
 ## Features
 
-- 🔗 **Smart Job Parsing**: Extracts job details from URLs using customizable proxies (no browser required)
+- 🔗 **Smart Job Parsing**: Extracts job details from URLs using customizable proxies. Supports:
+  - LinkedIn
+  - Indeed
+  - StepStone
+  - We Work Remotely
+  - Arbeitnow
 - 🚀 **Hybrid LLM Engine**: "Race Mode" runs local (Ollama) and remote (Groq/OpenRouter) models in parallel for maximum speed
 - 📄 **PDF Export**: Professional PDF format with embedded photo
 - 🎨 **Modern UI**: Beautiful, responsive SvelteKit interface
@@ -128,7 +133,11 @@ job_wizard/
 ├── backend/
 │   ├── app/
 │   │   ├── services/
-│   │   │   ├── job_parser.py    # httpx + proxy logic
+│   │   │   ├── parsers/         # Modular parser architecture
+│   │   │   │   ├── linkedin.py
+│   │   │   │   ├── indeed.py
+│   │   │   │   └── ...
+│   │   │   ├── job_parser.py    # Main parser entry point
 │   │   │   ├── llm_service.py   # Hybrid race logic
 │   │   │   └── ...
 │   ├── database/                # SQLModel definitions & migrations
