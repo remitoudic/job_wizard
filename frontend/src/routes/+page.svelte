@@ -632,7 +632,7 @@
 
 <SEO
 	title="Vite a Job - AI Cover Letter Generator"
-	description="Create high-quality, personalized cover letters in seconds with our AI generator. Optimized to beat ATS filters and get your application noticed by recruiters."
+	description="Learn how to write a cover letter that beats the ATS. Our AI-powered generator creates professional, personalized applications in seconds to help you get more interviews."
 />
 
 <div class="min-h-screen py-16 px-4">

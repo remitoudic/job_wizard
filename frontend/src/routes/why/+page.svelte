@@ -209,6 +209,65 @@
             </div>
         </div>
 
+        <!-- How to Write a Cover Letter Section (Keyword Target) -->
+        <div
+            class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-8 mb-8 overflow-hidden relative"
+        >
+            <div class="absolute top-0 right-0 p-4 opacity-5">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-32 w-32"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                </svg>
+            </div>
+
+            <h2 class="text-3xl font-bold text-[#0F172A] mb-6">
+                Expert Guide: How to Write a Cover Letter that Beats the ATS
+            </h2>
+            <div class="space-y-6 text-[#334155] leading-relaxed">
+                <p>
+                    Wondering <strong>how to write a cover letter</strong> that actually
+                    gets read? The secret isn't just in your experience—it's in the
+                    specialized optimization for automated filters.
+                </p>
+                <div class="grid md:grid-cols-2 gap-6 mt-8">
+                    <div class="p-4 bg-slate-50 rounded-lg">
+                        <h3 class="font-bold text-[#0369A1] mb-2 text-lg">
+                            1. Analyze the Job Description
+                        </h3>
+                        <p class="text-sm">
+                            Identify the top 3-5 skills mentioned. These are the
+                            "keywords" the ATS is programmed to find first.
+                        </p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-lg">
+                        <h3 class="font-bold text-[#0369A1] mb-2 text-lg">
+                            2. Speak the ATS Language
+                        </h3>
+                        <p class="text-sm">
+                            Don't use synonyms for technical skills. If they ask
+                            for "Project Management," don't write "Team Lead."
+                        </p>
+                    </div>
+                </div>
+                <p class="mt-4">
+                    Vite a Job automates this entire process. We don't just show
+                    you <strong>how to write a cover letter</strong>; we build
+                    one that matches your dream job's exact requirements in
+                    seconds.
+                </p>
+            </div>
+        </div>
+
         <!-- FAQ Section (GEO Boost) -->
         <div
             class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-8 mb-8"

@@ -11,6 +11,7 @@
         name: "Vite a Job",
         operatingSystem: "Web",
         applicationCategory: "BusinessApplication",
+        applicationSubCategory: "how to write a cover letter guide",
         offers: {
             "@type": "Offer",
             price: "0.00",
