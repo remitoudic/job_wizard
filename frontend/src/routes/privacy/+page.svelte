@@ -1,6 +1,13 @@
 <script>
 	import { fade } from "svelte/transition";
+	import SEO from "$lib/components/SEO.svelte";
 </script>
+
+<SEO
+	title="Privacy Policy - Vite a Job"
+	description="Learn how Vite a Job protects your personal data and privacy. Our policy details the collection, use, and security of your information on our platform."
+	canonical="https://viteajob.com/privacy"
+/>
 
 <div
 	class="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8"

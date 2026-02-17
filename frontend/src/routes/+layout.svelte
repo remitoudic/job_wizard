@@ -5,6 +5,7 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
 	import Sidebar from "$lib/components/Sidebar.svelte";
+	import SEO from "$lib/components/SEO.svelte";
 
 	export let data: any = {};
 	export let params: Record<string, string> = {};
@@ -23,6 +24,8 @@
 {#if $auth.isAuthenticated}
 	<Sidebar />
 {/if}
+
+<SEO />
 
 <div
 	class="min-h-screen bg-[#F8FAFC] flex flex-col font-body {$auth.isAuthenticated

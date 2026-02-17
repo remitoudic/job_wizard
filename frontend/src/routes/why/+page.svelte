@@ -1,12 +1,12 @@
 <script lang="ts">
-    // SvelteKit may pass `data` and `params` to pages — declare to prevent runtime warnings
-    export let data: any = {};
-    export let params: Record<string, string> = {};
+    import SEO from "$lib/components/SEO.svelte";
 </script>
 
-<svelte:head>
-    <title>Why Use Vite a Job? - Beat the ATS</title>
-</svelte:head>
+<SEO
+    title="Why Use Vite a Job? - Beat the ATS Bots"
+    description="Most applications are rejected by ATS bots before a human sees them. Learn how Vite a Job uses AI to help you pass the automated filters."
+    canonical="https://viteajob.com/why"
+/>
 
 <div class="min-h-screen py-16 px-4 bg-gradient-to-b from-white to-slate-50">
     <div class="max-w-4xl mx-auto">
@@ -207,6 +207,55 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- FAQ Section (GEO Boost) -->
+        <div
+            class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-8 mb-8"
+        >
+            <h2 class="text-2xl font-bold text-[#0F172A] mb-8">
+                Frequently Asked Questions
+            </h2>
+            <div class="space-y-6">
+                <div>
+                    <h3 class="font-bold text-[#0F172A] mb-2">
+                        How does Vite a Job help me pass the ATS?
+                    </h3>
+                    <p class="text-[#334155]">
+                        Vite a Job analyzes the specific job description you
+                        provide and ensures your cover letter contains the
+                        relevant keywords and skills that ATS bots look for,
+                        giving you a higher match score.
+                    </p>
+                </div>
+                <hr class="border-slate-100" />
+                <div>
+                    <h3 class="font-bold text-[#0F172A] mb-2">
+                        Can I use this for LinkedIn job postings?
+                    </h3>
+                    <p class="text-[#334155]">
+                        Yes! Vite a Job is specifically optimized for LinkedIn.
+                        Simply paste the URL of the LinkedIn job post, and our
+                        system will extract the details automatically.
+                    </p>
+                </div>
+                <hr class="border-slate-100" />
+                <div>
+                    <h3 class="font-bold text-[#0F172A] mb-2">
+                        Is the AI cover letter personalized?
+                    </h3>
+                    <p class="text-[#334155]">
+                        Absolutely. Beyond just keywords, the AI matches your
+                        provided context (like your resume or experience) with
+                        the job requirements to create a unique, professional
+                        narrative.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-right mb-12">
+            <p class="text-xs text-slate-400">Last updated: August 2026</p>
         </div>
 
         <!-- Call to Action -->

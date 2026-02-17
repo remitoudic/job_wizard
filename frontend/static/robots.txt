@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Private Routes
+Disallow: /admin
+Disallow: /profile
+Disallow: /applications
+Disallow: /login
+Disallow: /register
+
+# Host
+Sitemap: https://viteajob.com/sitemap.xml

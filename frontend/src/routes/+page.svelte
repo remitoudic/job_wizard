@@ -13,6 +13,7 @@
 		API_URL,
 	} from "$lib/api";
 	import { auth } from "../stores/auth";
+	import SEO from "$lib/components/SEO.svelte";
 
 	// SvelteKit automatically passes these props - declare them to avoid warnings
 	export let data: any = {};
@@ -629,9 +630,10 @@
 	});
 </script>
 
-<svelte:head>
-	<title>Vite a Job - AI Cover Letter Generator</title>
-</svelte:head>
+<SEO
+	title="Vite a Job - AI Cover Letter Generator"
+	description="Create high-quality, personalized cover letters in seconds with our AI generator. Optimized to beat ATS filters and get your application noticed by recruiters."
+/>
 
 <div class="min-h-screen py-16 px-4">
 	<div class="max-w-3xl mx-auto">

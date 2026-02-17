@@ -1,6 +1,13 @@
 <script>
     import { fade } from "svelte/transition";
+    import SEO from "$lib/components/SEO.svelte";
 </script>
+
+<SEO
+    title="Terms of Service - Vite a Job"
+    description="Read the terms and conditions for using Vite a Job. Understand your rights, responsibilities, and our service guarantees when using our AI tools."
+    canonical="https://viteajob.com/terms"
+/>
 
 <div
     class="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8"
