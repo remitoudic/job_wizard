@@ -13,7 +13,7 @@ A web application that generates personalized cover letters from job description
 - 🚀 **Hybrid LLM Engine**: "Race Mode" runs local (Ollama) and remote (Groq/OpenRouter) models in parallel for maximum speed
 - 📄 **PDF Export**: Professional PDF format with embedded photo
 - 🎨 **Modern UI**: Beautiful, responsive SvelteKit interface
-- 🐳 **Docker Ready**: Complete multi-service architecture
+- 🐳 **Docker Ready** : Complete multi-service architecture
 
 ## Architecture
 
