@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     GROQ_MODEL_1: str = "llama-3.3-70b-versatile"
     GROQ_MODEL_2: str = "moonshotai/kimi-k2-instruct-0905"
 
+    # LlamaCloud Settings (CV Parsing)
+    LLAMA_CLOUD_API_KEY: str = ""
+
     # App Settings
     API_V1_STR: str = "/api"
     PROJECT_NAME: str = "Job Wizard API"
