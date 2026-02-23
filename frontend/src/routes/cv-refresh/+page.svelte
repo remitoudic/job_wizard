@@ -31,7 +31,8 @@
 
     // Templates
     let templates: CVTemplate[] = [];
-    let selectedTemplate = "modern";
+    let selectedTemplate = "modern_single";
+    let modernLayout: "single" | "two" = "single";
 
     // Skills / Languages inline editing
     let newSkill = "";
@@ -138,7 +139,14 @@
         loading = true;
         error = "";
         try {
-            const blob = await generateCV(cvData, selectedTemplate);
+            // Respect the layout toggle if modern is selected
+            let actualTemplate = selectedTemplate;
+            if (selectedTemplate.startsWith("modern")) {
+                actualTemplate =
+                    modernLayout === "single" ? "modern_single" : "modern";
+            }
+
+            const blob = await generateCV(cvData, actualTemplate);
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
@@ -791,18 +799,18 @@
                         Choose a Template
                     </h2>
                     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {#each templates as t}
+                        {#each templates.filter((t) => t.name !== "modern_single") as t}
                             <button
                                 on:click={() => (selectedTemplate = t.name)}
                                 class="border-2 rounded-xl p-5 text-left transition-all duration-200 hover:shadow-md
-                                    {selectedTemplate === t.name
+                                    {selectedTemplate.startsWith(t.name)
                                     ? 'border-[#0369A1] bg-[#EFF6FF] shadow-md'
                                     : 'border-slate-200 hover:border-slate-300'}"
                             >
                                 <div class="flex items-center gap-3 mb-2">
                                     <div
                                         class="w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold
-                                            {selectedTemplate === t.name
+                                            {selectedTemplate.startsWith(t.name)
                                             ? 'bg-[#0369A1] text-white'
                                             : 'bg-slate-100 text-slate-500'}"
                                     >
@@ -819,7 +827,7 @@
                                 <p class="text-sm text-slate-500">
                                     {t.description}
                                 </p>
-                                {#if selectedTemplate === t.name}
+                                {#if selectedTemplate.startsWith(t.name)}
                                     <div
                                         class="mt-2 text-xs font-semibold text-[#0369A1]"
                                     >
@@ -834,6 +842,93 @@
                             </p>
                         {/if}
                     </div>
+
+                    <!-- Layout Selector if Modern is chosen -->
+                    {#if selectedTemplate.startsWith("modern")}
+                        <div
+                            class="mt-6 p-5 border-2 border-[#0369A1] bg-[#EFF6FF] rounded-xl animate-fade-in"
+                        >
+                            <h3 class="font-bold text-lg mb-3">Layout Style</h3>
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <!-- Single Column (Default) -->
+                                <button
+                                    on:click={() => (modernLayout = "single")}
+                                    class="flex-1 border-2 rounded-lg p-4 text-left transition-all
+                                        {modernLayout === 'single'
+                                        ? 'border-[#0369A1] bg-white shadow-sm ring-1 ring-[#0369A1]'
+                                        : 'border-slate-300 bg-white/50 opacity-70 hover:opacity-100 hover:border-slate-400'}"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-10 border-2 border-slate-300 rounded flex flex-col gap-1 p-1"
+                                        >
+                                            <div
+                                                class="w-full h-2 bg-slate-300 rounded-sm"
+                                            ></div>
+                                            <div
+                                                class="w-full h-1.5 bg-slate-200 rounded-sm"
+                                            ></div>
+                                            <div
+                                                class="w-full h-4 bg-slate-200 rounded-sm"
+                                            ></div>
+                                        </div>
+                                        <div>
+                                            <div class="font-bold">
+                                                Single Column <span
+                                                    class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full ml-1 font-medium"
+                                                    >Recommended</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="text-xs text-slate-500 mt-1"
+                                            >
+                                                Best for long CVs. ATS-friendly.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                <!-- Two Column -->
+                                <button
+                                    on:click={() => (modernLayout = "two")}
+                                    class="flex-1 border-2 rounded-lg p-4 text-left transition-all
+                                        {modernLayout === 'two'
+                                        ? 'border-[#0369A1] bg-white shadow-sm ring-1 ring-[#0369A1]'
+                                        : 'border-slate-300 bg-white/50 opacity-70 hover:opacity-100 hover:border-slate-400'}"
+                                >
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-10 border-2 border-slate-300 rounded flex gap-1 p-1"
+                                        >
+                                            <div
+                                                class="w-1/3 h-full bg-slate-200 rounded-sm"
+                                            ></div>
+                                            <div
+                                                class="w-2/3 flex flex-col gap-1"
+                                            >
+                                                <div
+                                                    class="w-full h-2 bg-slate-300 rounded-sm"
+                                                ></div>
+                                                <div
+                                                    class="w-full h-4 bg-slate-200 rounded-sm"
+                                                ></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="font-bold">
+                                                Two Column
+                                            </div>
+                                            <div
+                                                class="text-xs text-slate-500 mt-1"
+                                            >
+                                                Classic side-by-side design.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    {/if}
                 </div>
 
                 <!-- Navigation -->
