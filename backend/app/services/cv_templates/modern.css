@@ -181,4 +181,5 @@ body {
     font-size: 9pt;
     color: #334155;
     line-height: 1.6;
+    white-space: pre-line;
 }

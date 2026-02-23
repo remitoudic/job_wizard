@@ -47,6 +47,7 @@ services:
     container_name: jobwizard-backend
     env_file:
       - .env
+      - .env.local
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://jobwizard:changeme123@postgres:5432/jobwizard}
       OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}

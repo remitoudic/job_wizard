@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     USE_PLAYWRIGHT: bool = True
     
     class Config:
-        env_file = [".env", "../.env"]
+        env_file = [".env.local", ".env", "../.env.local", "../.env"]
         case_sensitive = True
         extra = "ignore"
 
