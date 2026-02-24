@@ -1,6 +1,6 @@
-# Job Wizard - Production Deployment Guide
+# Vite a Job! - Production Deployment Guide
 
-This guide explains how to deploy Job Wizard to a production environment.
+This guide explains how to deploy Vite a Job! to a production environment.
 
 ## 🎯 Production Architecture
 

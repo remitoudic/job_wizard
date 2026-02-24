@@ -1,6 +1,6 @@
-# Job Wizard Development Guide
+# Vite a Job! Development Guide
 
-Complete guide for developing, testing, and deploying the Job Wizard application.
+Complete guide for developing, testing, and deploying the Vite a Job! application.
 
 ## 📚 Table of Contents
 
@@ -46,7 +46,7 @@ open http://localhost:5173
 
 ## 🏗 Architecture Overview
 
-Job Wizard uses a modern microservices architecture with Docker Compose orchestration:
+Vite a Job! uses a modern microservices architecture with Docker Compose orchestration:
 
 ```
 ┌─────────────┐
