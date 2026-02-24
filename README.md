@@ -1,19 +1,15 @@
-# Job Wizard 🧙‍♂️
+# Vite a Job! 🧙‍♂️
 
-A web application that generates personalized cover letters from job descriptions using AI. Simply paste a job URL, upload your CV as a PDF (or any other background documents) as context and get a professionally formatted PDF cover letter. The more the system knows about you, the more personalized the cover letter will be.
+A web application that generates personalized cover letters from job descriptions using AI, and revitalizes your old CVs into clean, beautiful PDFs. Simply paste a job URL and your background info to get a custom cover letter, or upload your old CV to automatically parse and render it into a modern or classic template.
 
 ## Features
 
-- 🔗 **Smart Job Parsing**: Extracts job details from URLs using customizable proxies. Supports:
-  - LinkedIn
-  - Indeed
-  - StepStone
-  - We Work Remotely
-  - Arbeitnow
-- 🚀 **Hybrid LLM Engine**: "Race Mode" runs local (Ollama) and remote (Groq/OpenRouter) models in parallel for maximum speed
-- 📄 **PDF Export**: Professional PDF format with embedded photo
-- 🎨 **Modern UI**: Beautiful, responsive SvelteKit interface
-- 🐳 **Docker Ready** : Complete multi-service architecture
+- 📄 **CV Refresh**: Upload your old PDF CV. Our AI (LlamaParse + Groq) extracts your experience, education, and contact details so you can quickly generate a sleek new CV using our Modern or Classic templates.
+- 🔗 **Smart Job Parsing**: Extracts job details from URLs using customizable proxies. Supports LinkedIn, Indeed, StepStone, We Work Remotely, and Arbeitnow.
+- 🚀 **Hybrid LLM Engine**: "Race Mode" runs local (Ollama) and remote (Groq/OpenRouter) models in parallel for maximum speed.
+- 📄 **PDF Export**: Professional PDF format with embedded photo styling and multiple layout options (single-column, two-column).
+- 🎨 **Modern UI**: Beautiful, responsive SvelteKit interface.
+- 🐳 **Docker Ready** : Complete multi-service architecture.
 
 ## Architecture
 
