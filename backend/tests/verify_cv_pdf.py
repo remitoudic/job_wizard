@@ -12,6 +12,9 @@ async def main():
     
     print("Generating modern (1-col) PDF...")
     cv_generator_service.generate_pdf(cv_data, "modern_single", "/app/tests/test_cv_modern_single.pdf")
+    
+    print("Generating classic PDF...")
+    cv_generator_service.generate_pdf(cv_data, "classic", "/app/tests/test_cv_classic.pdf")
     print("Done! PDFs saved to /app/tests")
 
 if __name__ == "__main__":
