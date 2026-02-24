@@ -371,3 +371,90 @@ export async function deleteApplication(id: number): Promise<any> {
 
     return handleResponse<any>(response, 'Failed to delete application');
 }
+
+// ── CV Refresh Types & API ─────────────────────────────────────────────────
+
+export interface CVContact {
+    name: string;
+    email: string;
+    phone: string;
+    linkedin: string;
+    address: string;
+}
+
+export interface CVExperience {
+    title: string;
+    company: string;
+    start_date: string;
+    end_date: string;
+    description: string;
+}
+
+export interface CVEducation {
+    degree: string;
+    institution: string;
+    start_date: string;
+    end_date: string;
+}
+
+export interface CVData {
+    contact: CVContact;
+    summary: string;
+    experiences: CVExperience[];
+    education: CVEducation[];
+    skills: string[];
+    languages: string[];
+}
+
+export interface CVTemplate {
+    name: string;
+    label: string;
+    description: string;
+}
+
+export async function uploadCV(file: File): Promise<CVData> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_URL}/api/cv/upload`, {
+        method: 'POST',
+        headers: (() => {
+            const h: Record<string, string> = {};
+            const token = get(auth).token;
+            if (token) h['Authorization'] = `Bearer ${token}`;
+            return h;
+        })(),
+        body: formData,
+    });
+
+    return handleResponse<CVData>(response, 'Failed to parse CV');
+}
+
+export async function getCVTemplates(): Promise<CVTemplate[]> {
+    const response = await fetch(`${API_URL}/api/cv/templates`, {
+        method: 'GET',
+        headers: getHeaders(),
+    });
+
+    return handleResponse<CVTemplate[]>(response, 'Failed to fetch CV templates');
+}
+
+export async function generateCV(data: CVData, template: string): Promise<Blob> {
+    const response = await fetch(`${API_URL}/api/cv/generate`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ cv_data: data, template_name: template }),
+    });
+
+    if (!response.ok) {
+        const text = await response.text();
+        let msg = 'Failed to generate CV';
+        try {
+            const d = JSON.parse(text);
+            if (d.detail) msg = d.detail;
+        } catch { }
+        throw new Error(msg);
+    }
+
+    return response.blob();
+}

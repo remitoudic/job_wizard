@@ -88,6 +88,43 @@
             </span>
         </a>
 
+        <!-- CV Refresh -->
+        <a
+            href="/cv-refresh"
+            class="relative p-2 text-[#64748B] hover:text-[#0369A1] transition-all duration-200 hover:scale-110 group {isActive(
+                '/cv-refresh',
+            )
+                ? 'text-[#0369A1]'
+                : ''}"
+            title="CV Refresh"
+        >
+            {#if isActive("/cv-refresh")}
+                <div
+                    class="absolute left-0 top-0 bottom-0 w-1 bg-[#0369A1] rounded-r"
+                ></div>
+            {/if}
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+            </svg>
+            <!-- Tooltip -->
+            <span
+                class="absolute left-full ml-4 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none"
+            >
+                CV Refresh
+            </span>
+        </a>
+
         <!-- Profile -->
         <a
             href="/profile"
@@ -259,6 +296,32 @@
                 />
             </svg>
             <span class="text-[10px] font-medium">Applications</span>
+        </a>
+
+        <!-- CV Refresh -->
+        <a
+            href="/cv-refresh"
+            class="flex flex-col items-center gap-1 p-2 text-[#64748B] hover:text-[#0369A1] transition-colors {isActive(
+                '/cv-refresh',
+            )
+                ? 'text-[#0369A1]'
+                : ''}"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+            </svg>
+            <span class="text-[10px] font-medium">CV Refresh</span>
         </a>
 
         <!-- Profile -->

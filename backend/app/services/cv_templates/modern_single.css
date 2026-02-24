@@ -1,0 +1,183 @@
+/* Modern CV Template — WeasyPrint-compatible CSS */
+
+@page {
+    size: A4;
+    margin: 1.5cm;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "DejaVu Sans", "Liberation Sans", Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    color: #1e293b;
+    background: #fff;
+}
+
+.cv-container {
+    max-width: 100%;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+.cv-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+    color: #fff;
+    padding: 28px 32px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.header-main {
+    flex: 1;
+}
+
+.name {
+    font-size: 22pt;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.tagline {
+    font-size: 9pt;
+    opacity: 0.85;
+    max-width: 400px;
+}
+
+.contact-info {
+    text-align: right;
+    font-size: 8.5pt;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.icon {
+    font-size: 10pt;
+}
+
+/* ── Single-column body ────────────────────────────────────── */
+
+.cv-body {
+    width: 100%;
+}
+
+.sidebar,
+.main-content {
+    width: 100%;
+    float: none;
+}
+
+/* ── Sections ───────────────────────────────────────────── */
+
+.section {
+    margin-bottom: 18px;
+}
+
+.section h2 {
+    font-size: 11pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #0369a1;
+    border-bottom: 2px solid #0369a1;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+}
+
+/* ── Skills ──────────────────────────────────────────────── */
+
+.skill-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.skill-list li {
+    background: #e0f2fe;
+    color: #0c4a6e;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 8.5pt;
+    font-weight: 500;
+}
+
+/* ── Education ──────────────────────────────────────────── */
+
+.education-item {
+    margin-bottom: 10px;
+    page-break-inside: avoid;
+}
+
+.education-item h3 {
+    font-size: 9.5pt;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.institution {
+    font-size: 8.5pt;
+    color: #475569;
+}
+
+.dates {
+    font-size: 8pt;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* ── Experience ─────────────────────────────────────────── */
+
+.experience-item {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e2e8f0;
+    page-break-inside: avoid;
+}
+
+.experience-item:last-child {
+    border-bottom: none;
+}
+
+.exp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.exp-header h3 {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.company {
+    font-size: 9pt;
+    color: #0369a1;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.description {
+    font-size: 9pt;
+    color: #334155;
+    line-height: 1.6;
+    white-space: pre-line;
+}

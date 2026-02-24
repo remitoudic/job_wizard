@@ -1,0 +1,163 @@
+/* Classic CV Template — WeasyPrint-compatible CSS */
+
+@page {
+    size: A4;
+    margin: 1.5cm;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 11pt;
+    line-height: 1.4;
+    color: #111;
+    background: #fff;
+}
+
+.cv-container {
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+.cv-header {
+    text-align: center;
+    border-bottom: 1.5px solid #000;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.name {
+    font-size: 24pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+}
+
+.contact-info {
+    font-size: 10pt;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 8px;
+    color: #333;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ── Body ─────────────────────────────────────────────────── */
+
+.cv-body {
+    width: 100%;
+}
+
+.main-content {
+    width: 100%;
+}
+
+/* ── Sections ───────────────────────────────────────────── */
+
+.section {
+    margin-bottom: 22px;
+}
+
+.section h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #000;
+    border-bottom: 1px solid #000;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+}
+
+/* ── Professional Summary ───────────────────────────────── */
+
+.summary-text {
+    text-align: justify;
+    line-height: 1.5;
+    margin-bottom: 6px;
+}
+
+/* ── Experience & Education ─────────────────────────────── */
+
+.entry-item {
+    margin-bottom: 16px;
+    page-break-inside: avoid;
+}
+
+.entry-item:last-child {
+    margin-bottom: 0;
+}
+
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+}
+
+.entry-title {
+    font-size: 11.5pt;
+    font-weight: 700;
+}
+
+.entry-dates {
+    font-size: 10pt;
+    font-style: italic;
+    color: #444;
+}
+
+.entry-subtitle {
+    font-size: 11pt;
+    font-style: italic;
+    color: #222;
+    margin-bottom: 6px;
+}
+
+.entry-description {
+    font-size: 10.5pt;
+    color: #333;
+    line-height: 1.5;
+    white-space: pre-line;
+    padding-left: 8px;
+    border-left: 2px solid #eaeaea;
+}
+
+/* ── Skills & Languages ─────────────────────────────────── */
+
+.list-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    line-height: 1.6;
+}
+
+.list-item {
+    background: none;
+    color: #111;
+    font-size: 10.5pt;
+    padding: 0;
+}
+
+.list-item::after {
+    content: " • ";
+    color: #999;
+}
+
+.list-item:last-child::after {
+    content: "";
+}

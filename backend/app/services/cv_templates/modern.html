@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ contact.name }} — CV</title>
+    <link rel="stylesheet" href="modern.css">
+</head>
+
+<body>
+    <div class="cv-container">
+
+        <!-- Header -->
+        <header class="cv-header">
+            <div class="header-main">
+                <h1 class="name">{{ contact.name }}</h1>
+                {% if summary %}
+                <p class="tagline">{{ summary }}</p>
+                {% endif %}
+            </div>
+            <div class="contact-info">
+                {% if contact.email %}
+                <div class="contact-item">
+                    <span class="icon">✉</span>
+                    <span>{{ contact.email }}</span>
+                </div>
+                {% endif %}
+                {% if contact.phone %}
+                <div class="contact-item">
+                    <span class="icon">☎</span>
+                    <span>{{ contact.phone }}</span>
+                </div>
+                {% endif %}
+                {% if contact.linkedin %}
+                <div class="contact-item">
+                    <span class="icon" style="font-weight:bold; font-family:sans-serif;">in</span>
+                    <span>{{ contact.linkedin }}</span>
+                </div>
+                {% endif %}
+                {% if contact.address %}
+                <div class="contact-item">
+                    <span class="icon">📍</span>
+                    <span>{{ contact.address }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </header>
+
+        <div class="cv-body">
+            <!-- Left Column -->
+            <aside class="sidebar">
+                {% if skills %}
+                <section class="section">
+                    <h2>Skills</h2>
+                    <ul class="skill-list">
+                        {% for skill in skills %}
+                        <li>{{ skill }}</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+                {% endif %}
+
+                {% if languages %}
+                <section class="section">
+                    <h2>Languages</h2>
+                    <ul class="skill-list">
+                        {% for lang in languages %}
+                        <li>{{ lang }}</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+                {% endif %}
+
+                {% if education %}
+                <section class="section">
+                    <h2>Education</h2>
+                    {% for edu in education %}
+                    <div class="education-item">
+                        <h3>{{ edu.degree }}</h3>
+                        <p class="institution">{{ edu.institution }}</p>
+                        {% if edu.start_date or edu.end_date %}
+                        <p class="dates">{{ edu.start_date }}{% if edu.start_date and edu.end_date %} — {% endif %}{{
+                            edu.end_date }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </section>
+                {% endif %}
+            </aside>
+
+            <!-- Right Column -->
+            <main class="main-content">
+                {% if summary %}
+                <section class="section">
+                    <h2>Professional Summary</h2>
+                    <p>{{ summary }}</p>
+                </section>
+                {% endif %}
+
+                {% if experiences %}
+                <section class="section">
+                    <h2>Experience</h2>
+                    {% for exp in experiences %}
+                    <div class="experience-item">
+                        <div class="exp-header">
+                            <h3>{{ exp.title }}</h3>
+                            {% if exp.start_date or exp.end_date %}
+                            <span class="dates">{{ exp.start_date }}{% if exp.start_date and exp.end_date %} — {% endif
+                                %}{{ exp.end_date }}</span>
+                            {% endif %}
+                        </div>
+                        <p class="company">{{ exp.company }}</p>
+                        {% if exp.description %}
+                        <p class="description">{{ exp.description }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </section>
+                {% endif %}
+            </main>
+        </div>
+    </div>
+</body>
+
+</html>
