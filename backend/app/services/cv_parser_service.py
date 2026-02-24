@@ -63,6 +63,7 @@ IMPORTANT RULES:
 5. If a field is missing, use an empty string or empty list.
 6. For "description" in experiences and education: combine all bullet points into a single multi-line string (e.g. "• Bullet 1\n• Bullet 2").
 7. For "summary": use the professional summary/profile/objective section if present, otherwise leave empty.
+8. Extract the candidate's core contact information (email, phone, linkedin, address) if present. Make sure to capture the phone number and email correctly.
 
 JSON Schema:
 {{
@@ -145,6 +146,17 @@ class CVParserService:
             raise ValueError("LlamaParse returned no content for the uploaded PDF.")
 
         cv_markdown = "\n\n".join(doc.text for doc in documents)
+        
+        # Inject raw text from first page to ensure headers/footers (contact info) are available
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(file_path)
+            first_page_text = reader.pages[0].extract_text()
+            # Prepend the raw text to the markdown
+            cv_markdown = f"--- RAW TEXT (Contains Contact Info) ---\n{first_page_text[:1000]}\n\n--- STRUCTURED MARKDOWN ---\n" + cv_markdown
+        except Exception as e:
+            logger.warning(f"Could not extract raw text fallback: {e}")
+            
         logger.info(f"LlamaParse extracted {len(cv_markdown)} characters of markdown")
 
         # Step 2: Structure the markdown using the LLM extraction agent
