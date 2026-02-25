@@ -166,6 +166,27 @@
         if (step === "generate") step = "review";
         else if (step === "review") step = "upload";
     }
+
+    function isStepAvailable(s: string) {
+        if (s === "upload") return true;
+        if (s === "review")
+            return cvData.contact.name !== "" || cvData.experiences.length > 0;
+        if (s === "generate")
+            return (
+                (cvData.contact.name !== "" || cvData.experiences.length > 0) &&
+                step !== "upload"
+            );
+        return false;
+    }
+
+    function handleStepClick(s: string) {
+        if (!isStepAvailable(s)) return;
+        if (s === "generate") {
+            goToGenerate();
+        } else {
+            step = s as "upload" | "review" | "generate";
+        }
+    }
 </script>
 
 <SEO
@@ -233,7 +254,8 @@
         <div class="flex items-center justify-center gap-2 mb-10">
             {#each [{ key: "upload", label: "Upload" }, { key: "review", label: "Review & Edit" }, { key: "generate", label: "Template & Download" }] as s, i}
                 <div class="flex items-center gap-2">
-                    <div
+                    <button
+                        on:click={() => handleStepClick(s.key)}
                         class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300
                             {step === s.key
                             ? 'bg-[#0369A1] text-white shadow-lg scale-110'
@@ -242,14 +264,17 @@
                                         step === 'generate')) ||
                                 (s.key === 'review' && step === 'generate')
                               ? 'bg-emerald-500 text-white'
-                              : 'bg-slate-200 text-slate-500'}"
+                              : 'bg-slate-200 text-slate-500'} 
+                            {isStepAvailable(s.key)
+                            ? 'cursor-pointer hover:opacity-80'
+                            : 'cursor-default'}"
                     >
                         {#if (s.key === "upload" && (step === "review" || step === "generate")) || (s.key === "review" && step === "generate")}
                             ✓
                         {:else}
                             {i + 1}
                         {/if}
-                    </div>
+                    </button>
                     <span
                         class="text-sm font-medium text-slate-600 hidden sm:inline"
                         >{s.label}</span
@@ -383,22 +408,26 @@
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
                             <label
+                                for="full-name"
                                 class="block text-sm font-medium text-slate-600 mb-1"
                                 >Full Name</label
                             >
                             <input
                                 type="text"
+                                id="full-name"
                                 bind:value={cvData.contact.name}
                                 class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none transition-all"
                             />
                         </div>
                         <div>
                             <label
+                                for="email"
                                 class="block text-sm font-medium text-slate-600 mb-1"
                                 >Email</label
                             >
                             <input
                                 type="email"
+                                id="email"
                                 bind:value={cvData.contact.email}
                                 class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none transition-all"
                             />
@@ -427,11 +456,13 @@
                         </div>
                         <div class="md:col-span-2">
                             <label
+                                for="address"
                                 class="block text-sm font-medium text-slate-600 mb-1"
                                 >Address</label
                             >
                             <input
                                 type="text"
+                                id="address"
                                 bind:value={cvData.contact.address}
                                 class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none transition-all"
                             />
