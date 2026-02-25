@@ -150,11 +150,18 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `cv_${cvData.contact.name.replace(/\s+/g, "_") || "refreshed"}.pdf`;
+
+            const safeName = cvData?.contact?.name || "";
+            a.download = `cv_${safeName.replace(/\\s+/g, "_") || "refreshed"}.pdf`;
+
             document.body.appendChild(a);
             a.click();
             a.remove();
-            URL.revokeObjectURL(url);
+
+            // Defer revocation to allow Safari enough time to start the download
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+            }, 1000);
         } catch (e: any) {
             error = e.message || "Failed to generate CV";
         } finally {
