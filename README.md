@@ -51,8 +51,6 @@ A web application that generates personalized cover letters from job description
 
 ## Quick Start
 
-### Local Development
-
 ```bash
 git clone git@github.com:remitoudic/job_wizard.git
 cd job_wizard
@@ -66,14 +64,7 @@ docker exec jobwizard-ollama ollama pull llama3.2:1b
 
 **Access**: http://localhost:5173
 
-### Production Server
-
-```bash
-# Safe update with auto-backup and rollback
-./scripts/update-production.sh
-```
-
-📖 **Full Development Guide**: See [DEVELOPMENT.md](DEVELOPMENT.md) for complete instructions.
+📖 **Full Development & Deployment Guide**: See [DEVELOPMENT.md](DEVELOPMENT.md) for complete instructions on local setup, environment variables, testing, and production deployment.
 
 ## Usage
 
@@ -83,66 +74,6 @@ docker exec jobwizard-ollama ollama pull llama3.2:1b
 4. Click "Generate Cover Letter" (Watch the race between AI models!)
 5. Review the AI-generated content
 6. Download your PDF
-
-## Development
-
-### Backend Development
-
-```bash
-cd backend
-
-# Install dependencies with uv
-uv sync
-
-# Run tests
-uv run pytest
-
-# Run locally
-uv run uvicorn app.main:app --reload
-```
-
-### Frontend Development
-
-```bash
-cd frontend
-
-# Install dependencies
-bun install
-
-# Run dev server
-bun run dev -- --host 0.0.0.0 --port 5173
-```
-
-## Environment Variables
-
-See `.env.example` for all configuration options. Key variables include:
-
-- `GROQ_API_KEY`: Primary remote LLM provider (Fastest)
-- `OPENROUTER_API_KEY`: Backup remote LLM provider
-- `PROXY_FILE_PATH`: Path to standard JSON proxy list (ip, port, un, pw)
-- `LOGFIRE_TOKEN`: (Optional) For observability and structured logging
-
-## Project Structure
-
-```
-job_wizard/
-├── backend/
-│   ├── app/
-│   │   ├── services/
-│   │   │   ├── parsers/         # Modular parser architecture
-│   │   │   │   ├── linkedin.py
-│   │   │   │   ├── indeed.py
-│   │   │   │   └── ...
-│   │   │   ├── job_parser.py    # Main parser entry point
-│   │   │   ├── llm_service.py   # Hybrid race logic
-│   │   │   └── ...
-│   ├── database/                # SQLModel definitions & migrations
-│   └── ...
-├── frontend/
-│   ├── src/lib/components/      # Svelte components
-│   └── ...
-└── scripts/                     # Deployment & Utility scripts
-```
 
 ## Troubleshooting
 
