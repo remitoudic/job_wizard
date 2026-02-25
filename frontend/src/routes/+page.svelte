@@ -981,6 +981,7 @@
 							>
 								<div>
 									<label
+										for="custom-instructions"
 										class="block text-sm font-semibold text-[#334155] mb-2"
 										>Custom Guidance</label
 									>
@@ -990,6 +991,7 @@
 										experience").
 									</p>
 									<textarea
+										id="custom-instructions"
 										bind:value={customInstructions}
 										placeholder="Optional: Enter custom instructions here..."
 										class="w-full px-4 py-3 rounded-lg border border-[#E2E8F0] focus:border-[#0369A1] focus:ring-2 focus:ring-[#0369A1]/20 outline-none transition-all resize-y min-h-[80px] text-sm"
@@ -998,6 +1000,7 @@
 
 								<div>
 									<label
+										for="file-upload-section"
 										class="block text-sm font-semibold text-[#334155] mb-2"
 										>Upload info</label
 									>
@@ -1009,7 +1012,7 @@
 									<div class="flex items-center gap-4">
 										<input
 											type="file"
-											id="file-upload"
+											id="file-upload-section"
 											accept="image/*,.pdf"
 											on:change={handleFileUpload}
 											class="hidden"
@@ -1337,10 +1340,12 @@
 								<div class="space-y-4">
 									<div>
 										<label
+											for="template-style"
 											class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 											>Template Style</label
 										>
 										<select
+											id="template-style"
 											bind:value={templateStyle}
 											on:change={invalidatePdf}
 											class="w-full text-sm border-[#E2E8F0] rounded-md focus:ring-[#0369A1] focus:border-[#0369A1]"
@@ -1356,10 +1361,12 @@
 
 									<div>
 										<label
+											for="letter-language"
 											class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 											>Language</label
 										>
 										<select
+											id="letter-language"
 											bind:value={language}
 											class="w-full text-sm border-[#E2E8F0] rounded-md focus:ring-[#0369A1] focus:border-[#0369A1]"
 										>
@@ -1677,10 +1684,12 @@
 							<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 								<div>
 									<label
+										for="header-firstname"
 										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>First Name</label
 									>
 									<input
+										id="header-firstname"
 										type="text"
 										bind:value={firstName}
 										on:input={() => {
@@ -1693,10 +1702,12 @@
 								</div>
 								<div>
 									<label
+										for="header-surname"
 										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>Family Name</label
 									>
 									<input
+										id="header-surname"
 										type="text"
 										bind:value={surname}
 										on:input={() => {
@@ -1712,10 +1723,12 @@
 							<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 								<div class="md:col-span-2">
 									<label
+										for="header-street"
 										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>Street Address</label
 									>
 									<input
+										id="header-street"
 										type="text"
 										bind:value={addressStreet}
 										on:input={invalidatePdf}
@@ -1725,10 +1738,12 @@
 								</div>
 								<div>
 									<label
+										for="header-postcode"
 										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>Postcode</label
 									>
 									<input
+										id="header-postcode"
 										type="text"
 										bind:value={addressPostcode}
 										on:input={invalidatePdf}
@@ -1738,11 +1753,13 @@
 								</div>
 								<div>
 									<label
+										for="header-city"
 										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>City & Country</label
 									>
 									<div class="flex gap-2">
 										<input
+											id="header-city"
 											type="text"
 											bind:value={addressCity}
 											on:input={invalidatePdf}
@@ -1751,6 +1768,7 @@
 											disabled={isPdfGenerating}
 										/>
 										<input
+											aria-label="Country"
 											type="text"
 											bind:value={addressCountry}
 											on:input={invalidatePdf}
@@ -1765,10 +1783,12 @@
 							<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 								<div>
 									<label
+										for="header-email"
 										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>Email Address</label
 									>
 									<input
+										id="header-email"
 										type="email"
 										bind:value={email}
 										on:input={invalidatePdf}
@@ -1778,10 +1798,12 @@
 								</div>
 								<div>
 									<label
+										for="header-phone"
 										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>Phone Number</label
 									>
 									<input
+										id="header-phone"
 										type="tel"
 										bind:value={phone}
 										on:input={invalidatePdf}
@@ -1791,10 +1813,12 @@
 								</div>
 								<div>
 									<label
+										for="header-linkedin"
 										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 										>LinkedIn URL</label
 									>
 									<input
+										id="header-linkedin"
 										type="text"
 										bind:value={linkedin}
 										on:input={invalidatePdf}

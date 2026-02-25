@@ -18,4 +18,9 @@ uvx ruff check --fix
 uvx ruff format
 cd ..
 
+echo "Processing Frontend..."
+cd frontend
+bun run check
+cd ..
+
 echo "Done!"

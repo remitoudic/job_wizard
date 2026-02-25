@@ -1,6 +1,6 @@
 
 import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 class Settings(BaseSettings):
@@ -25,16 +25,17 @@ class Settings(BaseSettings):
 
     # App Settings
     API_V1_STR: str = "/api"
-    PROJECT_NAME: str = "Job Wizard API"
+    PROJECT_NAME: str = "Vite a Job! API"
     
     # Scraping Settings
     PROXY_FILE_PATH: str = "proxies.json"
     USE_PLAYWRIGHT: bool = True
     
-    class Config:
-        env_file = [".env.local", ".env", "../.env.local", "../.env"]
-        case_sensitive = True
-        extra = "ignore"
+    model_config = SettingsConfigDict(
+        env_file=[".env.local", ".env", "../.env.local", "../.env"],
+        case_sensitive=True,
+        extra="ignore"
+    )
 
 @lru_cache()
 def get_settings():

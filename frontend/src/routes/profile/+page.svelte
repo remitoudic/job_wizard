@@ -94,10 +94,13 @@
         <form on:submit|preventDefault={handleSave} class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                    <label
+                        for="first-name"
+                        class="block text-sm font-medium text-gray-700 mb-1"
                         >First Name</label
                     >
                     <input
+                        id="first-name"
                         type="text"
                         bind:value={user.first_name}
                         class="input w-full"
@@ -105,10 +108,13 @@
                     />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                    <label
+                        for="surname"
+                        class="block text-sm font-medium text-gray-700 mb-1"
                         >Surname</label
                     >
                     <input
+                        id="surname"
                         type="text"
                         bind:value={user.surname}
                         class="input w-full"
@@ -116,10 +122,13 @@
                     />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                    <label
+                        for="email"
+                        class="block text-sm font-medium text-gray-700 mb-1"
                         >Email</label
                     >
                     <input
+                        id="email"
                         type="email"
                         value={user.email}
                         disabled
@@ -127,10 +136,13 @@
                     />
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                    <label
+                        for="phone"
+                        class="block text-sm font-medium text-gray-700 mb-1"
                         >Phone</label
                     >
                     <input
+                        id="phone"
                         type="text"
                         bind:value={user.phone}
                         class="input w-full"
@@ -138,10 +150,13 @@
                     />
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1"
+                    <label
+                        for="linkedin"
+                        class="block text-sm font-medium text-gray-700 mb-1"
                         >LinkedIn URL</label
                     >
                     <input
+                        id="linkedin"
                         type="url"
                         bind:value={user.linkedin_url}
                         class="input w-full"
@@ -179,10 +194,12 @@
                     <div class="md:col-span-2 contents">
                         <div class="md:col-span-2">
                             <label
+                                for="street"
                                 class="block text-sm font-medium text-gray-700 mb-1"
                                 >Street</label
                             >
                             <input
+                                id="street"
                                 type="text"
                                 bind:value={user.street}
                                 class="input w-full"
@@ -191,10 +208,12 @@
                         </div>
                         <div>
                             <label
+                                for="city"
                                 class="block text-sm font-medium text-gray-700 mb-1"
                                 >City</label
                             >
                             <input
+                                id="city"
                                 type="text"
                                 bind:value={user.city}
                                 class="input w-full"
@@ -203,10 +222,12 @@
                         </div>
                         <div>
                             <label
+                                for="postcode"
                                 class="block text-sm font-medium text-gray-700 mb-1"
                                 >Postcode</label
                             >
                             <input
+                                id="postcode"
                                 type="text"
                                 bind:value={user.postcode}
                                 class="input w-full"
@@ -215,10 +236,12 @@
                         </div>
                         <div class="md:col-span-2">
                             <label
+                                for="country"
                                 class="block text-sm font-medium text-gray-700 mb-1"
                                 >Country</label
                             >
                             <input
+                                id="country"
                                 type="text"
                                 bind:value={user.country}
                                 class="input w-full"

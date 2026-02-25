@@ -434,22 +434,26 @@
                         </div>
                         <div>
                             <label
+                                for="phone"
                                 class="block text-sm font-medium text-slate-600 mb-1"
                                 >Phone</label
                             >
                             <input
                                 type="tel"
+                                id="phone"
                                 bind:value={cvData.contact.phone}
                                 class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none transition-all"
                             />
                         </div>
                         <div>
                             <label
+                                for="linkedin"
                                 class="block text-sm font-medium text-slate-600 mb-1"
                                 >LinkedIn</label
                             >
                             <input
                                 type="url"
+                                id="linkedin"
                                 bind:value={cvData.contact.linkedin}
                                 class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none transition-all"
                             />
@@ -543,33 +547,39 @@
                             <div class="grid md:grid-cols-2 gap-3 mb-3">
                                 <div>
                                     <label
+                                        for="exp-title-{i}"
                                         class="block text-xs font-medium text-slate-500 mb-1"
                                         >Job Title</label
                                     >
                                     <input
                                         type="text"
+                                        id="exp-title-{i}"
                                         bind:value={exp.title}
                                         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none text-sm"
                                     />
                                 </div>
                                 <div>
                                     <label
+                                        for="exp-company-{i}"
                                         class="block text-xs font-medium text-slate-500 mb-1"
                                         >Company</label
                                     >
                                     <input
                                         type="text"
+                                        id="exp-company-{i}"
                                         bind:value={exp.company}
                                         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none text-sm"
                                     />
                                 </div>
                                 <div>
                                     <label
+                                        for="exp-start-{i}"
                                         class="block text-xs font-medium text-slate-500 mb-1"
                                         >Start Date</label
                                     >
                                     <input
                                         type="text"
+                                        id="exp-start-{i}"
                                         bind:value={exp.start_date}
                                         placeholder="e.g. Jan 2020"
                                         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none text-sm"
@@ -577,11 +587,13 @@
                                 </div>
                                 <div>
                                     <label
+                                        for="exp-end-{i}"
                                         class="block text-xs font-medium text-slate-500 mb-1"
                                         >End Date</label
                                     >
                                     <input
                                         type="text"
+                                        id="exp-end-{i}"
                                         bind:value={exp.end_date}
                                         placeholder="e.g. Present"
                                         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none text-sm"
@@ -590,10 +602,12 @@
                             </div>
                             <div>
                                 <label
+                                    for="exp-desc-{i}"
                                     class="block text-xs font-medium text-slate-500 mb-1"
                                     >Description</label
                                 >
                                 <textarea
+                                    id="exp-desc-{i}"
                                     bind:value={exp.description}
                                     rows="2"
                                     class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none text-sm resize-y"
@@ -670,33 +684,39 @@
                             <div class="grid md:grid-cols-2 gap-3">
                                 <div>
                                     <label
+                                        for="edu-degree-{i}"
                                         class="block text-xs font-medium text-slate-500 mb-1"
                                         >Degree</label
                                     >
                                     <input
                                         type="text"
+                                        id="edu-degree-{i}"
                                         bind:value={edu.degree}
                                         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none text-sm"
                                     />
                                 </div>
                                 <div>
                                     <label
+                                        for="edu-institution-{i}"
                                         class="block text-xs font-medium text-slate-500 mb-1"
                                         >Institution</label
                                     >
                                     <input
                                         type="text"
+                                        id="edu-institution-{i}"
                                         bind:value={edu.institution}
                                         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none text-sm"
                                     />
                                 </div>
                                 <div>
                                     <label
+                                        for="edu-start-{i}"
                                         class="block text-xs font-medium text-slate-500 mb-1"
                                         >Start Date</label
                                     >
                                     <input
                                         type="text"
+                                        id="edu-start-{i}"
                                         bind:value={edu.start_date}
                                         placeholder="e.g. 2016"
                                         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none text-sm"
@@ -704,11 +724,13 @@
                                 </div>
                                 <div>
                                     <label
+                                        for="edu-end-{i}"
                                         class="block text-xs font-medium text-slate-500 mb-1"
                                         >End Date</label
                                     >
                                     <input
                                         type="text"
+                                        id="edu-end-{i}"
                                         bind:value={edu.end_date}
                                         placeholder="e.g. 2020"
                                         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0369A1] focus:border-transparent outline-none text-sm"
