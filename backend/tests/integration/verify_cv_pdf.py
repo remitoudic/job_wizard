@@ -1,5 +1,5 @@
 import asyncio
-from app.services.cv_parser_service import cv_parser_service
+from app.services.cv_parsers.cv_parser_service import cv_parser_service
 from app.services.cv_generator_service import cv_generator_service
 
 async def main():

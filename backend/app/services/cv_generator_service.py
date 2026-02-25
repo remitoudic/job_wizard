@@ -8,7 +8,7 @@ from typing import Optional
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 
-from app.services.cv_parser_service import CVData
+from app.services.cv_parsers.cv_parser_service import CVData
 
 logger = logging.getLogger("app.services.cv_generator_service")
 

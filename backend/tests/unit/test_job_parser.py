@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 # Skip this test if respx isn't installed in the environment
 respx = pytest.importorskip("respx")
 
-from app.services.parsers.linkedin import LinkedInParser
+from app.services.job_parsers.linkedin import LinkedInParser
 
 def test_linkedin_parsing_accuracy():
     """Test parsing accuracy against a ground truth fixture"""
@@ -100,7 +100,7 @@ We appreciate your interest and wish you the best!"""
 
 def test_linkedin_url_normalization():
     """Test that private/auth-walled URLs are converted to public ones"""
-    from app.services.parsers.linkedin import LinkedInParser
+    from app.services.job_parsers.linkedin import LinkedInParser
     parser = LinkedInParser()
     
     # 1. The user's specific case

@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from llama_parse import LlamaParse
 from app.core.config import settings
 
-logger = logging.getLogger("app.services.cv_parser_service")
+logger = logging.getLogger("app.services.cv_parsers.cv_parser_service")
 
 
 # ── Pydantic models for structured CV data ──────────────────────────────────

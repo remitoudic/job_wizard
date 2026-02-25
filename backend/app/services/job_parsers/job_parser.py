@@ -2,7 +2,7 @@ import httpx
 from bs4 import BeautifulSoup
 from typing import Dict
 import asyncio
-from app.services.parsers import ParserRegistry
+from app.services.job_parsers.registry import ParserRegistry
 import logfire
 from app.services.proxy_manager import ProxyManager
 

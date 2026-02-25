@@ -1,6 +1,6 @@
 import asyncio
 import logfire
-from app.services.job_parser import JobParser
+from app.services.job_parsers.job_parser import JobParser
 
 # Configure logfire to print to console only for tests
 logfire.configure(send_to_logfire=False)
