@@ -2,7 +2,7 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch
-from app.services.llm_service import LLMService
+from app.services.cover_letter.llm_service import LLMService
 
 @pytest.mark.asyncio
 async def test_race_alternatives_with_failure():
@@ -10,7 +10,7 @@ async def test_race_alternatives_with_failure():
     Test that alternatives are still processed even if one model fails during the race.
     """
     # We need to patch create_writing_agent because LLMService creates remote agents dynamically
-    with patch("app.services.llm_service.create_writing_agent") as mock_create_agent:
+    with patch("app.services.cover_letter.llm_service.create_writing_agent") as mock_create_agent:
         service = LLMService()
         
         # Configure service
@@ -98,7 +98,7 @@ async def test_race_alternatives_with_failure():
 @pytest.mark.asyncio
 async def test_race_all_fail():
     """Test behavior when all models fail"""
-    with patch("app.services.llm_service.create_writing_agent") as mock_create_agent:
+    with patch("app.services.cover_letter.llm_service.create_writing_agent") as mock_create_agent:
         service = LLMService()
         
         # Local fails

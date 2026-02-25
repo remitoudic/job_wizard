@@ -1,6 +1,6 @@
 
 import pytest
-from app.services.llm_service import LLMService
+from app.services.cover_letter.llm_service import LLMService
 
 @pytest.mark.asyncio
 async def test_groq_integration_connectivity():

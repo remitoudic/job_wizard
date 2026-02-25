@@ -57,7 +57,7 @@ def test_upload_image_regression():
 # But if we want to test the *arguments* passing, we can mock the method.
 from unittest.mock import patch, AsyncMock  # noqa: E402
 
-@patch("app.services.llm_service.LLMService.generate_cover_letter", new_callable=AsyncMock)
+@patch("app.services.cover_letter.llm_service.LLMService.generate_cover_letter", new_callable=AsyncMock)
 def test_generate_cover_letter_with_context(mock_generate):
     mock_generate.return_value = ("Dear Hiring Manager, this is a generated letter.", "MockSource", "mock-alt-id")
     

@@ -1,6 +1,6 @@
 import pytest
 from bs4 import BeautifulSoup
-from app.services.job_parsers.stepstone import StepStoneParser
+from app.services.cover_letter.job_parsers.stepstone import StepStoneParser
 
 @pytest.fixture
 def parser():

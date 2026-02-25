@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, patch
-from app.services.job_parsers.job_parser import JobParser
+from app.services.cover_letter.job_parsers.job_parser import JobParser
 
 @pytest.mark.asyncio
 async def test_stepstone_integration_parsing():
@@ -21,7 +21,7 @@ async def test_stepstone_integration_parsing():
     # checking that JobParser correctly delegates to StepStoneParser
     
     # Mock StepStoneParser.fetch_content to avoid curl_cffi network calls
-    with patch("app.services.job_parsers.stepstone.StepStoneParser.fetch_content", return_value=mock_html) as mock_fetch:
+    with patch("app.services.cover_letter.job_parsers.stepstone.StepStoneParser.fetch_content", return_value=mock_html) as mock_fetch:
         
         parser = JobParser()
         url = "https://www.stepstone.de/jobs--Senior-Developer--12345-inline.html"

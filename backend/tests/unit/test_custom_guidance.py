@@ -1,12 +1,12 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from app.services.llm_service import LLMService
+from app.services.cover_letter.llm_service import LLMService
 
 @pytest.mark.asyncio
 async def test_generate_cover_letter_with_custom_instructions():
     # Mock settings and dependencies
-    with patch("app.services.llm_service.create_writing_agent") as mock_create_agent, \
-         patch("app.services.llm_service.settings") as mock_settings:
+    with patch("app.services.cover_letter.llm_service.create_writing_agent") as mock_create_agent, \
+         patch("app.services.cover_letter.llm_service.settings") as mock_settings:
         
         # Setup mock agent
         mock_agent = AsyncMock()

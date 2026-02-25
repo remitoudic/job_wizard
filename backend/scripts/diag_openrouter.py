@@ -2,7 +2,7 @@
 import asyncio
 import os
 import sys
-from app.services.llm_service import LLMService
+from app.services.cover_letter.llm_service import LLMService
 from dotenv import load_dotenv
 
 load_dotenv()

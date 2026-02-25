@@ -51,7 +51,7 @@ class PDFService:
         )
         
         # Get template strategy
-        from app.services.templates import TemplateRegistry
+        from app.services.cover_letter.templates import TemplateRegistry
         template = TemplateRegistry.get(template_name)
         
         # Prepare story container

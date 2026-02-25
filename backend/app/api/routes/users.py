@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel import select
 from app.api.deps import SessionDep, CurrentUser, get_current_superuser
 from src.models.user import UserRead, UserUpdate, User
-from app.services.user import user_service
+from app.services.platform.user import user_service
 
 router = APIRouter()
 

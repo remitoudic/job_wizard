@@ -1,12 +1,12 @@
 
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
-from app.services.llm_service import LLMService
+from app.services.cover_letter.llm_service import LLMService
 
 @pytest.fixture
 def mock_provider_service():
     # Patch the singleton instance
-    with patch("app.services.llm_provider_service.llm_provider_service") as mock_service:
+    with patch("app.services.platform.llm_provider_service.llm_provider_service") as mock_service:
         # Default to Groq being active
         mock_service.get_active_provider.return_value = "groq"
         mock_service.get_provider_config.return_value = {
@@ -26,7 +26,7 @@ async def test_groq_failover_trigger(mock_provider_service):
     Test that when Groq fails (simulated), 
     the service calls report_rate_limit for Groq and retries.
     """
-    with patch("app.services.llm_service.create_writing_agent") as mock_create_agent:
+    with patch("app.services.cover_letter.llm_service.create_writing_agent") as mock_create_agent:
         # Mock Local Agent (success)
         mock_local_agent = MagicMock()
         mock_local_agent.run = AsyncMock(return_value=MagicMock(output="Local Result"))
@@ -62,7 +62,7 @@ async def test_groq_success(mock_provider_service):
     """
     Test successful execution with Groq
     """
-    with patch("app.services.llm_service.create_writing_agent") as mock_create_agent:
+    with patch("app.services.cover_letter.llm_service.create_writing_agent") as mock_create_agent:
         mock_local_agent = MagicMock()
         mock_local_agent.run = AsyncMock(return_value=MagicMock(output="Local Result"))
         

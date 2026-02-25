@@ -1,6 +1,6 @@
 import os
-from app.services.pdf_service import PDFService
-from app.services.templates import TemplateRegistry
+from app.services.cover_letter.pdf_service import PDFService
+from app.services.cover_letter.templates import TemplateRegistry
 
 def test_british_template_generation(tmp_path):
     output_path = str(tmp_path / "test_british.pdf")
@@ -45,11 +45,11 @@ def test_german_template_generation(tmp_path):
 def test_template_registry_fallback():
     # Registry should fallback to 'british' if template not found
     template = TemplateRegistry.get("non-existent-template")
-    from app.services.templates.british import BritishTemplate
+    from app.services.cover_letter.templates.british import BritishTemplate
     assert isinstance(template, BritishTemplate)
 
 def test_template_aliases():
     # 'generic' and 'english' should point to BritishTemplate
-    from app.services.templates.british import BritishTemplate
+    from app.services.cover_letter.templates.british import BritishTemplate
     assert isinstance(TemplateRegistry.get("generic"), BritishTemplate)
     assert isinstance(TemplateRegistry.get("english"), BritishTemplate)

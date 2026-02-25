@@ -28,7 +28,7 @@ def client_fixture(session: Session):
     app.dependency_overrides.clear()
 
 def test_user_authentication_unit(session: Session):
-    from app.services.user import user_service
+    from app.services.platform.user import user_service
     
     email = "test@example.com"
     password = "password123"

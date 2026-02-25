@@ -5,8 +5,8 @@ import os
 # Add backend to path
 sys.path.append(os.path.join(os.getcwd(), "backend"))
 
-from app.services.job_parsers.indeed import IndeedParser
-from app.services.job_parsers.registry import ParserRegistry
+from app.services.cover_letter.job_parsers.indeed import IndeedParser
+from app.services.cover_letter.job_parsers.registry import ParserRegistry
 
 async def test_indeed():
     parser = IndeedParser()

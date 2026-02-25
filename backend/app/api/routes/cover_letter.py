@@ -4,10 +4,10 @@ from typing import Optional
 from pathlib import Path
 import uuid
 
-from app.services.llm_service import LLMService
-from app.services.pdf_service import PDFService
-from app.services.pdf_parser import PDFParser
-from app.services.backup_service import BackupService
+from app.services.cover_letter.llm_service import LLMService
+from app.services.cover_letter.pdf_service import PDFService
+from app.services.cover_letter.pdf_parser import PDFParser
+from app.services.platform.backup_service import BackupService
 
 # Import validation schemas
 from app.api.validation.schemas import (

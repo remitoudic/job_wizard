@@ -9,14 +9,14 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel
 
-from app.services.cv_parsers.cv_parser_service import (
+from app.services.cv_refresh.cv_parsers.cv_parser_service import (
     CVData,
     CVContact,
     CVExperience,
     CVEducation,
     cv_parser_service,
 )
-from app.services.cv_generator_service import cv_generator_service
+from app.services.cv_refresh.cv_generator_service import cv_generator_service
 
 logger = logging.getLogger("app.api.routes.cv_refresh")
 

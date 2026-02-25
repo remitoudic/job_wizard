@@ -1,4 +1,4 @@
-from app.services.pdf_service import PDFService
+from app.services.cover_letter.pdf_service import PDFService
 import os
 
 def test_generation():

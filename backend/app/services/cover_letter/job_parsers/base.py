@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any
 from bs4 import BeautifulSoup
 import re
-from app.services.job_description_normalizer import normalize_job_post
+from app.services.cover_letter.job_description_normalizer import normalize_job_post
 
 class BaseParser(ABC):
     """Abstract base class for job parsers"""

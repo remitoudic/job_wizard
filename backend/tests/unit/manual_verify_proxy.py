@@ -1,5 +1,5 @@
 from app.services.browser_service import BrowserService
-from app.services.proxy_manager import ProxyManager
+from app.services.platform.proxy_manager import ProxyManager
 import asyncio
 import logfire
 

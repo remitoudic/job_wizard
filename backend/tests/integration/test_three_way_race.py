@@ -3,7 +3,7 @@ Test the three-way race for cover letter generation
 """
 import pytest
 import asyncio
-from app.services.llm_service import LLMService
+from app.services.cover_letter.llm_service import LLMService
 
 
 @pytest.mark.asyncio

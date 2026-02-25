@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from app.services.job_parsers.job_parser import JobParser
+from app.services.cover_letter.job_parsers.job_parser import JobParser
 
 # Import validation schemas
 from app.api.validation.schemas import (

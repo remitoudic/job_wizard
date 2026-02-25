@@ -2,9 +2,9 @@ import httpx
 from bs4 import BeautifulSoup
 from typing import Dict
 import asyncio
-from app.services.job_parsers.registry import ParserRegistry
+from app.services.cover_letter.job_parsers.registry import ParserRegistry
 import logfire
-from app.services.proxy_manager import ProxyManager
+from app.services.platform.proxy_manager import ProxyManager
 
 class JobParser:
     """Service for parsing job descriptions using strategy pattern"""

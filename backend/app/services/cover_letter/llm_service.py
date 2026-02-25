@@ -2,7 +2,7 @@ import asyncio
 import uuid
 from typing import Optional, Dict, Any
 
-from app.services.agents import create_writing_agent, create_extraction_agent
+from app.services.platform.agents import create_writing_agent, create_extraction_agent
 from app.core.config import settings
 import logfire
 
@@ -15,7 +15,7 @@ class LLMService:
         self.ollama_model_name = settings.OLLAMA_MODEL
         
         # Import here to avoid circular dependencies if any
-        from app.services.llm_provider_service import llm_provider_service
+        from app.services.platform.llm_provider_service import llm_provider_service
         self.provider_service = llm_provider_service
         
         # Initialize Agents
@@ -150,7 +150,7 @@ class LLMService:
         import logging
         
         # Configure logger
-        logger = logging.getLogger("app.services.llm_service")
+        logger = logging.getLogger("app.services.cover_letter.llm_service")
         
         # Build optimized prompt (concise for speed)
         req_list = ', '.join(requirements[:5]) if requirements else 'See description'
@@ -432,7 +432,7 @@ CUSTOM USER GUIDANCE:
         """Handle the slower tasks incrementally"""
         import time
         import logging
-        logger = logging.getLogger("app.services.llm_service")
+        logger = logging.getLogger("app.services.cover_letter.llm_service")
         
         # Initialize tasks set
         tasks = list(pending_tasks)

@@ -1,6 +1,6 @@
 import pytest
 from bs4 import BeautifulSoup
-from app.services.job_parsers.arbeitnow import ArbeitnowParser
+from app.services.cover_letter.job_parsers.arbeitnow import ArbeitnowParser
 
 @pytest.fixture
 def parser():

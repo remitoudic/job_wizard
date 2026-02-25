@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from llama_parse import LlamaParse
 from app.core.config import settings
 
-logger = logging.getLogger("app.services.cv_parsers.cv_parser_service")
+logger = logging.getLogger("app.services.cv_refresh.cv_parsers.cv_parser_service")
 
 
 # ── Pydantic models for structured CV data ──────────────────────────────────
@@ -179,7 +179,7 @@ class CVParserService:
         try:
             from pydantic_ai import Agent
             from pydantic_ai.models.openai import OpenAIChatModel
-            from app.services.agents import create_custom_openai_provider
+            from app.services.platform.agents import create_custom_openai_provider
 
             provider = create_custom_openai_provider(
                 base_url="https://api.groq.com/openai/v1",

@@ -1,7 +1,7 @@
 
 import asyncio
 import httpx
-from app.services.proxy_manager import ProxyManager
+from app.services.platform.proxy_manager import ProxyManager
 import logfire
 
 # Disable logfire sending for this test

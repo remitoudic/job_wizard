@@ -1,6 +1,6 @@
 import pytest
 from bs4 import BeautifulSoup
-from app.services.job_parsers.wwr import WWRParser
+from app.services.cover_letter.job_parsers.wwr import WWRParser
 
 @pytest.fixture
 def parser():

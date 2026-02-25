@@ -1,7 +1,7 @@
 
 import pytest
 import os
-from app.services.agents import create_writing_agent
+from app.services.platform.agents import create_writing_agent
 
 @pytest.mark.asyncio
 async def test_openrouter_connection():

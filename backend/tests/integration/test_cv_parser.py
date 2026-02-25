@@ -7,7 +7,7 @@ from pathlib import Path
 # Add the app directory to the path so imports work
 sys.path.append("/app")
 
-from app.services.cv_parsers.cv_parser_service import cv_parser_service
+from app.services.cv_refresh.cv_parsers.cv_parser_service import cv_parser_service
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("test_parser")
