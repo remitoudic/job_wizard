@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("test_parser")
 
 async def main():
-    pdf_path = "/app/tests/test_cv/Rémi_Toudic_CV_26 .pdf"
+    pdf_path = "/app/tests/integration/test_cv/Rémi_Toudic_CV_26 .pdf"
     
     if not Path(pdf_path).exists():
         logger.error(f"Cannot find PDF at {pdf_path}")
