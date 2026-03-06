@@ -4,10 +4,10 @@ A web application that generates personalized cover letters from job description
 
 ## Features
 
-- 📄 **CV Refresh**: Upload your old PDF CV. Our AI (LlamaParse + Groq) extracts your experience, education, and contact details so you can quickly generate a sleek new CV using our Modern or Classic templates.
+- 📄 **CV Refresh**: Upload your old PDF CV. Our AI (LlamaParse + Groq) extracts your experience, education, and contact details so you can quickly generate a sleek new CV using our Modern or Classic templates. (Requires `LLAMA_CLOUD_API_KEY`).
 - 🔗 **Smart Job Parsing**: Extracts job details from URLs using customizable proxies. Supports LinkedIn, Indeed, StepStone, We Work Remotely, and Arbeitnow.
 - 🚀 **Hybrid LLM Engine**: "Race Mode" runs local (Ollama) and remote (Groq/OpenRouter) models in parallel for maximum speed.
-- 📄 **PDF Export**: Professional PDF format with embedded photo styling and multiple layout options (single-column, two-column).
+- 📄 **PDF Export**: Professional PDF format with embedded photo styling and multiple layout options (Modern Single-Column, Modern Two-Column, Classic).
 - 🎨 **Modern UI**: Beautiful, responsive SvelteKit interface.
 - 🐳 **Docker Ready** : Complete multi-service architecture.
 
@@ -55,7 +55,7 @@ A web application that generates personalized cover letters from job description
 git clone git@github.com:remitoudic/job_wizard.git
 cd job_wizard
 
-# Start services
+# Start services (automatically sets up .env and localhost URLs)
 ./scripts/start_locally.sh
 
 # First time: pull the Ollama model
@@ -78,6 +78,7 @@ docker exec jobwizard-ollama ollama pull llama3.2:1b
 ## Troubleshooting
 
 - **Ollama model not found?** Run `docker exec jobwizard-ollama ollama pull llama3.2:1b`
+- **CV Parsing failing?** Ensure `LLAMA_CLOUD_API_KEY` is set in your `.env` (get it from [LlamaIndex Cloud](https://cloud.llamaindex.ai/)).
 - **Scraping failed?** Check `proxies.json` or ensure the target URL is accessible.
 - **Race mode issues?** Ensure at least one remote API key is set in `.env`.
 
