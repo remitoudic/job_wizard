@@ -1,0 +1,212 @@
+/* Time Line CV Template — WeasyPrint-compatible CSS */
+
+@page {
+    size: A4;
+    margin: 1.25cm 1.5cm;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Liberation Sans", Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    color: #2b2b2b;
+    background: #fafafa;
+}
+
+.cv-container {
+    max-width: 100%;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+
+.cv-header {
+    border-bottom: 3px solid #0bc19e;
+    padding-bottom: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.header-main {
+    flex: 1;
+    padding-right: 20px;
+}
+
+.name {
+    font-size: 26pt;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+    line-height: 1.1;
+}
+
+.tagline {
+    font-size: 10pt;
+    color: #4a4a4a;
+    max-width: 100%;
+}
+
+.contact-info {
+    text-align: right;
+    font-size: 9pt;
+    color: #4a4a4a;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 200px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.icon {
+    font-size: 10pt;
+    color: #0bc19e;
+    width: 16px;
+    text-align: center;
+}
+
+/* ── Two-column body ────────────────────────────────────── */
+
+.columns {
+    width: 100%;
+}
+
+.columns::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+.main-content {
+    width: 68%;
+    float: left;
+    padding-right: 20px;
+}
+
+.sidebar {
+    width: 32%;
+    float: right;
+    padding-left: 20px;
+}
+
+/* ── Sections ───────────────────────────────────────────── */
+
+.section {
+    margin-bottom: 24px;
+}
+
+.section h2 {
+    font-size: 12pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+    position: relative;
+    padding-left: 20px; /* Align with timeline content */
+}
+
+/* ── Timeline ───────────────────────────────────────────── */
+
+.timeline {
+    border-left: 2px solid #e0e0e0;
+    padding-left: 18px;
+    margin-left: 6px;
+}
+
+.timeline-item {
+    position: relative;
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -24px;
+    top: 6px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #0bc19e;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e0e0e0;
+}
+
+/* ── Experience & Education ──────────────────────────────── */
+
+.exp-header, .edu-header {
+    margin-bottom: 4px;
+}
+
+.exp-header h3, .edu-header h3 {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #1a1a1a;
+    display: inline-block;
+}
+
+.dates {
+    font-size: 9pt;
+    color: #0bc19e;
+    font-weight: 600;
+    display: block;
+    margin-top: 2px;
+    margin-bottom: 4px;
+}
+
+.company, .institution {
+    font-size: 10pt;
+    color: #4a4a4a;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.description-content {
+    font-size: 9.5pt;
+    color: #4a4a4a;
+    line-height: 1.6;
+}
+
+.description-content ul {
+    margin-top: 6px;
+    padding-left: 16px;
+    list-style-type: disc;
+}
+
+.description-content li {
+    margin-bottom: 4px;
+}
+
+/* ── Skills & Languages Sidebar ─────────────────────────── */
+
+.skill-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skill-list li {
+    font-size: 10pt;
+    color: #2b2b2b;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 4px;
+}
