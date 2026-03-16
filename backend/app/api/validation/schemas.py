@@ -22,6 +22,7 @@ class CoverLetterRequest(BaseModel):
     user_skills: Optional[str] = ""
     context_text: Optional[str] = None
     custom_instructions: Optional[str] = None
+    language: Optional[str] = "english"  # "english" | "german"
 
 
 class CoverLetterResponse(BaseModel):

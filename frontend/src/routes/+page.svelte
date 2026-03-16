@@ -29,8 +29,10 @@
 
 	// Settings
 	let showSettings = false;
-	let templateStyle = "english";
-	let language = "english"; // Currently unused backend-side but good for UI
+	// Single unified format selector: drives both template (PDF format) and language (AI writing)
+	let selectedFormat: string = "british";
+	$: templateName = selectedFormat;           // maps 1-to-1 to backend template_name
+	$: language = selectedFormat === "german" ? "german" : "english";
 
 	// Contact Info
 	let email = "";
@@ -213,6 +215,7 @@
 				user_name: userName || "Applicant",
 				context_text: contextText,
 				custom_instructions: customInstructions,
+				language,
 			});
 
 			// Initialize
@@ -270,12 +273,24 @@
 				firstName || surname
 					? `${firstName} ${surname}`.trim()
 					: userName || "";
-			editableDate = new Date().toLocaleDateString("en-US", {
-				year: "numeric",
-				month: "long",
-				day: "numeric",
-			});
-			editableSubject = `Re: Application for ${jobData.title} at ${jobData.company}`;
+
+			// Date and subject adapt to selected language/format
+			if (language === "german") {
+				const now = new Date();
+				const deMonths = [
+					"Januar", "Februar", "März", "April", "Mai", "Juni",
+					"Juli", "August", "September", "Oktober", "November", "Dezember"
+				];
+				editableDate = `${now.getDate()}. ${deMonths[now.getMonth()]} ${now.getFullYear()}`;
+				editableSubject = `Bewerbung als ${jobData.title}`;
+			} else {
+				editableDate = new Date().toLocaleDateString("en-GB", {
+					year: "numeric",
+					month: "long",
+					day: "numeric",
+				});
+				editableSubject = `Re: Application for ${jobData.title} at ${jobData.company}`;
+			}
 
 			step.set(3);
 		} catch (e: any) {
@@ -473,7 +488,7 @@
 				email,
 				phone,
 				linkedin,
-				template_name: templateStyle,
+				template_name: templateName,
 				custom_date: editableDate,
 				custom_subject: editableSubject,
 				full_name: editableName,
@@ -570,8 +585,8 @@
 		error = "";
 		step.set(1);
 
-		// Manual Input Reset
-		isManualInput = false;
+		// Reset format selection
+		selectedFormat = "british";
 		manualTitle = "";
 		manualCompany = "";
 		manualDescription = "";
@@ -1339,41 +1354,53 @@
 
 								<div class="space-y-4">
 									<div>
-										<label
-											for="template-style"
+										<span
 											class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
-											>Template Style</label
+											>Language &amp; Format</span
 										>
-										<select
-											id="template-style"
-											bind:value={templateStyle}
-											on:change={invalidatePdf}
-											class="w-full text-sm border-[#E2E8F0] rounded-md focus:ring-[#0369A1] focus:border-[#0369A1]"
-										>
-											<option value="english"
-												>English (Standard)</option
+										<p class="text-[11px] text-[#94A3B8] mb-3 leading-relaxed">
+											Sets the AI writing language and PDF formatting standard.
+										</p>
+										<div class="flex flex-col gap-2">
+											<button
+												id="format-british"
+												type="button"
+												on:click={() => { selectedFormat = "british"; invalidatePdf(); }}
+												class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border text-left transition-all {selectedFormat === 'british'
+													? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]'
+													: 'border-[#E2E8F0] bg-white text-[#334155] hover:bg-[#F8FAFC]'}"
 											>
-											<option value="german"
-												>German (DIN 5008)</option
+												<span class="text-xl leading-none select-none">🇬🇧</span>
+												<div class="flex-1 min-w-0">
+													<div class="text-sm font-semibold leading-tight">British English</div>
+													<div class="text-[11px] text-[#64748B] mt-0.5">Standard business format</div>
+												</div>
+												{#if selectedFormat === 'british'}
+													<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#0369A1] shrink-0" viewBox="0 0 20 20" fill="currentColor">
+														<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+													</svg>
+												{/if}
+											</button>
+											<button
+												id="format-german"
+												type="button"
+												on:click={() => { selectedFormat = "german"; invalidatePdf(); }}
+												class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border text-left transition-all {selectedFormat === 'german'
+													? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]'
+													: 'border-[#E2E8F0] bg-white text-[#334155] hover:bg-[#F8FAFC]'}"
 											>
-										</select>
-									</div>
-
-									<div>
-										<label
-											for="letter-language"
-											class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
-											>Language</label
-										>
-										<select
-											id="letter-language"
-											bind:value={language}
-											class="w-full text-sm border-[#E2E8F0] rounded-md focus:ring-[#0369A1] focus:border-[#0369A1]"
-										>
-											<option value="english"
-												>English</option
-											>
-										</select>
+												<span class="text-xl leading-none select-none">🇩🇪</span>
+												<div class="flex-1 min-w-0">
+													<div class="text-sm font-semibold leading-tight">Deutsch</div>
+													<div class="text-[11px] text-[#64748B] mt-0.5">DIN 5008 · Bewerbungsschreiben</div>
+												</div>
+												{#if selectedFormat === 'german'}
+													<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#0369A1] shrink-0" viewBox="0 0 20 20" fill="currentColor">
+														<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+													</svg>
+												{/if}
+											</button>
+										</div>
 									</div>
 								</div>
 							</div>

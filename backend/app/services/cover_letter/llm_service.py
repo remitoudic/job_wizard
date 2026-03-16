@@ -142,6 +142,7 @@ class LLMService:
         user_skills: str = "",
         context_text: Optional[str] = None,
         custom_instructions: Optional[str] = None,
+        language: str = "english",
     ) -> tuple[str, str, str]:
         """
         Generate cover letter with race mode (Local vs Remote)
@@ -155,13 +156,30 @@ class LLMService:
         # Build optimized prompt (concise for speed)
         req_list = ', '.join(requirements[:5]) if requirements else 'See description'
         
+        # Language-specific instructions
+        is_german = language.lower() == "german"
+        if is_german:
+            lang_block = """
+LANGUAGE: Write the ENTIRE letter in German (Deutsch).
+- Use formal German throughout.
+- Salutation: "Sehr geehrte Damen und Herren," (or personalized if recipient name is known).
+- Do NOT write in English. Every word must be in German.
+- Tone: Formal, structured, professional (Bewerbungsschreiben standard)."""
+            STANDARD_SIGNATURE = "\n\nMit freundlichen Grüßen\n\n[Ihr Name]"
+            salutation_hint = '"Sehr geehrte/r [Name]," (or "Sehr geehrte Damen und Herren,")'
+        else:
+            lang_block = "\nLANGUAGE: Write in British English."
+            STANDARD_SIGNATURE = "\n\nSincerely,\n\n[Your Name]"
+            salutation_hint = '"Dear Hiring Manager," (or similar)'
+
         # Shared base instructions
         base_prompt = f"""Write a professional cover letter applying to {company} as {job_title}.
+{lang_block}
 
 IMPORTANT INSTRUCTIONS:
 1. OUTPUT BODY ONLY. Do NOT include a header, address block, date, or contact info.
-2. Start directly with "Dear Hiring Manager," (or similar).
-3. Do NOT include a signature (e.g., "Sincerely", "Best regards"). I will add this programmatically.
+2. Start directly with {salutation_hint}.
+3. Do NOT include a signature. I will add this programmatically.
 4. Do NOT include your name or any placeholders like "[Your Name]" or "[Date]".
 5. Keep the letter between 200 and 400 words.
 6. Maintain a formal, business-appropriate tone.
@@ -175,18 +193,13 @@ CUSTOM USER GUIDANCE:
         # Remote prompt gets more context
         prompt = base_prompt
         if context_text:
-            # Reduced from 3000 to 1500 chars for faster processing
             prompt += f"\nCandidate background:\n{context_text[:1500]}"
-            
+
         # Local prompt gets reduced context
         local_prompt = base_prompt
         if context_text:
-            # Drastically reduce context for local model to improve speed (max 500 chars)
             local_context = context_text[:500]
             local_prompt += f"\nCandidate background:\n{local_context}"
-
-        # Standard signature to append to ALL outputs
-        STANDARD_SIGNATURE = "\n\nSincerely,\n\n[Your Name]"
 
         # Retry loop for failover
         max_retries = 1

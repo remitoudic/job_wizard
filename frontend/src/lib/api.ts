@@ -96,6 +96,7 @@ export interface CoverLetterRequest {
     user_skills?: string;
     context_text?: string;
     custom_instructions?: string;
+    language?: string; // "english" | "german"
 }
 
 export interface User {

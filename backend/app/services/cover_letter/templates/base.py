@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
+from typing import Optional, List, Dict
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
+from reportlab.lib.units import inch, cm
 from reportlab.lib.colors import HexColor
 from reportlab.lib.enums import TA_LEFT
 from PIL import Image as PILImage
@@ -14,6 +14,16 @@ class BaseTemplate(ABC):
     def __init__(self):
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
+
+    def get_margins(self) -> Dict[str, float]:
+        """Return page margins. Override in subclasses for non-standard formats."""
+        margin = 0.75 * inch
+        return {
+            "leftMargin": margin,
+            "rightMargin": margin,
+            "topMargin": margin,
+            "bottomMargin": margin,
+        }
 
     def _setup_custom_styles(self):
         """Define custom paragraph styles."""
@@ -46,6 +56,16 @@ class BaseTemplate(ABC):
             leading=16,
             alignment=TA_LEFT,
             spaceAfter=12,
+        )
+        self.subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=self.styles['Normal'],
+            fontName='Times-Bold',
+            fontSize=11,
+            textColor=HexColor('#1a1a1a'),
+            leading=14,
+            spaceAfter=4,
+            alignment=TA_LEFT,
         )
 
     def _add_user_photo(self, story: List, image_path: Optional[str]):

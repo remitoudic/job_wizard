@@ -2,7 +2,7 @@ from typing import List, Optional
 from datetime import datetime
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
-from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.enums import TA_LEFT, TA_RIGHT
 from reportlab.lib.styles import ParagraphStyle
 
 from .base import BaseTemplate
@@ -81,12 +81,12 @@ class BritishTemplate(BaseTemplate):
             
         story.append(Spacer(1, 0.2 * inch))
         
-        # 3. Date (Left Side)
+        # 3. Date (Right Side)
         # Fallback to current date if custom_date is None, but skip if it's an empty string
         current_date = datetime.now().strftime("%d %B %Y") if custom_date is None else custom_date
         
         if current_date:
-            date_style = ParagraphStyle('DateStyle', parent=self.body_style, alignment=TA_LEFT)
+            date_style = ParagraphStyle('DateStyle', parent=self.body_style, alignment=TA_RIGHT)
             story.append(Paragraph(current_date, date_style))
             story.append(Spacer(1, 0.3 * inch))
 
