@@ -155,6 +155,8 @@
 
 		try {
 			jobData = await parseJobUrl(jobUrl);
+			editableJobTitle = jobData?.title || "";
+			editableCompany = jobData?.company || "";
 			if (advance) {
 				step.set(2);
 				// Auto-start generation in background
@@ -428,6 +430,8 @@
 			requirements: [],
 			url: jobUrl || "manual",
 		};
+		editableJobTitle = manualTitle;
+		editableCompany = manualCompany;
 		step.set(2);
 		handleGenerateCoverLetter();
 	}
@@ -1151,28 +1155,38 @@
 				<div class="space-y-6 mb-10">
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 						<div
-							class="p-4 rounded-md bg-[#F8FAFC] border border-[#E2E8F0]"
+							class="p-4 rounded-md bg-white border border-[#E2E8F0] focus-within:border-[#0369A1] transition-colors"
 						>
-							<h3
-								class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1"
+							<label
+								for="edit-role"
+								class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 							>
 								Role
-							</h3>
-							<p class="text-lg font-bold text-[#0F172A]">
-								{jobData.title}
-							</p>
+							</label>
+							<input
+								id="edit-role"
+								type="text"
+								bind:value={editableJobTitle}
+								class="w-full bg-transparent border-none p-0 text-lg font-bold text-[#0F172A] focus:ring-0 outline-none"
+								placeholder="Job Title"
+							/>
 						</div>
 						<div
-							class="p-4 rounded-md bg-[#F8FAFC] border border-[#E2E8F0]"
+							class="p-4 rounded-md bg-white border border-[#E2E8F0] focus-within:border-[#0369A1] transition-colors"
 						>
-							<h3
-								class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1"
+							<label
+								for="edit-company"
+								class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 							>
 								Company
-							</h3>
-							<p class="text-lg font-bold text-[#0F172A]">
-								{jobData.company}
-							</p>
+							</label>
+							<input
+								id="edit-company"
+								type="text"
+								bind:value={editableCompany}
+								class="w-full bg-transparent border-none p-0 text-lg font-bold text-[#0F172A] focus:ring-0 outline-none"
+								placeholder="Company Name"
+							/>
 						</div>
 					</div>
 
