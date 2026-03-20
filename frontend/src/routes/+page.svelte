@@ -80,6 +80,8 @@
 	let editableName = "";
 	let editableDate = "";
 	let editableSubject = "";
+	let editableJobTitle = "";
+	let editableCompany = "";
 
 	// Multiple cover letter versions
 	let allCoverLetters: Array<{
@@ -273,6 +275,8 @@
 				firstName || surname
 					? `${firstName} ${surname}`.trim()
 					: userName || "";
+			editableJobTitle = jobData?.title || "";
+			editableCompany = jobData?.company || "";
 
 			// Date and subject adapt to selected language/format
 			if (language === "german") {
@@ -454,8 +458,8 @@
 				try {
 					await saveApplication({
 						job_url: jobUrl,
-						job_title: jobData.title,
-						job_company: jobData.company,
+						job_title: editableJobTitle || jobData.title,
+						job_company: editableCompany || jobData.company,
 						job_description:
 							jobData.full_description || jobData.description, // Use full description if available
 						job_requirements: jobData.requirements,
@@ -479,8 +483,8 @@
 
 			const result = await generatePdf({
 				cover_letter: coverLetter,
-				job_title: jobData.title,
-				company: jobData.company,
+				job_title: editableJobTitle || jobData.title,
+				company: editableCompany || jobData.company,
 				user_name: userName || "Applicant",
 				first_name: firstName,
 				surname: surname,
@@ -599,6 +603,8 @@
 		editableName = "";
 		editableDate = "";
 		editableSubject = "";
+		editableJobTitle = "";
+		editableCompany = "";
 	}
 
 	function startEditing() {
@@ -1727,6 +1733,43 @@
 						<div
 							class="p-8 border-t border-[#E2E8F0] space-y-8 bg-white"
 						>
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+								<div>
+									<label
+										for="header-jobtitle"
+										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
+										>Job Title</label
+									>
+									<input
+										id="header-jobtitle"
+										type="text"
+										bind:value={editableJobTitle}
+										on:input={() => {
+											invalidatePdf();
+										}}
+										class="input"
+										disabled={isPdfGenerating}
+									/>
+								</div>
+								<div>
+									<label
+										for="header-company"
+										class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
+										>Company Name</label
+									>
+									<input
+										id="header-company"
+										type="text"
+										bind:value={editableCompany}
+										on:input={() => {
+											invalidatePdf();
+										}}
+										class="input"
+										disabled={isPdfGenerating}
+									/>
+								</div>
+							</div>
+
 							<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 								<div>
 									<label
