@@ -7,11 +7,10 @@ import logfire
 
 class PDFService:
     """Service for generating PDF cover letters"""
-    
+
     def __init__(self):
         self.page_width, self.page_height = A4
-        self.margin = 0.75 * inch
-    
+
     def generate_cover_letter_pdf(
         self,
         output_path: str,
@@ -39,23 +38,24 @@ class PDFService:
     ):
         """
         Generate a professional cover letter PDF using the specified template.
+        Margins are determined by the template (e.g. DIN 5008 for German).
         """
-        # Create PDF document
+        # Get template strategy first — margins depend on it
+        from app.services.cover_letter.templates import TemplateRegistry
+        template = TemplateRegistry.get(template_name)
+
+        # Build document with template-specific margins
+        margins = template.get_margins()
         doc = SimpleDocTemplate(
             output_path,
             pagesize=A4,
-            rightMargin=self.margin,
-            leftMargin=self.margin,
-            topMargin=self.margin,
-            bottomMargin=self.margin,
+            **margins,
         )
-        
-        # Get template strategy
-        from app.services.cover_letter.templates import TemplateRegistry
-        template = TemplateRegistry.get(template_name)
-        
+
+
         # Prepare story container
         story = []
+
         
         # Delegate generation to strategy
         template.generate(

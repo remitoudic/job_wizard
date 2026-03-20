@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ contact.name }} — CV</title>
+    <link rel="stylesheet" href="time_line.css">
+</head>
+
+<body>
+    <div class="cv-container">
+
+        <!-- Header -->
+        <header class="cv-header">
+            <div class="header-main">
+                <h1 class="name">{{ contact.name }}</h1>
+                {% if summary %}
+                <p class="tagline">{{ summary }}</p>
+                {% endif %}
+            </div>
+            <div class="contact-info">
+                {% if contact.email %}
+                <div class="contact-item">
+                    <span>{{ contact.email }}</span>
+                    <span class="icon">✉</span>
+                </div>
+                {% endif %}
+                {% if contact.phone %}
+                <div class="contact-item">
+                    <span>{{ contact.phone }}</span>
+                    <span class="icon">☎</span>
+                </div>
+                {% endif %}
+                {% if contact.linkedin %}
+                <div class="contact-item">
+                    <span>{{ contact.linkedin }}</span>
+                    <span class="icon" style="font-weight:bold;">in</span>
+                </div>
+                {% endif %}
+                {% if contact.address %}
+                <div class="contact-item">
+                    <span>{{ contact.address }}</span>
+                    <span class="icon">📍</span>
+                </div>
+                {% endif %}
+            </div>
+        </header>
+
+        <div class="cv-body columns">
+            
+            <main class="main-content">
+                {% if experiences %}
+                <section class="section">
+                    <h2>Experience</h2>
+                    <div class="timeline">
+                        {% for exp in experiences %}
+                        <div class="timeline-item experience-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <div class="exp-header">
+                                    <h3>{{ exp.title }}</h3>
+                                    {% if exp.start_date or exp.end_date %}
+                                    <span class="dates">{{ exp.start_date }}{% if exp.start_date and exp.end_date %} — {% endif %}{{ exp.end_date }}</span>
+                                    {% endif %}
+                                </div>
+                                <p class="company">{{ exp.company }}</p>
+                                {% if exp.description %}
+                                <div class="description-content">
+                                    {{ exp.description | replace('\n', '<br>') | safe }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
+
+                {% if education %}
+                <section class="section">
+                    <h2>Education</h2>
+                    <div class="timeline">
+                        {% for edu in education %}
+                        <div class="timeline-item education-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-content">
+                                <div class="edu-header">
+                                    <h3>{{ edu.degree }}</h3>
+                                    {% if edu.start_date or edu.end_date %}
+                                    <span class="dates">{{ edu.start_date }}{% if edu.start_date and edu.end_date %} — {% endif %}{{ edu.end_date }}</span>
+                                    {% endif %}
+                                </div>
+                                <p class="institution">{{ edu.institution }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
+            </main>
+
+            <aside class="sidebar">
+                {% if skills %}
+                <section class="section">
+                    <h2>Skills</h2>
+                    <ul class="skill-list">
+                        {% for skill in skills %}
+                        <li>{{ skill }}</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+                {% endif %}
+
+                {% if languages %}
+                <section class="section">
+                    <h2>Languages</h2>
+                    <ul class="skill-list">
+                        {% for lang in languages %}
+                        <li>{{ lang }}</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+                {% endif %}
+            </aside>
+            
+        </div>
+    </div>
+</body>
+
+</html>

@@ -151,8 +151,12 @@
             const a = document.createElement("a");
             a.href = url;
 
-            const safeName = cvData?.contact?.name || "";
-            a.download = `cv_${safeName.replace(/\\s+/g, "_") || "refreshed"}.pdf`;
+            const safeName = cvData?.contact?.name?.trim() || "";
+            if (safeName) {
+                a.download = `cv_${safeName.replace(/\\s+/g, "_")}.pdf`;
+            } else {
+                a.download = `refreshed_cv_${actualTemplate}.pdf`;
+            }
 
             document.body.appendChild(a);
             a.click();
