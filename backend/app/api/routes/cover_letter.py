@@ -44,6 +44,7 @@ async def generate_cover_letter(request: CoverLetterRequest):
             user_skills=request.user_skills,
             context_text=request.context_text,
             custom_instructions=request.custom_instructions,
+            language=request.language,
         )
 
         extraction_task = None

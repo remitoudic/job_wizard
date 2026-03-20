@@ -142,6 +142,7 @@ class LLMService:
         user_skills: str = "",
         context_text: Optional[str] = None,
         custom_instructions: Optional[str] = None,
+        language: str = "english",
     ) -> tuple[str, str, str]:
         """
         Generate cover letter with race mode (Local vs Remote)
@@ -156,11 +157,11 @@ class LLMService:
         req_list = ', '.join(requirements[:5]) if requirements else 'See description'
         
         # Shared base instructions
-        base_prompt = f"""Write a professional cover letter applying to {company} as {job_title}.
+        base_prompt = f"""Write a professional cover letter applying to {company} as {job_title} in {language.upper()} language.
 
 IMPORTANT INSTRUCTIONS:
 1. OUTPUT BODY ONLY. Do NOT include a header, address block, date, or contact info.
-2. Start directly with "Dear Hiring Manager," (or similar).
+2. Start directly with "Dear Hiring Manager," (or similar natural greeting in {language.upper()}).
 3. Do NOT include a signature (e.g., "Sincerely", "Best regards"). I will add this programmatically.
 4. Do NOT include your name or any placeholders like "[Your Name]" or "[Date]".
 5. Keep the letter between 200 and 400 words.

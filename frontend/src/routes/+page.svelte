@@ -213,6 +213,7 @@
 				user_name: userName || "Applicant",
 				context_text: contextText,
 				custom_instructions: customInstructions,
+				language: language,
 			});
 
 			// Initialize
@@ -981,6 +982,25 @@
 							>
 								<div>
 									<label
+										for="letter-language"
+										class="block text-sm font-semibold text-[#334155] mb-2"
+										>Cover Letter Language</label
+									>
+									<p class="text-xs text-[#64748B] mb-3">
+										Choose the language for the generated cover letter.
+									</p>
+									<select
+										id="letter-language"
+										bind:value={language}
+										class="w-full px-4 py-3 rounded-lg border border-[#E2E8F0] bg-white text-[#0F172A] focus:border-[#0369A1] focus:ring-2 focus:ring-[#0369A1]/20 outline-none transition-all text-sm mb-6"
+									>
+										<option value="english">English</option>
+										<option value="german">German</option>
+									</select>
+								</div>
+
+								<div>
+									<label
 										for="custom-instructions"
 										class="block text-sm font-semibold text-[#334155] mb-2"
 										>Custom Guidance</label
@@ -1355,23 +1375,6 @@
 											>
 											<option value="german"
 												>German (DIN 5008)</option
-											>
-										</select>
-									</div>
-
-									<div>
-										<label
-											for="letter-language"
-											class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
-											>Language</label
-										>
-										<select
-											id="letter-language"
-											bind:value={language}
-											class="w-full text-sm border-[#E2E8F0] rounded-md focus:ring-[#0369A1] focus:border-[#0369A1]"
-										>
-											<option value="english"
-												>English</option
 											>
 										</select>
 									</div>
