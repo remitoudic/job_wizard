@@ -272,13 +272,12 @@
 				loadAlternatives();
 			}
 
-			// Initialize Editable Header Fields
-			editableName =
-				firstName || surname
-					? `${firstName} ${surname}`.trim()
-					: userName || "";
-			editableJobTitle = jobData?.title || "";
-			editableCompany = jobData?.company || "";
+			// Initialize Editable Header Fields if not already edited
+			if (!editableJobTitle) editableJobTitle = jobData?.title || "";
+			if (!editableCompany) editableCompany = jobData?.company || "";
+			editableName = firstName || surname
+				? `${firstName} ${surname}`.trim()
+				: userName || "";
 
 			// Date and subject adapt to selected language/format
 			if (language === "german") {
@@ -288,14 +287,14 @@
 					"Juli", "August", "September", "Oktober", "November", "Dezember"
 				];
 				editableDate = `${now.getDate()}. ${deMonths[now.getMonth()]} ${now.getFullYear()}`;
-				editableSubject = `Bewerbung als ${jobData.title}`;
+				editableSubject = `Bewerbung als ${editableJobTitle || jobData.title}`;
 			} else {
 				editableDate = new Date().toLocaleDateString("en-GB", {
 					year: "numeric",
 					month: "long",
 					day: "numeric",
 				});
-				editableSubject = `Re: Application for ${jobData.title} at ${jobData.company}`;
+				editableSubject = `Re: Application for ${editableJobTitle || jobData.title} at ${editableCompany || jobData.company}`;
 			}
 
 			step.set(3);
@@ -1538,6 +1537,16 @@
 									>[Contact info not set]</span
 								>
 							{/if}
+						</div>
+
+						<!-- Recipient Block -->
+						<div class="mb-6 font-serif">
+							<div class="text-base font-bold text-gray-900 mb-0.5">
+								{editableCompany || jobData.company || "[Company]"}
+							</div>
+							<div class="text-base text-gray-900 italic">
+								{editableJobTitle || jobData.title || "[Role]"}
+							</div>
 						</div>
 
 						<div
