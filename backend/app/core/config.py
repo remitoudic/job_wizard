@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
     PROJECT_NAME: str = "Vite a Job! API"
     
+    # Cloudinary Settings
+    CLOUDINARY_URL: str = ""
+
     # Scraping Settings
     PROXY_FILE_PATH: str = "proxies.json"
     USE_PLAYWRIGHT: bool = True

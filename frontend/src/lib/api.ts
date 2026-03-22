@@ -109,6 +109,7 @@ export interface User {
     linkedin_url?: string;
     portfolio_url?: string;
     website_url?: string;
+    profile_picture_url?: string;
 
     street?: string;
     city?: string;
@@ -153,6 +154,32 @@ export interface CoverLetterResponse {
 export interface UploadImageResponse {
     filename: string;
     url: string;
+}
+
+export async function uploadProfilePicture(token: string, file: Blob): Promise<User> {
+    const formData = new FormData();
+    formData.append('file', file, 'profile.jpg');
+
+    const response = await fetch(`${API_URL}/api/users/me/picture`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+    });
+
+    return handleResponse<User>(response, 'Failed to upload profile picture');
+}
+
+export async function deleteProfilePicture(token: string): Promise<User> {
+    const response = await fetch(`${API_URL}/api/users/me/picture`, {
+        method: 'DELETE',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    return handleResponse<User>(response, 'Failed to delete profile picture');
 }
 
 export interface UploadContextResponse {

@@ -11,6 +11,7 @@ export interface User {
     linkedin_url?: string;
     portfolio_url?: string;
     website_url?: string;
+    profile_picture_url?: string;
 
     street?: string;
     city?: string;

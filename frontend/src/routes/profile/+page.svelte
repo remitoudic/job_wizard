@@ -1,8 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { getProfile, updateProfile } from "$lib/api";
+    import { getProfile, updateProfile, uploadProfilePicture, deleteProfilePicture } from "$lib/api";
     import { auth } from "../../stores/auth";
     import type { User } from "../../stores/auth";
+    import { get } from "svelte/store";
+    import Cropper from "cropperjs";
+    import "cropperjs/dist/cropper.css";
 
     // SvelteKit may pass `data` and `params` to pages — declare to prevent runtime warnings
     export let data: any = {};
@@ -14,6 +17,116 @@
     let isAddressOpen = false;
     let message = "";
     let error = "";
+
+    // Profile Picture logic
+    let fileInput: HTMLInputElement;
+    let imageToCrop: string | null = null;
+    let cropperRef: HTMLImageElement;
+    let cropperInstance: Cropper | null = null;
+    let isUploading = false;
+    let isDeleting = false;
+
+    function handleFileSelect(event: Event) {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+
+        // Reset file input
+        fileInput.value = '';
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imageToCrop = e.target?.result as string;
+            // Initialize cropper after tick
+            setTimeout(() => {
+                if (cropperRef) {
+                    cropperInstance = new Cropper(cropperRef, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 0.8,
+                        restore: false,
+                        guides: false,
+                        center: false,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false,
+                    });
+                }
+            }, 0);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function cancelCrop() {
+        if (cropperInstance) {
+            cropperInstance.destroy();
+            cropperInstance = null;
+        }
+        imageToCrop = null;
+    }
+
+    async function handleCropSave() {
+        if (!cropperInstance || !user) return;
+        
+        isUploading = true;
+        try {
+            const canvas = cropperInstance.getCroppedCanvas({
+                width: 400,
+                height: 400,
+                fillColor: '#fff',
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+            
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    error = "Failed to export cropped image";
+                    isUploading = false;
+                    return;
+                }
+                
+                try {
+                    const token = get(auth).token;
+                    if (!token) throw new Error("No token");
+                    
+                    const updatedUser = await uploadProfilePicture(token, blob);
+                    user = updatedUser;
+                    auth.updateUser(user);
+                    message = "Profile picture updated successfully!";
+                    cancelCrop();
+                } catch (err: any) {
+                    error = err.message || "Failed to upload image";
+                } finally {
+                    isUploading = false;
+                }
+            }, 'image/jpeg', 0.9);
+            
+        } catch (err) {
+            error = "Failed to process image";
+            isUploading = false;
+        }
+    }
+
+    async function handleDeletePicture() {
+        if (!user || !user.profile_picture_url) return;
+        if (!confirm("Are you sure you want to delete your profile picture?")) return;
+        
+        isDeleting = true;
+        try {
+            const token = get(auth).token;
+            if (!token) throw new Error("No token");
+            
+            const updatedUser = await deleteProfilePicture(token);
+            user = updatedUser;
+            auth.updateUser(user);
+            message = "Profile picture deleted successfully!";
+        } catch (err: any) {
+            error = err.message || "Failed to delete image";
+        } finally {
+            isDeleting = false;
+        }
+    }
 
     onMount(async () => {
         try {
@@ -89,6 +202,74 @@
             >
                 {error}
             </div>
+        {/if}
+
+        <!-- Profile Picture Section -->
+        <div class="mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-8 border-b border-gray-100">
+            <div class="relative group">
+                {#if user.profile_picture_url}
+                    <img src={user.profile_picture_url} alt="Profile" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md bg-gray-50" />
+                {:else}
+                    <div class="w-24 h-24 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center text-3xl font-bold border-4 border-white shadow-md">
+                        {user.first_name?.[0] || user.email[0].toUpperCase()}
+                    </div>
+                {/if}
+            </div>
+            
+            <div class="flex-1 text-center sm:text-left space-y-3">
+                <h3 class="text-sm font-semibold text-gray-800">Profile Picture</h3>
+                <p class="text-xs text-gray-500 max-w-xs">Upload a professional headshot. Recommended size is 400x400px.</p>
+                
+                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                    <input type="file" accept="image/*" class="hidden" bind:this={fileInput} on:change={handleFileSelect} />
+                    <button type="button" on:click={() => fileInput.click()} class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
+                        Upload New
+                    </button>
+                    {#if user.profile_picture_url}
+                        <button type="button" on:click={handleDeletePicture} disabled={isDeleting} class="px-4 py-2 text-red-600 border border-transparent rounded-lg text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-50">
+                            {isDeleting ? "Deleting..." : "Delete"}
+                        </button>
+                    {/if}
+                </div>
+            </div>
+        </div>
+
+        {#if imageToCrop}
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800">Crop Profile Picture</h3>
+                    <button on:click={cancelCrop} class="text-gray-400 hover:text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="p-6 bg-gray-50 flex-1 overflow-auto flex items-center justify-center">
+                    <div class="w-full aspect-square relative bg-white shadow-inner max-w-[300px] mx-auto overflow-hidden">
+                        <img bind:this={cropperRef} src={imageToCrop} alt="To crop" class="block max-w-full" />
+                    </div>
+                </div>
+                
+                <div class="p-4 border-t border-gray-100 flex justify-end gap-3 bg-white">
+                    <button on:click={cancelCrop} class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">
+                        Cancel
+                    </button>
+                    <button on:click={handleCropSave} disabled={isUploading} class="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2">
+                        {#if isUploading}
+                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Saving...
+                        {:else}
+                            Save Picture
+                        {/if}
+                    </button>
+                </div>
+            </div>
+        </div>
         {/if}
 
         <form on:submit|preventDefault={handleSave} class="space-y-6">

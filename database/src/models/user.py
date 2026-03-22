@@ -12,6 +12,7 @@ class UserBase(SQLModel):
     linkedin_url: Optional[str] = None
     portfolio_url: Optional[str] = None
     website_url: Optional[str] = None
+    profile_picture_url: Optional[str] = None
     
     # Address fields
     street: Optional[str] = None
@@ -43,6 +44,7 @@ class UserUpdate(SQLModel):
     linkedin_url: Optional[str] = None
     portfolio_url: Optional[str] = None
     website_url: Optional[str] = None
+    profile_picture_url: Optional[str] = None
     
     street: Optional[str] = None
     city: Optional[str] = None
