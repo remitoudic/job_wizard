@@ -85,6 +85,7 @@
 
 	let isDateManuallyEdited = false;
 	let isSubjectManuallyEdited = false;
+	let hasAutoFilled = false;
 
 	// Update defaults when format changes
 	$: if (selectedFormat && !isGenerating && (jobData || isManualInput)) {
@@ -654,28 +655,27 @@
 		showSettings = !showSettings;
 	}
 
-	// Pre-fill contact fields from logged-in user profile
-	onMount(() => {
+	// Pre-fill contact fields from logged-in user profile once available
+	$: if ($auth.user && !hasAutoFilled) {
 		const user = $auth.user;
-		if (user) {
-			if (user.first_name) firstName = user.first_name;
-			if (user.surname) surname = user.surname;
-			if (user.email) email = user.email;
-			if (user.phone) phone = user.phone;
-			if (user.linkedin_url) linkedin = user.linkedin_url;
-			if (user.website_url) website = user.website_url;
-			if (user.street) addressStreet = user.street;
-			if (user.postcode) addressPostcode = user.postcode;
-			if (user.city) addressCity = user.city;
-			if (user.country) addressCountry = user.country;
+		if (user.first_name) firstName = user.first_name;
+		if (user.surname) surname = user.surname;
+		if (user.email) email = user.email;
+		if (user.phone) phone = user.phone;
+		if (user.linkedin_url) linkedin = user.linkedin_url;
+		if (user.website_url) website = user.website_url;
+		if (user.street) addressStreet = user.street;
+		if (user.postcode) addressPostcode = user.postcode;
+		if (user.city) addressCity = user.city;
+		if (user.country) addressCountry = user.country;
 
-			const fullName = `${user.first_name || ''} ${user.surname || ''}`.trim();
-			if (fullName) {
-				userName = fullName;
-				editableName = fullName;
-			}
+		const fullName = `${user.first_name || ''} ${user.surname || ''}`.trim();
+		if (fullName) {
+			userName = fullName;
+			editableName = fullName;
 		}
-	});
+		hasAutoFilled = true;
+	}
 
 	// Close settings when clicking outside
 	onMount(() => {
