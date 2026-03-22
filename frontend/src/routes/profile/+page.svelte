@@ -79,7 +79,7 @@
                 imageSmoothingQuality: 'high',
             });
             
-            canvas.toBlob(async (blob) => {
+            canvas.toBlob(async (blob: Blob | null) => {
                 if (!blob) {
                     error = "Failed to export cropped image";
                     isUploading = false;
@@ -219,7 +219,6 @@
             <div class="flex-1 text-center sm:text-left space-y-3">
                 <h3 class="text-sm font-semibold text-gray-800">Profile Picture</h3>
 
-                
                 <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3">
                     <input type="file" accept="image/*" class="hidden" bind:this={fileInput} on:change={handleFileSelect} />
                     <button type="button" on:click={() => fileInput.click()} class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
