@@ -65,7 +65,6 @@ describe('Cover Letter +page.svelte', () => {
         expect(screen.getByText(/Jane Doe/i)).toBeInTheDocument();
         expect(screen.getByText(/janedoe@example\.com/i)).toBeInTheDocument();
         expect(screen.getByText(/555-0101/i)).toBeInTheDocument();
-        expect(screen.getByText(/linkedin\.com\/in\/janedoe/i)).toBeInTheDocument();
         expect(screen.getByText(/123 Test St[\s\S]*12345[\s\S]*Testville/i)).toBeInTheDocument();
     });
 });

@@ -145,7 +145,6 @@ class GermanTemplate(BaseTemplate):
         contact_parts = []
         if phone: contact_parts.append(phone)
         if email: contact_parts.append(email)
-        if linkedin: contact_parts.append(linkedin)
 
         if contact_parts:
             story.append(Paragraph(" | ".join(contact_parts), self.header_style))
