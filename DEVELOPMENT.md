@@ -81,6 +81,7 @@ Vite a Job! uses a modern microservices architecture with Docker Compose orchest
 - **Backend**: FastAPI REST API with modular parser architecture
 - **Database**: PostgreSQL 16 for storing job data and user context
 - **LLM Service**: Hybrid "race mode" - runs local and remote models in parallel
+- **Storage**: Cloudinary for user profile pictures and persistent assets
 - **Parsers**: Modular job board parsers (LinkedIn, Indeed, StepStone, etc.)
 - **CV Layouts**: Support for Modern (Single/Two-Column) and Classic templates
 
@@ -757,6 +758,9 @@ LLAMA_CLOUD_API_KEY=your_llama_cloud_key_here  # Required for CV Refresh
 
 # Ollama (local LLM)
 OLLAMA_BASE_URL=http://ollama:11434
+
+# External Storage
+CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
 ```
 
 ### Production (`.env.production` on server)
@@ -774,6 +778,9 @@ POSTGRES_PASSWORD=STRONG_PASSWORD
 GROQ_API_KEY=your_groq_key_here
 OPENROUTER_API_KEY=your_openrouter_key_here
 LLAMA_CLOUD_API_KEY=your_llama_cloud_key_here
+
+# External Storage
+CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
 
 # Monitoring (optional)
 LOGFIRE_TOKEN=your_logfire_token_here
