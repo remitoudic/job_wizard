@@ -2,7 +2,6 @@
 import asyncio
 import httpx
 import time
-import json
 import statistics
 
 API_URL = "http://localhost:8000/api/generate-cover-letter"
@@ -79,7 +78,7 @@ async def run_load_test():
         local_count = sum(1 for s in sources if "Ollama" in s or "local" in s.lower())
         remote_count = len(successes) - local_count
         
-        print(f"\nAnalysis:")
+        print("\nAnalysis:")
         print(f"  Local Processed:  {local_count} (Expected ~2)")
         print(f"  Cloud Failover:   {remote_count} (Expected ~{len(successes)-2})")
     

@@ -9,7 +9,7 @@ async def test_api_keys_presence():
     """
     Verify that necessary API keys are set in the environment or config.
     """
-    print(f"\nChecking API Keys...")
+    print("\nChecking API Keys...")
     
     openrouter_key = settings.OPENROUTER_API_KEY or os.getenv("OPENROUTER_API_KEY")
     groq_key = settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY")

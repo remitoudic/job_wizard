@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from typing import Dict, Optional
+from typing import Dict
 import json
 from .base import BaseParser
 

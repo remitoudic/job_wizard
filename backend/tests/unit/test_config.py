@@ -1,5 +1,4 @@
 from app.core.config import Settings, get_settings
-import os
 
 def test_settings_initialization():
     """Test that settings can be initialized without errors in Pydantic V2."""

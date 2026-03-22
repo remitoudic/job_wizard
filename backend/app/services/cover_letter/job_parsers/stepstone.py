@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 from typing import Dict, Optional
-import urllib.parse
 from .base import BaseParser
 
 class StepStoneParser(BaseParser):

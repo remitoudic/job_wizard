@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, List, Dict
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch, cm
+from reportlab.lib.units import inch
 from reportlab.lib.colors import HexColor
 from reportlab.lib.enums import TA_LEFT
 from PIL import Image as PILImage

@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 from app.services.cover_letter.job_parsers.job_parser import JobParser
 
 @pytest.mark.asyncio

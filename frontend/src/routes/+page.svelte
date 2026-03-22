@@ -83,6 +83,37 @@
 	let editableJobTitle = "";
 	let editableCompany = "";
 
+	let isDateManuallyEdited = false;
+	let isSubjectManuallyEdited = false;
+
+	// Update defaults when format changes
+	$: if (selectedFormat && jobData && !isGenerating) {
+		if (selectedFormat === "german") {
+			if (!isDateManuallyEdited) {
+				const now = new Date();
+				const deMonths = [
+					"Januar", "Februar", "März", "April", "Mai", "Juni",
+					"Juli", "August", "September", "Oktober", "November", "Dezember"
+				];
+				editableDate = `${now.getDate()}. ${deMonths[now.getMonth()]} ${now.getFullYear()}`;
+			}
+			if (!isSubjectManuallyEdited) {
+				editableSubject = `Bewerbung als ${editableJobTitle || jobData.title}`;
+			}
+		} else {
+			if (!isDateManuallyEdited) {
+				editableDate = new Date().toLocaleDateString("en-GB", {
+					year: "numeric",
+					month: "long",
+					day: "numeric",
+				});
+			}
+			if (!isSubjectManuallyEdited) {
+				editableSubject = `Re: Application for ${editableJobTitle || jobData.title} at ${editableCompany || jobData.company}`;
+			}
+		}
+	}
+
 	// Multiple cover letter versions
 	let allCoverLetters: Array<{
 		text: string;
@@ -279,23 +310,7 @@
 				? `${firstName} ${surname}`.trim()
 				: userName || "";
 
-			// Date and subject adapt to selected language/format
-			if (language === "german") {
-				const now = new Date();
-				const deMonths = [
-					"Januar", "Februar", "März", "April", "Mai", "Juni",
-					"Juli", "August", "September", "Oktober", "November", "Dezember"
-				];
-				editableDate = `${now.getDate()}. ${deMonths[now.getMonth()]} ${now.getFullYear()}`;
-				editableSubject = `Bewerbung als ${editableJobTitle || jobData.title}`;
-			} else {
-				editableDate = new Date().toLocaleDateString("en-GB", {
-					year: "numeric",
-					month: "long",
-					day: "numeric",
-				});
-				editableSubject = `Re: Application for ${editableJobTitle || jobData.title} at ${editableCompany || jobData.company}`;
-			}
+			// Defaults are now handled by the reactive block for selectedFormat
 
 			step.set(3);
 		} catch (e: any) {
@@ -608,6 +623,8 @@
 		editableSubject = "";
 		editableJobTitle = "";
 		editableCompany = "";
+		isDateManuallyEdited = false;
+		isSubjectManuallyEdited = false;
 	}
 
 	function startEditing() {
@@ -1453,7 +1470,7 @@
 						class="absolute top-0 left-0 w-1 h-full bg-[#0369A1]/20"
 					></div>
 					<!-- Live Header Preview -->
-					<div class="mb-8 font-serif">
+					<div class="mb-8 {selectedFormat === 'german' ? 'font-sans' : 'font-serif'}">
 						<!-- Line 1: Name -->
 						<div
 							class="text-base font-bold text-gray-900 mb-0.5 relative group w-fit"
@@ -1522,7 +1539,7 @@
 						</div>
 
 						<!-- Line 3: Contact Info -->
-						<div class="text-base text-gray-900 mb-6">
+						<div class="text-base text-gray-900 mb-6 pb-6 border-b border-gray-100">
 							{#if email}<span>{email}</span>{/if}
 							{#if email && (phone || linkedin)}<span>
 									|
@@ -1539,75 +1556,85 @@
 							{/if}
 						</div>
 
-						<!-- Recipient Block -->
-						<div class="mb-6 font-serif">
-							<div class="text-base font-bold text-gray-900 mb-0.5">
-								{editableCompany || jobData.company || "[Company]"}
+						{#if selectedFormat === 'british'}
+							<!-- British Layout: Date then Recipient -->
+							<div class="text-gray-800 mb-6 relative group w-fit ml-auto">
+								{#if isEditingDate}
+									<div class="flex items-center space-x-2 justify-end">
+										<input
+											type="text"
+											bind:value={editableDate}
+											on:input={() => isDateManuallyEdited = true}
+											class="input py-1 px-2 text-right w-48"
+										/>
+										<button on:click={() => { isEditingDate = false; invalidatePdf(); }} class="p-1 text-green-600 hover:bg-green-50 rounded">✓</button>
+										<button on:click={() => (isEditingDate = false)} class="p-1 text-red-500 hover:bg-red-50 rounded">✕</button>
+									</div>
+								{:else}
+									<div class="pl-8">
+										{editableDate || "[Date]"}
+										<button on:click={() => (isEditingDate = true)} class="absolute -left-2 top-0 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity" title="Edit Date">
+											<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+												<path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+											</svg>
+										</button>
+									</div>
+								{/if}
 							</div>
-							<div class="text-base text-gray-900 italic">
-								{editableJobTitle || jobData.title || "[Role]"}
+
+							<div class="mb-6">
+								<div class="text-base font-bold text-gray-900 mb-0.5">
+									{editableCompany || jobData.company || "[Company]"}
+								</div>
+								<div class="text-base text-gray-900 italic">
+									{editableJobTitle || jobData.title || "[Role]"}
+								</div>
 							</div>
-						</div>
+						{:else}
+							<!-- German DIN 5008 Layout: Recipient then Date -->
+							<div class="mb-6">
+								<div class="text-base font-bold text-gray-900 mb-0.5">
+									{editableCompany || jobData.company || "[Company]"}
+								</div>
+								<div class="text-base text-gray-900 italic">
+									{editableJobTitle || jobData.title || "[Role]"}
+								</div>
+							</div>
+
+							<div class="text-gray-800 mb-6 relative group w-fit ml-auto">
+								{#if isEditingDate}
+									<div class="flex items-center space-x-2 justify-end">
+										<input
+											type="text"
+											bind:value={editableDate}
+											on:input={() => isDateManuallyEdited = true}
+											class="input py-1 px-2 text-right w-48"
+										/>
+										<button on:click={() => { isEditingDate = false; invalidatePdf(); }} class="p-1 text-green-600 hover:bg-green-50 rounded">✓</button>
+										<button on:click={() => (isEditingDate = false)} class="p-1 text-red-500 hover:bg-red-50 rounded">✕</button>
+									</div>
+								{:else}
+									<div class="pl-8">
+										{editableDate || "[Date]"}
+										<button on:click={() => (isEditingDate = true)} class="absolute -left-2 top-0 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity" title="Edit Date">
+											<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+												<path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+											</svg>
+										</button>
+									</div>
+								{/if}
+							</div>
+						{/if}
 
 						<div
-							class="text-gray-800 mb-6 relative group w-fit ml-auto"
-						>
-							{#if isEditingDate}
-								<div
-									class="flex items-center space-x-2 justify-end"
-								>
-									<input
-										type="text"
-										bind:value={editableDate}
-										class="input py-1 px-2 text-right w-48"
-									/>
-									<button
-										on:click={() => {
-											isEditingDate = false;
-											invalidatePdf();
-										}}
-										class="p-1 text-green-600 hover:bg-green-50 rounded"
-									>
-										✓
-									</button>
-									<button
-										on:click={() => (isEditingDate = false)}
-										class="p-1 text-red-500 hover:bg-red-50 rounded"
-									>
-										✕
-									</button>
-								</div>
-							{:else}
-								<div class="pl-8">
-									{editableDate || "[Date]"}
-									<button
-										on:click={() => (isEditingDate = true)}
-										class="absolute -left-2 top-0 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
-										title="Edit Date"
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											class="h-4 w-4"
-											viewBox="0 0 20 20"
-											fill="currentColor"
-										>
-											<path
-												d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
-											/>
-										</svg>
-									</button>
-								</div>
-							{/if}
-						</div>
-
-						<div
-							class="text-gray-800 mb-8 font-semibold relative group w-fit"
+							class="text-gray-800 mb-8 {selectedFormat === 'german' ? 'font-sans font-bold' : 'font-serif font-semibold'} relative group w-fit"
 						>
 							{#if isEditingSubject}
 								<div class="flex items-center space-x-2">
 									<input
 										type="text"
 										bind:value={editableSubject}
+										on:input={() => isSubjectManuallyEdited = true}
 										class="input py-1 px-2 w-full font-semibold"
 									/>
 									<button
@@ -1653,7 +1680,7 @@
 					</div>
 
 					<!-- Content Area -->
-					<div class="prose max-w-none font-serif relative">
+					<div class="prose max-w-none {selectedFormat === 'german' ? 'font-sans' : 'font-serif'} relative">
 						{#if isEditing}
 							<textarea
 								bind:value={tempCoverLetter}

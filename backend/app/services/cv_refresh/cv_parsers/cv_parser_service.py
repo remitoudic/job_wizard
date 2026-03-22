@@ -130,7 +130,6 @@ class CVParserService:
         1. Send the PDF to LlamaParse → get markdown.
         2. Use a simple JSON-extraction prompt to structure the markdown.
         """
-        import json
         import traceback
 
         logger.info(f"Parsing CV from: {file_path}")
@@ -171,7 +170,6 @@ class CVParserService:
     async def _structure_with_llm(self, cv_markdown: str) -> CVData:
         """Use Groq LLM to convert markdown → CVData."""
         import json
-        import re
 
         prompt = STRUCTURING_PROMPT.format(cv_markdown=cv_markdown[:8000])
         raw = ""
