@@ -218,7 +218,7 @@
             
             <div class="flex-1 text-center sm:text-left space-y-3">
                 <h3 class="text-sm font-semibold text-gray-800">Profile Picture</h3>
-                <p class="text-xs text-gray-500 max-w-xs">Upload a professional headshot. Recommended size is 400x400px.</p>
+
                 
                 <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3">
                     <input type="file" accept="image/*" class="hidden" bind:this={fileInput} on:change={handleFileSelect} />
