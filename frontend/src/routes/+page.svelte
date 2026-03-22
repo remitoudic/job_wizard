@@ -87,7 +87,10 @@
 	let isSubjectManuallyEdited = false;
 
 	// Update defaults when format changes
-	$: if (selectedFormat && jobData && !isGenerating) {
+	$: if (selectedFormat && !isGenerating && (jobData || isManualInput)) {
+		const currentTitle = editableJobTitle || (jobData ? jobData.title : manualTitle);
+		const currentCompany = editableCompany || (jobData ? jobData.company : manualCompany);
+
 		if (selectedFormat === "german") {
 			if (!isDateManuallyEdited) {
 				const now = new Date();
@@ -98,7 +101,7 @@
 				editableDate = `${now.getDate()}. ${deMonths[now.getMonth()]} ${now.getFullYear()}`;
 			}
 			if (!isSubjectManuallyEdited) {
-				editableSubject = `Bewerbung als ${editableJobTitle || jobData.title}`;
+				editableSubject = `Bewerbung als ${currentTitle}`;
 			}
 		} else {
 			if (!isDateManuallyEdited) {
@@ -109,7 +112,7 @@
 				});
 			}
 			if (!isSubjectManuallyEdited) {
-				editableSubject = `Re: Application for ${editableJobTitle || jobData.title} at ${editableCompany || jobData.company}`;
+				editableSubject = `Re: Application for ${currentTitle} at ${currentCompany}`;
 			}
 		}
 	}
