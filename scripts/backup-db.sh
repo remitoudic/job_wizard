@@ -10,7 +10,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 # Create backups directory if it doesn't exist
-BACKUP_DIR="backups"
+BACKUP_DIR="services/backups"
 mkdir -p "$BACKUP_DIR"
 
 # Generate timestamp
@@ -18,8 +18,8 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="${BACKUP_DIR}/jobwizard_${TIMESTAMP}.sql"
 
 # Get database credentials from .env
-if [ -f .env ]; then
-    source .env
+if [ -f .env/.env ]; then
+    source .env/.env
 fi
 
 # Use defaults if not set

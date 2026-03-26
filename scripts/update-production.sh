@@ -110,10 +110,10 @@ COMPOSE_FILE="docker-compose.prod.yml"
 # Ensure backup directory exists on host with correct permissions
 # 1000:1000 is often the default non-root user in many containers (like python:slim or node)
 # Adjust if your container uses a specific UID/GID
-if [ ! -d "./backups" ]; then
+if [ ! -d "./services/backups" ]; then
     echo "📂 Creating backups directory..."
-    mkdir -p ./backups
-    chmod 777 ./backups # Permissive for now to avoid permission issues with bind mounts
+    mkdir -p ./services/backups
+    chmod 777 ./services/backups # Permissive for now to avoid permission issues with bind mounts
 fi
 
 if command -v docker-compose > /dev/null 2>&1; then
