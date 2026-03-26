@@ -28,7 +28,7 @@ dependencies = [
     "bcrypt==3.2.2",
     "python-jose[cryptography]>=3.3.0",
     "python-multipart>=0.0.9",
-    "job-wizard-db @ file:///root/job_wizard/database",
+    "job-wizard-db @ file:///root/job_wizard/services/database",
     "curl_cffi>=0.6.0",
     "weasyprint>=62.0",
     "llama-parse>=0.5.0",

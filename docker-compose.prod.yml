@@ -4,7 +4,7 @@
 services:
   postgres:
     build:
-      context: ./database
+      context: ./services/database
     container_name: jobwizard-postgres-prod
     restart: unless-stopped
     environment:
@@ -51,11 +51,11 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: services/backend/Dockerfile
     container_name: jobwizard-backend-prod
     restart: unless-stopped
     env_file:
-      - .env.production
+      - .env/.env.production
     environment:
       DATABASE_URL: ${DATABASE_URL}
       OLLAMA_HOST: ${OLLAMA_HOST}
@@ -68,7 +68,7 @@ services:
     # NO PORT MAPPING - only accessible via nginx
     volumes:
       - backend_uploads:/app/uploads
-      - ./backups:/app/backups
+      - ./services/backups:/app/backups
     networks:
       - jobwizard-network
     depends_on:
@@ -80,7 +80,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./services/frontend
       dockerfile: Dockerfile
       target: production
     container_name: jobwizard-frontend-prod
@@ -102,7 +102,7 @@ services:
 
   nginx:
     build:
-      context: ./nginx
+      context: ./services/nginx
       dockerfile: Dockerfile
     container_name: jobwizard-nginx-prod
     restart: unless-stopped
@@ -112,10 +112,10 @@ services:
       - "443:443"
     volumes:
       # Mount nginx config (if you want to update without rebuilding)
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./services/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       # Mount for SSL certificates (share with certbot)
-      - ./certbot/conf:/etc/nginx/ssl:ro
-      - ./certbot/www:/var/www/certbot:ro
+      - ./services/certbot/conf:/etc/nginx/ssl:ro
+      - ./services/certbot/www:/var/www/certbot:ro
       # Mount shared uploads volume to serve static files
       - backend_uploads:/app/uploads:ro
     networks:
@@ -133,8 +133,8 @@ services:
     image: certbot/certbot
     container_name: jobwizard-certbot
     volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - ./services/certbot/conf:/etc/letsencrypt
+      - ./services/certbot/www:/var/www/certbot
     # No network needed usually, but good to have if it needs to talk to others
     # command: certonly --webroot -w /var/www/certbot --force-renewal --email YOUR_EMAIL -d job-vite.com -d www.job-vite.com --agree-tos
     # We will run the command manually first

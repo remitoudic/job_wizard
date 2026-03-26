@@ -6,10 +6,10 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Copy dependency files
-COPY backend/pyproject.toml ./
+COPY services/backend/pyproject.toml ./
 
 # Copy database package
-COPY database /database_pkg
+COPY services/database /database_pkg
 
 # Install build dependencies for compiling Python packages
 RUN apt-get update && \
@@ -44,9 +44,9 @@ COPY --from=builder /usr/local/bin/uv /usr/local/bin/uv
 COPY --from=builder /database_pkg /database_pkg
 
 # Copy application code from backend directory
-COPY backend/app ./app
-COPY backend/scripts/seed_user.py ./scripts/seed_user.py
-COPY backend/pyproject.toml .
+COPY services/backend/app ./app
+COPY services/backend/scripts/seed_user.py ./scripts/seed_user.py
+COPY services/backend/pyproject.toml .
 
 # Fix absolute path in pyproject.toml for Docker environment (same as builder)
 RUN sed -i 's|file:///root/job_wizard/database|file:///database_pkg|g' pyproject.toml

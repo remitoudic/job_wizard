@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     USE_PLAYWRIGHT: bool = True
     
     model_config = SettingsConfigDict(
-        env_file=[".env.local", ".env", "../.env.local", "../.env"],
+        env_file=[".env/.env.local", ".env/.env", "../../.env/.env.local", "../../.env/.env"],
         case_sensitive=True,
         extra="ignore"
     )

@@ -1,7 +1,7 @@
 services:
   postgres:
     build:
-      context: ./database
+      context: ./services/database
     container_name: jobwizard-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-jobwizard}
@@ -43,11 +43,10 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: services/backend/Dockerfile
     container_name: jobwizard-backend
     env_file:
-      - .env
-      - .env.local
+      - .env/.env
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://jobwizard:changeme123@postgres:5432/jobwizard}
       OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
@@ -61,8 +60,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend/app:/app/app
-      - ./backend/tests:/app/tests
+      - ./services/backend/app:/app/app
+      - ./services/backend/tests:/app/tests
       - backend_uploads:/app/uploads
       - ./backups:/app/backups
     networks:
@@ -76,7 +75,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./services/frontend
       dockerfile: Dockerfile
       target: development
     container_name: jobwizard-frontend
@@ -85,7 +84,7 @@ services:
       - "3000:3000"
       - "5173:5173"
     volumes:
-      - ./frontend:/app
+      - ./services/frontend:/app
       - /app/node_modules
     networks:
       - jobwizard-network
