@@ -117,9 +117,9 @@ if [ ! -d "./services/backups" ]; then
 fi
 
 if command -v docker-compose > /dev/null 2>&1; then
-    docker-compose -f "$COMPOSE_FILE" up -d --build
+    docker-compose --env-file .env/.env -f "$COMPOSE_FILE" up -d --build
 else
-    docker compose -f "$COMPOSE_FILE" up -d --build
+    docker compose --env-file .env/.env -f "$COMPOSE_FILE" up -d --build
 fi
 
 echo ""
@@ -190,9 +190,9 @@ else
     
     # Restart services
     if command -v docker-compose > /dev/null 2>&1; then
-        docker-compose -f "$COMPOSE_FILE" up -d --build
+        docker-compose --env-file .env/.env -f "$COMPOSE_FILE" up -d --build
     else
-        docker compose -f "$COMPOSE_FILE" up -d --build
+        docker compose --env-file .env/.env -f "$COMPOSE_FILE" up -d --build
     fi
     
     echo ""
