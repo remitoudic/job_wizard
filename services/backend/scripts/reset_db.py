@@ -9,7 +9,7 @@ sys.path.append(str(backend_dir))
 from sqlmodel import Session, select, SQLModel, text
 from app.core.db import engine  # noqa: E402
 # Import from the installed package 'src' instead of local 'database' path
-from src.models.user import User  # noqa: E402
+from database_pkg.models.user import User  # noqa: E402
 from passlib.context import CryptContext  # noqa: E402
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

@@ -12,7 +12,7 @@ if os.getenv("LOGFIRE_TOKEN") == "":
 
 # Configure Logfire
 from app.api.routes import job_description, auth, users, application, cover_letter, cv_refresh
-from src import init_db
+from database_pkg import init_db
 from contextlib import asynccontextmanager
 
 @asynccontextmanager

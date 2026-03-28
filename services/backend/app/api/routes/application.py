@@ -10,7 +10,7 @@ from app.api.validation.schemas import (
 )
 
 # Import database models
-from src.models import (
+from database_pkg.models import (
     JobDescription as DBJobDescription,
     GeneratedLetter,
     Application,

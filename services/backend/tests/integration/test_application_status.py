@@ -11,7 +11,7 @@ with patch.object(Path, 'mkdir'):
     from app.main import app
 
 from app.core.security import create_access_token
-from src.models import User, JobDescription, GeneratedLetter, Application, ApplicationStatus
+from database_pkg.models import User, JobDescription, GeneratedLetter, Application, ApplicationStatus
 from app.core.db import get_session
 
 # Test database setup fixtures

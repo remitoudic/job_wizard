@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlmodel import Session, SQLModel, create_engine
 from sqlalchemy.pool import StaticPool
 
-from src.models import (
+from database_pkg.models import (
     User,
     JobDescription,
     GeneratedLetter,

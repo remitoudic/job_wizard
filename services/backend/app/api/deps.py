@@ -6,7 +6,7 @@ from sqlmodel import Session
 from app.core.db import get_session
 from app.core.security import SECRET_KEY, ALGORITHM
 from app.api.validation.schemas import TokenData
-from src.models.user import User
+from database_pkg.models.user import User
 from app.services.platform.user import user_service
 
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl="/api/auth/login")

@@ -6,7 +6,7 @@ from sqlmodel.pool import StaticPool
 from app.main import app
 from app.api.deps import get_session
 from app.core.security import get_password_hash, create_access_token
-from src.models.user import User
+from database_pkg.models.user import User
 
 @pytest.fixture(name="session")
 def session_fixture():

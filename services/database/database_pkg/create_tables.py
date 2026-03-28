@@ -1,5 +1,5 @@
-from src import init_db
-from src.models import user # Import models to register them with SQLModel
+from database_pkg import init_db
+from database_pkg.models import user # Import models to register them with SQLModel
 
 def create_tables():
     print("Creating tables...")

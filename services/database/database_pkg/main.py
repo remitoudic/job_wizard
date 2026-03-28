@@ -1,9 +1,9 @@
 import sys
 from sqlmodel import Session, select
 from passlib.context import CryptContext
-from src import engine
-from src.create_tables import create_tables
-from src.models.user import User
+from database_pkg import engine
+from database_pkg.create_tables import create_tables
+from database_pkg.models.user import User
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

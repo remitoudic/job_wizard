@@ -5,7 +5,7 @@ import pytest
 from app.main import app
 from app.api.deps import get_session
 from app.core.security import get_password_hash
-from src.models.user import User
+from database_pkg.models.user import User
 
 # Setup in-memory database for testing
 @pytest.fixture(name="session")

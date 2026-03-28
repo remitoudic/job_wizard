@@ -2,7 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlmodel import select
 from app.api.deps import SessionDep, CurrentUser, get_current_superuser
-from src.models.user import UserRead, UserUpdate, User
+from database_pkg.models.user import UserRead, UserUpdate, User
 from app.services.platform.user import user_service
 from app.services.platform.cloudinary_service import cloudinary_service
 from fastapi import UploadFile, File, HTTPException

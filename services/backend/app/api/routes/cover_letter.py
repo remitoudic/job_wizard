@@ -178,7 +178,7 @@ async def upload_image(file: UploadFile = File(...)):
 
 
 from app.api.deps import get_current_user_optional
-from src.models.user import User
+from database_pkg.models.user import User
 
 @router.post("/generate-pdf")
 async def generate_pdf(

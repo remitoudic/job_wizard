@@ -11,7 +11,7 @@ with patch.object(Path, 'mkdir'):
     from app.main import app
 
 from app.core.security import get_password_hash
-from src.models import User
+from database_pkg.models import User
 from app.core.db import get_session
 
 @pytest.fixture(name="test_db")
