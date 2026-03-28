@@ -13,6 +13,7 @@ Complete guide for developing, testing, and deploying the Vite a Job! applicatio
 - [Development Workflow](#development-workflow)
 - [Troubleshooting](#troubleshooting)
 - [Useful Commands](#useful-commands)
+- [Monorepo & Dependency Guide](MONOREPO_GUIDE.md)
 - [Best Practices](#best-practices)
 
 ## 🚀 Quick Start
