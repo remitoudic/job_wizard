@@ -42,14 +42,12 @@ def test_generate_cover_letter_endpoint():
         assert response.status_code == 200
         data = response.json()
         
-        assert "cover_letter" in data
-        assert len(data["cover_letter"]) > 0
-        assert data["job_title"] == "Senior Python Developer"
-        assert data["company"] == "TechCorp"
+        # New: The API now returns a job_id for async processing
+        assert "job_id" in data
+        assert len(data["job_id"]) > 0
         
-        print("\n✅ API Integration Test Passed!")
-        print(f"   Generated letter length: {len(data['cover_letter'])}")
-        print(f"   Source: {data.get('source', 'unknown')}")
+        print("\n✅ API Integration Test (Async Start) Passed!")
+        print(f"   Job ID: {data['job_id']}")
         
     finally:
         # Cancel any background tasks (e.g. slow local models processing alternatives)

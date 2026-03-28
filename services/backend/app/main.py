@@ -13,12 +13,18 @@ if os.getenv("LOGFIRE_TOKEN") == "":
 # Configure Logfire
 from app.api.routes import job_description, auth, users, application, cover_letter, cv_refresh
 from database_pkg import init_db
+from app.core.pubsub import pubsub_manager
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize DB (creates tables if they don't exist)
     init_db()
+    # Start the PubSub listener in the background
+    await pubsub_manager.start()
     yield
+    # Stop the PubSub listener on shutdown
+    await pubsub_manager.stop()
 
 # Create FastAPI app
 app = FastAPI(

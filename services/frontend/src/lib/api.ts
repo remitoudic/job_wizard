@@ -228,7 +228,7 @@ export async function parseJobUrl(url: string): Promise<JobDescription> {
 
 export async function generateCoverLetter(
     request: CoverLetterRequest
-): Promise<CoverLetterResponse> {
+): Promise<{ job_id: string }> {
     const response = await fetch(`${API_URL}/api/generate-cover-letter`, {
         method: 'POST',
         headers: {
@@ -237,7 +237,7 @@ export async function generateCoverLetter(
         body: JSON.stringify(request),
     });
 
-    return handleResponse<CoverLetterResponse>(response, 'Failed to generate cover letter');
+    return handleResponse<{ job_id: string }>(response, 'Failed to generate cover letter');
 }
 
 export async function uploadImage(file: File): Promise<UploadImageResponse> {

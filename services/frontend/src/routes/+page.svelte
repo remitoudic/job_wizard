@@ -55,6 +55,7 @@
 
 	let isParsing = false;
 	let isGenerating = false;
+    let generationProgress: Array<{status: string, message: string, timestamp: number}> = [];
 	let isPdfGenerating = false;
 	let error = "";
 
@@ -259,9 +260,12 @@
 
 		isGenerating = true;
 		error = "";
+        generationProgress = [];
+        allCoverLetters = [];
+        currentVersionIndex = 0;
 
 		try {
-			const result = await generateCoverLetter({
+			const { job_id } = await generateCoverLetter({
 				job_description: jobData,
 				user_name: userName || "Applicant",
 				context_text: contextText,
@@ -269,55 +273,106 @@
 				language,
 			});
 
-			// Initialize
-			coverLetter = result.cover_letter;
-			originalCoverLetter = result.cover_letter; // Save original
+            if (!job_id) throw new Error("No job ID received from server");
 
-			// Initialize all cover letters with the winner
-			allCoverLetters = [
-				{
-					text: result.cover_letter,
-					rawText: result.cover_letter,
-					source: result.source || "AI",
-				},
-			];
-			currentVersionIndex = 0;
+            // Open SSE connection
+            const eventSource = new EventSource(`${API_URL}/api/events/${job_id}`);
+            
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                // Add to progression list
+                generationProgress = [...generationProgress, { 
+                    status: data.status, 
+                    message: data.message, 
+                    timestamp: Date.now() 
+                }];
 
-			// Auto-replace name if already entered
-			if (firstName || surname) {
-				// This acts on currentVersionIndex 0
-				updateNameInCoverLetter();
-				// updateNameInCoverLetter updates 'coverLetter' and 'allCoverLetters[0].text'
-			}
+                // Handle Step: Extraction Done
+                if (data.status === "extracted" && data.contact_info) {
+                    const info = data.contact_info;
+                    if (info.first_name) firstName = info.first_name;
+                    if (info.surname) surname = info.surname;
+                    if (info.email) email = info.email;
+                    if (info.phone) phone = info.phone;
+                    if (info.linkedin) linkedin = info.linkedin;
+                    if (info.website) website = info.website;
+                    if (info.address) address = info.address;
+                    if (info.address_street) addressStreet = info.address_street;
+                    if (info.address_postcode) addressPostcode = info.address_postcode;
+                    if (info.address_city) addressCity = info.address_city;
+                    if (info.address_country) addressCountry = info.address_country;
+                    
+                    if (info.name && !userName) {
+                        userName = info.name;
+                    }
+                }
 
-			// Pre-fill contact info if available
-			if (result.first_name) firstName = result.first_name;
-			if (result.surname) surname = result.surname;
-			if (result.email) email = result.email;
-			if (result.phone) phone = result.phone;
-			if (result.linkedin) linkedin = result.linkedin;
-			if (result.website) website = result.website;
-			if (result.address) address = result.address;
-			if (result.address_street) addressStreet = result.address_street;
-			if (result.address_postcode)
-				addressPostcode = result.address_postcode;
-			if (result.address_city) addressCity = result.address_city;
-			if (result.address_country) addressCountry = result.address_country;
+                // Handle Step: Partial (Primary Ready)
+                if (data.status === "partial") {
+                    coverLetter = data.text;
+                    originalCoverLetter = data.text;
+                    source = data.source;
+                    alternativeId = data.alternative_id;
 
-			// Auto-fill name if detected and currently empty
-			if (result.user_name_detected && !userName) {
-				userName = result.user_name_detected;
-			}
+                    allCoverLetters = [{
+                        text: data.text,
+                        rawText: data.text,
+                        source: data.source
+                    }];
+                    
+                    if (firstName || surname) {
+                        updateNameInCoverLetter();
+                    }
 
-			// Capture race result
-			if (result.alternative_id) alternativeId = result.alternative_id;
-			if (result.source) source = result.source;
+                    // Move to Step 3 automatically once primary is ready
+                    step.set(3);
+                }
 
-			// Load alternatives in background
-			if (alternativeId) {
-				isLoadingAlternatives = true;
-				loadAlternatives();
-			}
+                // Handle Step: Alternative Ready
+                if (data.status === "alternative_ready") {
+                    if (!allCoverLetters.some(l => l.source === data.source)) {
+                        allCoverLetters = [...allCoverLetters, {
+                            text: data.text,
+                            rawText: data.text,
+                            source: data.source,
+                            status: "completed"
+                        }];
+                    }
+                }
+
+                // Handle Step: Completed
+                if (data.status === "completed") {
+                    // Update final result if we don't have it yet (e.g. race was instant)
+                    if (data.text && !coverLetter) {
+                        coverLetter = data.text;
+                        originalCoverLetter = data.text;
+                        source = data.source;
+                        alternativeId = data.alternative_id;
+                        allCoverLetters = [{
+                           text: data.text,
+                           rawText: data.text,
+                           source: data.source
+                        }];
+                        step.set(3);
+                    }
+                    isGenerating = false;
+                    eventSource.close();
+                }
+
+                // Handle Error
+                if (data.status === "error") {
+                    error = data.message;
+                    isGenerating = false;
+                    eventSource.close();
+                }
+            };
+
+            eventSource.onerror = (e) => {
+                console.error("SSE Connection Error", e);
+                // We don't necessarily want to show error to user immediately 
+                // as SSE auto-reconnects, but if we are still generating and it fails...
+            };
 
 			// Initialize Editable Header Fields if not already edited
 			if (!editableJobTitle) editableJobTitle = jobData?.title || "";
@@ -327,13 +382,9 @@
 					? `${firstName} ${surname}`.trim()
 					: userName || "";
 
-			// Defaults are now handled by the reactive block for selectedFormat
-
-			step.set(3);
 		} catch (e: any) {
-			error = e.message || "Failed to generate cover letter";
-		} finally {
-			isGenerating = false;
+			error = e.message || "Failed to start generation";
+            isGenerating = false;
 		}
 	}
 
@@ -1395,6 +1446,64 @@
 						{/if}
 					</button>
 				</div>
+
+				{#if isGenerating && generationProgress.length > 0}
+					<div
+						class="mt-8 p-6 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] shadow-sm"
+						transition:fade={{ duration: 300 }}
+					>
+						<h3
+							class="text-sm font-bold text-[#475569] uppercase tracking-wider mb-4 flex items-center gap-2"
+						>
+							<span class="relative flex h-2 w-2">
+								<span
+									class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"
+								></span>
+								<span
+									class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"
+								></span>
+							</span>
+							AI Engine Progression
+						</h3>
+						<div class="space-y-3">
+							{#each generationProgress as progressItem, i}
+								<div
+									class="flex items-start gap-3 text-sm text-[#334155]"
+									transition:fade={{ duration: 200 }}
+								>
+									<div class="mt-1">
+										{#if i === generationProgress.length - 1 && isGenerating}
+											<div
+												class="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"
+											></div>
+										{:else}
+											<svg
+												class="w-4 h-4 text-green-500"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="3"
+													d="M5 13l4 4L19 7"
+												/>
+											</svg>
+										{/if}
+									</div>
+									<span
+										class={i === generationProgress.length - 1
+											? "font-medium text-[#0F172A]"
+											: "opacity-60"}
+									>
+										{progressItem.message}
+									</span>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
 			</div>
 		{/if}
 

@@ -9,11 +9,14 @@ from app.services.cover_letter.pdf_service import PDFService
 from app.services.cover_letter.pdf_parser import PDFParser
 from app.services.platform.backup_service import BackupService
 
-# Import validation schemas
 from app.api.validation.schemas import (
     CoverLetterRequest,
     CoverLetterResponse,
 )
+from app.core.pubsub import pubsub_manager
+from sse_starlette.sse import EventSourceResponse
+import json
+import asyncio
 
 router = APIRouter(tags=["cover_letter"])
 
@@ -26,78 +29,86 @@ backup_service = BackupService()
 UPLOAD_DIR = Path("/app/uploads")
 
 
-@router.post("/generate-cover-letter", response_model=CoverLetterResponse)
+@router.post("/generate-cover-letter")
 async def generate_cover_letter(request: CoverLetterRequest):
     """
-    Generate a personalized cover letter using LLM
+    Start the asynchronous generation of a cover letter.
+    Returns a job_id that can be used to listen for events.
     """
-    import asyncio
+    job_id = str(uuid.uuid4())
     
-    try:
-        # Create tasks for parallel execution
-        generation_task = llm_service.generate_cover_letter(
-            job_description=request.job_description.description,
-            job_title=request.job_description.title,
-            company=request.job_description.company,
-            requirements=request.job_description.requirements,
-            user_name=request.user_name,
-            user_skills=request.user_skills,
-            context_text=request.context_text,
-            custom_instructions=request.custom_instructions,
-            language=request.language or "english",
-        )
+    # Define the background task
+    async def background_generation():
+        try:
+            # 1. Extraction (Async if context provided)
+            # We notify that we are starting extraction
+            if request.context_text:
+                await pubsub_manager.notify({
+                    "job_id": job_id,
+                    "status": "extracting",
+                    "message": "Analyzing your profile context..."
+                })
+                contact_info = await llm_service.extract_contact_info(request.context_text)
+                await pubsub_manager.notify({
+                    "job_id": job_id,
+                    "status": "extracted",
+                    "message": "Profile analysis complete.",
+                    "contact_info": contact_info
+                })
+            else:
+                contact_info = {}
 
-        extraction_task = None
-        if request.context_text:
-            extraction_task = asyncio.wait_for(
-                llm_service.extract_contact_info(request.context_text), 
-                timeout=20.0
+            # 2. Generation (Race mode)
+            # This already notifies within the service
+            await llm_service.generate_cover_letter(
+                job_description=request.job_description.description,
+                job_title=request.job_description.title,
+                company=request.job_description.company,
+                requirements=request.job_description.requirements,
+                job_id=job_id,
+                user_name=request.user_name,
+                user_skills=request.user_skills,
+                context_text=request.context_text,
+                custom_instructions=request.custom_instructions,
+                language=request.language or "english",
             )
+        except Exception as e:
+            await pubsub_manager.notify({
+                "job_id": job_id,
+                "status": "error",
+                "message": f"Generation failed: {str(e)}"
+            })
 
-        # Execute tasks
-        if extraction_task:
-            results = await asyncio.gather(generation_task, extraction_task, return_exceptions=True)
-            gen_result = results[0]
-            extract_result = results[1]
-        else:
-            gen_result = await generation_task
-            extract_result = {}
+    # Start the background task
+    asyncio.create_task(background_generation())
+    
+    return {"job_id": job_id}
 
-        # Handle Generation Result
-        if isinstance(gen_result, Exception):
-            raise gen_result
-        
-        cover_letter, source, alternative_id = gen_result
 
-        # Handle Extraction Result
-        contact_info = {"email": "", "phone": "", "linkedin": "", "name": "", "first_name": "", "surname": "", "address": "", "website": ""}
-        if isinstance(extract_result, dict):
-            contact_info = extract_result
-        elif isinstance(extract_result, Exception):
-             # Fail silently on extraction error, just log it if we had a logger
-             pass
-
-        return CoverLetterResponse(
-            cover_letter=cover_letter,
-            job_title=request.job_description.title,
-            company=request.job_description.company,
-            first_name=contact_info.get("first_name", ""),
-            surname=contact_info.get("surname", ""),
-            email=contact_info.get("email", ""),
-            phone=contact_info.get("phone", ""),
-            linkedin=contact_info.get("linkedin", ""),
-            website=contact_info.get("website", ""),
-            address=contact_info.get("address", ""),
-            address_street=contact_info.get("address_street", ""),
-            address_postcode=contact_info.get("address_postcode", ""),
-            address_city=contact_info.get("address_city", ""),
-            address_country=contact_info.get("address_country", ""),
-            user_name_detected=contact_info.get("name", ""),
-            source=source,
-            alternative_id=alternative_id,
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate cover letter: {str(e)}")
+@router.get("/events/{job_id}")
+async def cover_letter_events(job_id: str):
+    """
+    SSE endpoint to listen for cover letter generation events for a specific job_id.
+    """
+    async def event_generator():
+        try:
+            async for msg in pubsub_manager.subscribe():
+                # Filter by job_id
+                if msg.get("job_id") == job_id:
+                    yield {
+                        "event": "message",
+                        "id": str(uuid.uuid4()),
+                        "data": json.dumps(msg)
+                    }
+                    
+                    # Terminate stream on completion or error
+                    if msg.get("status") in ("completed", "error"):
+                        break
+        except asyncio.CancelledError:
+            # Handle client disconnect
+            pass
+            
+    return EventSourceResponse(event_generator())
 
 
 @router.post("/upload-context")

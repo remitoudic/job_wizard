@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any
 
 from app.services.platform.agents import create_writing_agent, create_extraction_agent
 from app.core.config import settings
+from app.core.pubsub import pubsub_manager
 import logfire
 
 class LLMService:
@@ -138,6 +139,7 @@ class LLMService:
         job_title: str,
         company: str,
         requirements: list[str],
+        job_id: str, # Required for tracking
         user_name: str = "",
         user_skills: str = "",
         context_text: Optional[str] = None,
@@ -224,6 +226,14 @@ CUSTOM USER GUIDANCE:
             # Only log attempt if it's a retry
             retry_msg = f" (Attempt {attempt})" if attempt > 1 else ""
             logger.info(f"Starting generic race with local={self.ollama_model_name} and remote_provider={self.current_provider_name}{retry_msg}")
+            
+            # Notify: Race started
+            await pubsub_manager.notify({
+                "job_id": job_id,
+                "status": "generating",
+                "message": f"Starting generation race using {self.current_provider_name}...",
+                "provider": self.current_provider_name
+            })
             
             race_start = time.perf_counter()
             tasks = []
@@ -414,9 +424,32 @@ CUSTOM USER GUIDANCE:
                  }
                  
                  if pending:
-                     task = asyncio.create_task(self._process_alternatives(pending, alt_id, task_start_times))
+                     # Notify: Primary ready, processing alternatives
+                     await pubsub_manager.notify({
+                         "job_id": job_id,
+                         "status": "partial",
+                         "message": "Primary letter ready. Processing alternatives...",
+                         "winner": winner_source,
+                         "text": winner_text,
+                         "source": winner_source,
+                         "alternative_id": alt_id
+                     })
+                     
+                     task = asyncio.create_task(self._process_alternatives(pending, alt_id, job_id, task_start_times))
                      self.background_tasks.add(task)
                      task.add_done_callback(self.background_tasks.discard)
+                     
+                 else:
+                     # Notify: All completed immediately
+                     await pubsub_manager.notify({
+                         "job_id": job_id,
+                         "status": "completed",
+                         "message": "Generation complete!",
+                         "winner": winner_source,
+                         "text": winner_text,
+                         "source": winner_source,
+                         "alternative_id": alt_id
+                     })
                      
                  return winner_text, winner_source, alt_id
             
@@ -441,7 +474,7 @@ CUSTOM USER GUIDANCE:
             else:
                  raise Exception(f"All models failed. Errors: {error_summary}")
 
-    async def _process_alternatives(self, pending_tasks, alt_id: str, task_start_times: dict):
+    async def _process_alternatives(self, pending_tasks, alt_id: str, job_id: str, task_start_times: dict):
         """Handle the slower tasks incrementally"""
         import time
         import logging
@@ -496,6 +529,14 @@ CUSTOM USER GUIDANCE:
                 
                 # Continue with remaining
                 tasks = list(pending)
+            
+            if not tasks:
+                # Final Notify
+                await pubsub_manager.notify({
+                    "job_id": job_id,
+                    "status": "completed",
+                    "message": "All alternatives generated."
+                })
             
         except Exception as e:
             logfire.error("Error processing alternatives", error=str(e))
