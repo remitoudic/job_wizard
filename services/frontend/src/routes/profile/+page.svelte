@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { fade, slide } from "svelte/transition";
     import { getProfile, updateProfile, uploadProfilePicture, deleteProfilePicture, getUserCVs, uploadUserCV, updateUserCV, activateUserCV, deleteUserCV } from "$lib/api";
     import type { UserCVRead } from "$lib/api";
     import { auth } from "../../stores/auth";
@@ -15,11 +16,11 @@
     let user: User | null = null;
     let isLoading = true;
     let isSaving = false;
-    let isAddressOpen = false;
     let message = "";
     let error = "";
 
     // Profile Picture logic
+    let isPictureModalOpen = false;
     let fileInput: HTMLInputElement;
     let imageToCrop: string | null = null;
     let cropperRef: HTMLImageElement;
@@ -69,6 +70,15 @@
         reader.readAsDataURL(file);
     }
 
+    function closePictureModal() {
+        if (cropperInstance) {
+            cropperInstance.destroy();
+            cropperInstance = null;
+        }
+        imageToCrop = null;
+        isPictureModalOpen = false;
+    }
+
     function cancelCrop() {
         if (cropperInstance) {
             cropperInstance.destroy();
@@ -105,7 +115,7 @@
                     user = updatedUser;
                     auth.updateUser(user);
                     message = "Profile picture updated successfully!";
-                    cancelCrop();
+                    closePictureModal();
                 } catch (err: any) {
                     error = err.message || "Failed to upload image";
                 } finally {
@@ -132,6 +142,7 @@
             user = updatedUser;
             auth.updateUser(user);
             message = "Profile picture deleted successfully!";
+            closePictureModal();
         } catch (err: any) {
             error = err.message || "Failed to delete image";
         } finally {
@@ -299,29 +310,31 @@
 <div
     class="max-w-2xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-md border border-gray-100"
 >
-    <h1 class="text-2xl font-bold mb-6 text-gray-800">My Profile</h1>
-
-    <div
-        class="mb-6 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100 flex items-start gap-3"
-    >
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 text-blue-500 mt-0.5 shrink-0"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-        >
-            <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-        </svg>
-        <p>
-            The contact information will be used for the header of covering
-            letter, and will be used only for this purpose.
-        </p>
+    <div class="flex justify-between items-start mb-6 pb-6 border-b border-gray-100">
+        <h1 class="text-2xl font-bold text-gray-800 mt-2">My Profile</h1>
+        
+        {#if !isLoading && user}
+            <button 
+                type="button"
+                on:click={() => isPictureModalOpen = true}
+                class="relative group rounded-full w-20 h-20 sm:w-24 sm:h-24 block overflow-hidden focus:outline-none focus:ring-4 focus:ring-primary-100 shadow-md -mt-2"
+            >
+                {#if user.profile_picture_url}
+                    <img src={user.profile_picture_url} alt="Profile" class="w-full h-full object-cover border-4 border-white bg-gray-50 transition-opacity duration-200 group-hover:opacity-75" />
+                {:else}
+                    <div class="w-full h-full rounded-full bg-primary-50 text-primary-600 flex items-center justify-center text-3xl font-bold border-4 border-white transition-opacity duration-200 group-hover:opacity-75">
+                        {user.first_name?.[0] || user.email[0].toUpperCase()}
+                    </div>
+                {/if}
+                <!-- Hover Overlay -->
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-8 sm:w-8 text-white drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
+            </button>
+        {/if}
     </div>
 
     {#if isLoading}
@@ -342,69 +355,82 @@
             </div>
         {/if}
 
-        <!-- Profile Picture Section -->
-        <div class="mb-8 flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-8 border-b border-gray-100">
-            <div class="relative group">
-                {#if user.profile_picture_url}
-                    <img src={user.profile_picture_url} alt="Profile" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md bg-gray-50" />
-                {:else}
-                    <div class="w-24 h-24 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center text-3xl font-bold border-4 border-white shadow-md">
-                        {user.first_name?.[0] || user.email[0].toUpperCase()}
-                    </div>
-                {/if}
-            </div>
-            
-            <div class="flex-1 text-center sm:text-left space-y-3">
-                <h3 class="text-sm font-semibold text-gray-800">Profile Picture</h3>
 
-                <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3">
-                    <input type="file" accept="image/*" class="hidden" bind:this={fileInput} on:change={handleFileSelect} />
-                    <button type="button" on:click={() => fileInput.click()} class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                        Upload New
-                    </button>
-                    {#if user.profile_picture_url}
-                        <button type="button" on:click={handleDeletePicture} disabled={isDeleting} class="px-4 py-2 text-red-600 border border-transparent rounded-lg text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-50">
-                            {isDeleting ? "Deleting..." : "Delete"}
-                        </button>
-                    {/if}
-                </div>
-            </div>
-        </div>
 
-        {#if imageToCrop}
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        {#if isPictureModalOpen}
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" transition:fade={{ duration: 150 }}>
             <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
-                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 class="font-bold text-gray-800">Crop Profile Picture</h3>
-                    <button on:click={cancelCrop} class="text-gray-400 hover:text-gray-600">
+                <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white z-10">
+                    <h3 class="font-bold text-gray-800">{imageToCrop ? 'Crop profile picture' : 'Profile picture'}</h3>
+                    <button on:click={closePictureModal} class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
                 
-                <div class="p-6 bg-gray-50 flex-1 overflow-auto flex items-center justify-center">
-                    <div class="w-full aspect-square relative bg-white shadow-inner max-w-[300px] mx-auto overflow-hidden">
-                        <img bind:this={cropperRef} src={imageToCrop} alt="To crop" class="block max-w-full" />
+                {#if imageToCrop}
+                    <!-- Cropper State -->
+                    <div class="p-6 bg-gray-50 flex-1 overflow-auto flex items-center justify-center">
+                        <div class="w-full aspect-square relative bg-white shadow-inner max-w-[300px] mx-auto overflow-hidden">
+                            <img bind:this={cropperRef} src={imageToCrop} alt="To crop" class="block max-w-full" />
+                        </div>
                     </div>
-                </div>
-                
-                <div class="p-4 border-t border-gray-100 flex justify-end gap-3 bg-white">
-                    <button on:click={cancelCrop} class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">
-                        Cancel
-                    </button>
-                    <button on:click={handleCropSave} disabled={isUploading} class="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2">
-                        {#if isUploading}
-                            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Saving...
-                        {:else}
-                            Save Picture
-                        {/if}
-                    </button>
-                </div>
+                    
+                    <div class="p-4 border-t border-gray-100 flex justify-end gap-3 bg-white">
+                        <button on:click={cancelCrop} class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">
+                            Back
+                        </button>
+                        <button on:click={handleCropSave} disabled={isUploading} class="px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2">
+                            {#if isUploading}
+                                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Saving...
+                            {:else}
+                                Save
+                            {/if}
+                        </button>
+                    </div>
+                {:else}
+                    <!-- Display State -->
+                    <div class="p-8 bg-gray-50 flex-1 flex flex-col items-center justify-center">
+                        <div class="w-48 h-48 sm:w-64 sm:h-64 rounded-full overflow-hidden border-[12px] border-white shadow-xl bg-white mb-4 relative group">
+                            {#if user.profile_picture_url}
+                                <img src={user.profile_picture_url} alt="Profile" class="w-full h-full object-cover" />
+                            {:else}
+                                <div class="w-full h-full bg-primary-50 text-primary-600 flex items-center justify-center text-7xl font-bold">
+                                    {user.first_name?.[0] || user.email[0].toUpperCase()}
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 border-t border-gray-100 bg-white">
+                        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                            <input type="file" accept="image/*" class="hidden" bind:this={fileInput} on:change={handleFileSelect} />
+                            <button type="button" on:click={() => fileInput.click()} class="px-6 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors shadow-sm flex-1 flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                                Upload Photo
+                            </button>
+                            {#if user.profile_picture_url}
+                                <button type="button" on:click={handleDeletePicture} disabled={isDeleting} class="px-6 py-2 text-red-600 border border-slate-200 bg-white rounded-lg text-sm font-medium hover:bg-red-50 hover:border-red-100 transition-colors disabled:opacity-50 flex-1 flex items-center justify-center gap-2 shadow-sm">
+                                    {#if isDeleting}
+                                        Deleting...
+                                    {:else}
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete
+                                    {/if}
+                                </button>
+                            {/if}
+                        </div>
+                    </div>
+                {/if}
             </div>
         </div>
         {/if}
@@ -489,49 +515,50 @@
             {:else}
                 <div class="space-y-3">
                     {#each cvList as cv (cv.id)}
-                        <div class="flex items-center gap-3 p-3 rounded-lg border {cv.is_active ? 'border-primary-200 bg-primary-50/50' : 'border-gray-200 bg-white'} hover:shadow-sm transition-shadow">
+                        <div transition:slide={{ duration: 250 }} class="group flex items-center gap-4 p-4 rounded-xl border {cv.is_active ? 'border-primary-400 bg-primary-50/30 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'} transition-all duration-200">
                             <!-- Icon -->
-                            <div class="shrink-0 {cv.is_active ? 'text-primary-500' : 'text-gray-400'}">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            <div class="shrink-0 {cv.is_active ? 'text-primary-600 bg-primary-100/50' : 'text-slate-400 bg-slate-50'} p-2.5 rounded-lg border border-slate-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
 
                             <!-- Info -->
                             <div class="flex-1 min-w-0">
                                 {#if editingCvId === cv.id}
-                                    <div class="flex gap-2">
+                                    <div class="flex gap-2" transition:fade={{ duration: 150 }}>
                                         <input
                                             type="text"
                                             bind:value={editingCvName}
                                             on:keydown={(e) => { if (e.key === 'Enter') handleRenameCv(cv.id); if (e.key === 'Escape') cancelRenameCv(); }}
-                                            class="input text-sm flex-1 py-1"
+                                            class="input text-sm flex-1 py-1 px-2 min-w-0"
+                                            autofocus
                                         />
-                                        <button on:click={() => handleRenameCv(cv.id)} class="text-primary-600 hover:text-primary-700 text-xs font-medium">Save</button>
-                                        <button on:click={cancelRenameCv} class="text-gray-400 hover:text-gray-600 text-xs">Cancel</button>
+                                        <button on:click={() => handleRenameCv(cv.id)} class="px-3 py-1 text-primary-600 hover:text-primary-700 text-xs font-semibold rounded-md border border-primary-200 hover:bg-primary-50 transition-colors">Save</button>
+                                        <button on:click={cancelRenameCv} class="px-3 py-1 text-slate-500 hover:text-slate-700 text-xs font-medium rounded-md border border-slate-200 hover:bg-slate-50 transition-colors">Cancel</button>
                                     </div>
                                 {:else}
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-medium text-sm text-gray-800 truncate">{cv.name}</span>
+                                    <div class="flex items-center gap-2" transition:fade={{ duration: 150 }}>
+                                        <span class="font-semibold text-sm text-slate-800 truncate">{cv.name}</span>
                                         {#if cv.is_active}
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700">Active</span>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-primary-100 text-primary-700 border border-primary-200">Active</span>
                                         {/if}
                                     </div>
-                                    <p class="text-xs text-gray-400 truncate">{cv.original_filename} · {formatDate(cv.created_at)}</p>
+                                    <p class="text-xs text-slate-400 truncate mt-0.5">{cv.original_filename} · {formatDate(cv.created_at)}</p>
                                 {/if}
                             </div>
 
                             <!-- Actions -->
-                            <div class="shrink-0 flex items-center gap-1">
+                            <div class="shrink-0 flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
                                 {#if !cv.is_active}
                                     <button
                                         type="button"
                                         on:click={() => handleActivateCv(cv.id)}
                                         title="Set as active"
-                                        class="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
+                                        class="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors border border-transparent hover:border-primary-100"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                         </svg>
                                     </button>
                                 {/if}
@@ -540,7 +567,7 @@
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     title="View PDF"
-                                    class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                    class="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-200"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -550,7 +577,7 @@
                                     type="button"
                                     on:click={() => startRenameCv(cv)}
                                     title="Rename"
-                                    class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                    class="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-200"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -560,7 +587,7 @@
                                     type="button"
                                     on:click={() => handleDeleteCv(cv)}
                                     title="Delete"
-                                    class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -646,95 +673,78 @@
                     />
                 </div>
 
-                <div class="md:col-span-2 pt-4">
-                    <button
-                        type="button"
-                        on:click={() => (isAddressOpen = !isAddressOpen)}
-                        class="flex items-center justify-between w-full text-left text-lg font-medium text-gray-900 border-b border-gray-100 pb-2 mb-4 hover:bg-gray-50 transition-colors"
-                    >
-                        <span>Address</span>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-5 w-5 transform transition-transform {isAddressOpen
-                                ? 'rotate-180'
-                                : ''}"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M19 9l-7 7-7-7"
-                            />
-                        </svg>
-                    </button>
-                </div>
-
-                {#if isAddressOpen}
-                    <div class="md:col-span-2 contents">
-                        <div class="md:col-span-2">
-                            <label
-                                for="street"
-                                class="block text-sm font-medium text-gray-700 mb-1"
-                                >Street</label
-                            >
-                            <input
-                                id="street"
-                                type="text"
-                                bind:value={user.street}
-                                class="input w-full"
-                                placeholder="123 Main St"
-                            />
+                <div class="md:col-span-2 pt-6 mt-2">
+                    <div class="bg-slate-50/50 border border-slate-200 rounded-xl p-6 shadow-sm">
+                        <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <h3 class="text-lg font-semibold text-slate-800">Address</h3>
                         </div>
-                        <div>
-                            <label
-                                for="city"
-                                class="block text-sm font-medium text-gray-700 mb-1"
-                                >City</label
-                            >
-                            <input
-                                id="city"
-                                type="text"
-                                bind:value={user.city}
-                                class="input w-full"
-                                placeholder="New York"
-                            />
-                        </div>
-                        <div>
-                            <label
-                                for="postcode"
-                                class="block text-sm font-medium text-gray-700 mb-1"
-                                >Postcode</label
-                            >
-                            <input
-                                id="postcode"
-                                type="text"
-                                bind:value={user.postcode}
-                                class="input w-full"
-                                placeholder="10001"
-                            />
-                        </div>
-                        <div class="md:col-span-2">
-                            <label
-                                for="country"
-                                class="block text-sm font-medium text-gray-700 mb-1"
-                                >Country</label
-                            >
-                            <input
-                                id="country"
-                                type="text"
-                                bind:value={user.country}
-                                class="input w-full"
-                                placeholder="USA"
-                            />
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div class="md:col-span-2">
+                                <label
+                                    for="street"
+                                    class="block text-sm font-medium text-slate-700 mb-1"
+                                    >Street</label
+                                >
+                                <input
+                                    id="street"
+                                    type="text"
+                                    bind:value={user.street}
+                                    class="input w-full"
+                                    placeholder="123 Main St"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    for="city"
+                                    class="block text-sm font-medium text-slate-700 mb-1"
+                                    >City</label
+                                >
+                                <input
+                                    id="city"
+                                    type="text"
+                                    bind:value={user.city}
+                                    class="input w-full"
+                                    placeholder="New York"
+                                />
+                            </div>
+                            <div>
+                                <label
+                                    for="postcode"
+                                    class="block text-sm font-medium text-slate-700 mb-1"
+                                    >Postcode</label
+                                >
+                                <input
+                                    id="postcode"
+                                    type="text"
+                                    bind:value={user.postcode}
+                                    class="input w-full"
+                                    placeholder="10001"
+                                />
+                            </div>
+                            <div class="md:col-span-2">
+                                <label
+                                    for="country"
+                                    class="block text-sm font-medium text-slate-700 mb-1"
+                                    >Country</label
+                                >
+                                <input
+                                    id="country"
+                                    type="text"
+                                    bind:value={user.country}
+                                    class="input w-full"
+                                    placeholder="USA"
+                                />
+                            </div>
                         </div>
                     </div>
-                {/if}
+                </div>
             </div>
 
-            <div class="pt-4 border-t border-gray-100 flex justify-end">
+            <div class="pt-6 border-t border-gray-100 flex flex-col items-end gap-3">
                 <button
                     type="submit"
                     disabled={isSaving}
@@ -742,6 +752,12 @@
                 >
                     {isSaving ? "Saving..." : "Save Changes"}
                 </button>
+                <div class="flex items-start sm:items-center gap-2 text-xs text-slate-400 max-w-sm text-right">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mt-0.5 sm:mt-0 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p>The contact information will be used for the header of the covering letter, and will be used only for this purpose.</p>
+                </div>
             </div>
         </form>
     {:else}
@@ -758,6 +774,6 @@
 
 <style>
     .input {
-        @apply px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500 transition-colors;
+        @apply px-3 py-2 border border-slate-200 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white;
     }
 </style>
