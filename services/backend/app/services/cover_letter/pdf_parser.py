@@ -1,5 +1,5 @@
 from pathlib import Path
-from pypdf import PdfReader
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,10 +18,8 @@ class PDFParser:
             str: Extracted text content
         """
         try:
-            reader = PdfReader(str(file_path))
-            text = ""
-            for page in reader.pages:
-                text += page.extract_text() + "\n"
+            import edgeparse
+            text = edgeparse.convert(str(file_path), format="markdown")
             return text.strip()
         except Exception as e:
             logger.error(f"Failed to extract text from PDF: {e}")

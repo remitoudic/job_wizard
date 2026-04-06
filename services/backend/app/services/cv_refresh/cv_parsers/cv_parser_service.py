@@ -148,9 +148,8 @@ class CVParserService:
         
         # Inject raw text from first page to ensure headers/footers (contact info) are available
         try:
-            from pypdf import PdfReader
-            reader = PdfReader(file_path)
-            first_page_text = reader.pages[0].extract_text()
+            import edgeparse
+            first_page_text = edgeparse.convert(file_path, format="markdown")
             # Prepend the raw text to the markdown
             cv_markdown = f"--- RAW TEXT (Contains Contact Info) ---\n{first_page_text[:1000]}\n\n--- STRUCTURED MARKDOWN ---\n" + cv_markdown
         except Exception as e:
