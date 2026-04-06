@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { getProfile, updateProfile, uploadProfilePicture, deleteProfilePicture } from "$lib/api";
+    import { getProfile, updateProfile, uploadProfilePicture, deleteProfilePicture, getUserCVs, uploadUserCV, updateUserCV, activateUserCV, deleteUserCV } from "$lib/api";
+    import type { UserCVRead } from "$lib/api";
     import { auth } from "../../stores/auth";
     import type { User } from "../../stores/auth";
     import { get } from "svelte/store";
@@ -25,6 +26,16 @@
     let cropperInstance: Cropper | null = null;
     let isUploading = false;
     let isDeleting = false;
+
+    // CV Management
+    let cvList: UserCVRead[] = [];
+    let isCvLoading = false;
+    let isCvUploading = false;
+    let cvFileInput: HTMLInputElement;
+    let showCvUploadForm = false;
+    let newCvName = "My CV";
+    let editingCvId: number | null = null;
+    let editingCvName = "";
 
     function handleFileSelect(event: Event) {
         const file = (event.target as HTMLInputElement).files?.[0];
@@ -128,10 +139,137 @@
         }
     }
 
+    // ── CV Management Functions ─────────────────────────────────────────────
+
+    async function loadCVs() {
+        isCvLoading = true;
+        try {
+            cvList = await getUserCVs();
+        } catch (e: any) {
+            console.error("Failed to load CVs:", e);
+        } finally {
+            isCvLoading = false;
+        }
+    }
+
+    function handleCvFileSelect(event: Event) {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            error = "Please select a PDF file";
+            cvFileInput.value = '';
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            error = "File size must be less than 10MB";
+            cvFileInput.value = '';
+            return;
+        }
+        showCvUploadForm = true;
+    }
+
+    async function handleCvUpload() {
+        const file = cvFileInput?.files?.[0];
+        if (!file) return;
+
+        isCvUploading = true;
+        error = "";
+        message = "";
+        try {
+            const uploaded = await uploadUserCV(file, newCvName || "My CV");
+            cvList = [...cvList, uploaded];
+            // Sort: active first, then by date desc
+            cvList.sort((a, b) => {
+                if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            });
+            message = `CV "${uploaded.name}" uploaded successfully!`;
+            showCvUploadForm = false;
+            newCvName = "My CV";
+            if (cvFileInput) cvFileInput.value = '';
+        } catch (e: any) {
+            error = e.message || "Failed to upload CV";
+        } finally {
+            isCvUploading = false;
+        }
+    }
+
+    function cancelCvUpload() {
+        showCvUploadForm = false;
+        newCvName = "My CV";
+        if (cvFileInput) cvFileInput.value = '';
+    }
+
+    async function handleActivateCv(cvId: number) {
+        error = "";
+        message = "";
+        try {
+            await activateUserCV(cvId);
+            cvList = cvList.map(cv => ({ ...cv, is_active: cv.id === cvId }));
+            // Re-sort
+            cvList.sort((a, b) => {
+                if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            });
+            message = "Active CV updated!";
+        } catch (e: any) {
+            error = e.message || "Failed to activate CV";
+        }
+    }
+
+    function startRenameCv(cv: UserCVRead) {
+        editingCvId = cv.id;
+        editingCvName = cv.name;
+    }
+
+    async function handleRenameCv(cvId: number) {
+        if (!editingCvName.trim()) return;
+        error = "";
+        try {
+            const updated = await updateUserCV(cvId, { name: editingCvName.trim() });
+            cvList = cvList.map(cv => cv.id === cvId ? { ...cv, name: updated.name } : cv);
+            editingCvId = null;
+            editingCvName = "";
+        } catch (e: any) {
+            error = e.message || "Failed to rename CV";
+        }
+    }
+
+    function cancelRenameCv() {
+        editingCvId = null;
+        editingCvName = "";
+    }
+
+    async function handleDeleteCv(cv: UserCVRead) {
+        if (!confirm(`Delete "${cv.name}"? This cannot be undone.`)) return;
+        error = "";
+        message = "";
+        try {
+            await deleteUserCV(cv.id);
+            cvList = cvList.filter(c => c.id !== cv.id);
+            // If the deleted CV was active and there are remaining CVs, reload to get new active
+            if (cv.is_active && cvList.length > 0) {
+                await loadCVs();
+            }
+            message = `CV "${cv.name}" deleted.`;
+        } catch (e: any) {
+            error = e.message || "Failed to delete CV";
+        }
+    }
+
+    function formatDate(dateStr: string): string {
+        return new Date(dateStr).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    }
+
     onMount(async () => {
         try {
             user = await getProfile();
             auth.updateUser(user!);
+            await loadCVs();
         } catch (e) {
             error = "Failed to load profile";
         } finally {
@@ -270,6 +408,170 @@
             </div>
         </div>
         {/if}
+
+        <!-- My CVs Section -->
+        <div class="mb-8 pb-8 border-b border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    My CVs
+                    <span class="text-xs font-normal text-gray-400">({cvList.length}/5)</span>
+                </h3>
+                {#if cvList.length < 5}
+                    <div>
+                        <input type="file" accept=".pdf" class="hidden" bind:this={cvFileInput} on:change={handleCvFileSelect} />
+                        <button
+                            type="button"
+                            on:click={() => cvFileInput.click()}
+                            disabled={isCvUploading}
+                            class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Upload CV
+                        </button>
+                    </div>
+                {/if}
+            </div>
+
+            <!-- Upload Form (shown after file selected) -->
+            {#if showCvUploadForm}
+                <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                    <p class="text-sm text-gray-600 mb-2">
+                        File: <span class="font-medium text-gray-800">{cvFileInput?.files?.[0]?.name || ''}</span>
+                    </p>
+                    <label for="cv-name" class="block text-sm font-medium text-gray-700 mb-1">Give this CV a name</label>
+                    <div class="flex gap-2">
+                        <input
+                            id="cv-name"
+                            type="text"
+                            bind:value={newCvName}
+                            placeholder="e.g. Tech Lead CV"
+                            class="input flex-1"
+                        />
+                        <button
+                            type="button"
+                            on:click={handleCvUpload}
+                            disabled={isCvUploading}
+                            class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {#if isCvUploading}
+                                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Uploading...
+                            {:else}
+                                Save
+                            {/if}
+                        </button>
+                        <button type="button" on:click={cancelCvUpload} class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            {/if}
+
+            <!-- CV List -->
+            {#if isCvLoading}
+                <div class="text-center py-6 text-gray-400 text-sm">Loading CVs...</div>
+            {:else if cvList.length === 0}
+                <div class="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p class="text-gray-500 text-sm mb-1">No CVs uploaded yet</p>
+                    <p class="text-gray-400 text-xs">Upload your CV to auto-fill cover letters</p>
+                </div>
+            {:else}
+                <div class="space-y-3">
+                    {#each cvList as cv (cv.id)}
+                        <div class="flex items-center gap-3 p-3 rounded-lg border {cv.is_active ? 'border-primary-200 bg-primary-50/50' : 'border-gray-200 bg-white'} hover:shadow-sm transition-shadow">
+                            <!-- Icon -->
+                            <div class="shrink-0 {cv.is_active ? 'text-primary-500' : 'text-gray-400'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+
+                            <!-- Info -->
+                            <div class="flex-1 min-w-0">
+                                {#if editingCvId === cv.id}
+                                    <div class="flex gap-2">
+                                        <input
+                                            type="text"
+                                            bind:value={editingCvName}
+                                            on:keydown={(e) => { if (e.key === 'Enter') handleRenameCv(cv.id); if (e.key === 'Escape') cancelRenameCv(); }}
+                                            class="input text-sm flex-1 py-1"
+                                        />
+                                        <button on:click={() => handleRenameCv(cv.id)} class="text-primary-600 hover:text-primary-700 text-xs font-medium">Save</button>
+                                        <button on:click={cancelRenameCv} class="text-gray-400 hover:text-gray-600 text-xs">Cancel</button>
+                                    </div>
+                                {:else}
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-medium text-sm text-gray-800 truncate">{cv.name}</span>
+                                        {#if cv.is_active}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-700">Active</span>
+                                        {/if}
+                                    </div>
+                                    <p class="text-xs text-gray-400 truncate">{cv.original_filename} · {formatDate(cv.created_at)}</p>
+                                {/if}
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="shrink-0 flex items-center gap-1">
+                                {#if !cv.is_active}
+                                    <button
+                                        type="button"
+                                        on:click={() => handleActivateCv(cv.id)}
+                                        title="Set as active"
+                                        class="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                        </svg>
+                                    </button>
+                                {/if}
+                                <a
+                                    href={cv.cv_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="View PDF"
+                                    class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                </a>
+                                <button
+                                    type="button"
+                                    on:click={() => startRenameCv(cv)}
+                                    title="Rename"
+                                    class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                                <button
+                                    type="button"
+                                    on:click={() => handleDeleteCv(cv)}
+                                    title="Delete"
+                                    class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    {/each}
+                </div>
+            {/if}
+        </div>
 
         <form on:submit|preventDefault={handleSave} class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

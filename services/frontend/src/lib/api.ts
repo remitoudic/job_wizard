@@ -400,7 +400,68 @@ export async function deleteApplication(id: number): Promise<any> {
     return handleResponse<any>(response, 'Failed to delete application');
 }
 
-// ── CV Refresh Types & API ─────────────────────────────────────────────────
+// ── User CV Management Types & API ─────────────────────────────────────────
+
+export interface UserCVRead {
+    id: number;
+    name: string;
+    original_filename: string;
+    cv_url: string;
+    cv_data: string | null;
+    is_active: boolean;
+    user_id: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export async function getUserCVs(): Promise<UserCVRead[]> {
+    const response = await fetch(`${API_URL}/api/users/me/cvs/`, {
+        method: 'GET',
+        headers: getHeaders(),
+    });
+    return handleResponse<UserCVRead[]>(response, 'Failed to fetch CVs');
+}
+
+export async function uploadUserCV(file: File, name: string): Promise<UserCVRead> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('name', name);
+
+    const token = get(auth).token;
+    const response = await fetch(`${API_URL}/api/users/me/cvs/`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+    });
+    return handleResponse<UserCVRead>(response, 'Failed to upload CV');
+}
+
+export async function updateUserCV(cvId: number, data: { name?: string }): Promise<UserCVRead> {
+    const response = await fetch(`${API_URL}/api/users/me/cvs/${cvId}`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+    });
+    return handleResponse<UserCVRead>(response, 'Failed to update CV');
+}
+
+export async function activateUserCV(cvId: number): Promise<UserCVRead> {
+    const response = await fetch(`${API_URL}/api/users/me/cvs/${cvId}/activate`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+    });
+    return handleResponse<UserCVRead>(response, 'Failed to activate CV');
+}
+
+export async function deleteUserCV(cvId: number): Promise<void> {
+    const response = await fetch(`${API_URL}/api/users/me/cvs/${cvId}`, {
+        method: 'DELETE',
+        headers: getHeaders(),
+    });
+    await handleResponse<any>(response, 'Failed to delete CV');
+}
+
+
 
 export interface CVContact {
     name: string;
