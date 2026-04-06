@@ -1171,7 +1171,7 @@
 											disabled={isParsing}
 										/>
 										<label
-											for="file-upload"
+											for="file-upload-section"
 											class="btn btn-secondary text-sm cursor-pointer flex items-center gap-2"
 										>
 											<svg

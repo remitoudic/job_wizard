@@ -1,7 +1,8 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Page from './+page.svelte';
 import { auth } from '../stores/auth';
+import { step } from '../stores/wizard';
 import * as api from '$lib/api';
 
 // Mock the API module to prevent real fetch calls
@@ -17,6 +18,10 @@ vi.mock('$lib/api', () => ({
 }));
 
 describe('Cover Letter +page.svelte', () => {
+    beforeEach(() => {
+        step.set(1);
+    });
+
     it('should pre-fill contact info from the auth store when logged in', async () => {
         // Setup API mocks to allow progressing to Step 3
         vi.mocked(api.parseJobUrl).mockResolvedValue({
@@ -66,6 +71,22 @@ describe('Cover Letter +page.svelte', () => {
         expect(screen.getByText(/janedoe@example\.com/i)).toBeInTheDocument();
         expect(screen.getByText(/555-0101/i)).toBeInTheDocument();
         expect(screen.getByText(/123 Test St[\s\S]*12345[\s\S]*Testville/i)).toBeInTheDocument();
+    });
+
+    it('should have a correctly linked upload info file input', async () => {
+        render(Page, { props: { data: {} } });
+        
+        // Open the 'Personalize your letter' details section
+        const personalizeSummary = screen.getByText('Personalize your letter');
+        await fireEvent.click(personalizeSummary);
+
+        // testing-library uses the linked <label> text to find the input element.
+        // If the `for` attribute and the `id` don't match, this will throw a TestingLibraryElementError
+        const fileInput = screen.getByLabelText(/choose file/i);
+        
+        expect(fileInput).toBeInTheDocument();
+        expect(fileInput.tagName).toBe('INPUT');
+        expect(fileInput).toHaveAttribute('type', 'file');
     });
 });
 

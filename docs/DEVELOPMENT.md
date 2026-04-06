@@ -58,20 +58,11 @@ Vite a Job! uses a modern microservices architecture with Docker Compose orchest
        ▼
 ┌─────────────┐
 │   FastAPI   │ ← Backend (Port 8000)
-│   Backend   │   • Python 3.11 + uv
-└──────┬──────┘   • Auto-reload on changes
-       │          • Interactive API docs at /docs
-       ├──────────────────────┐
-       ▼                      ▼
+│          ├──────────────────────┐
+        ▼                      ▼
 ┌─────────────┐        ┌─────────────┐
 │ PostgreSQL  │        │   Ollama    │ ← Local LLM (Port 11434)
 │  Database   │        │   (Local)   │   • llama3.2:1b model
-└─────────────┘        └─────────────┘   • Optional (can use remote)
-                              │
-                              ├─────────────┐
-                              ▼             ▼
-                       ┌─────────────┐ ┌─────────────┐
-                       │    Groq     │ │ OpenRouter  │
                        │  (Primary)  │ │ (Failover)  │
                        └─────────────┘ └─────────────┘
 ```
@@ -82,6 +73,8 @@ Vite a Job! uses a modern microservices architecture with Docker Compose orchest
 - **Backend**: FastAPI REST API with modular parser architecture
 - **Database**: PostgreSQL 16 for storing job data and user context
 - **LLM Service**: Hybrid "race mode" - runs local and remote models in parallel
+- **Pub/Sub Broker**: PostgreSQL `LISTEN/NOTIFY` system for internal event broadcasting
+- **Real-time Feedback**: Server-Sent Events (SSE) via FastAPI to provide visual progression in the UI
 - **Storage**: Cloudinary for user profile pictures and persistent assets
 - **Parsers**: Modular job board parsers (LinkedIn, Indeed, StepStone, etc.)
 - **CV Layouts**: Support for Modern (Single/Two-Column) and Classic templates
@@ -101,8 +94,12 @@ job_wizard/
 │   │   │   ├── job_parser.py    # Main parser entry point
 │   │   │   ├── llm_service.py   # Hybrid race logic
 │   │   │   └── pdf_service.py   # PDF generation
-│   │   ├── routers/             # API endpoints
-│   │   └── main.py              # FastAPI app
+│   │   ├── core/
+│   │   │   ├── config.py        # Central configuration (Pydantic Settings)
+│   │   │   ├── db.py            # Session pooling & SQLAlchemy engine
+│   │   │   └── pubsub.py        # Real-time Pub/Sub manager (LISTEN/NOTIFY)
+│   │   ├── routers/             # API endpoints (including SSE streams)
+│   │   └── main.py              # FastAPI app with lifespan management
 │   ├── database/                # SQLModel definitions
 │   ├── tests/                   # Unit & integration tests
 │   └── scripts/                 # Utility scripts
@@ -228,8 +225,18 @@ backend/tests/
 │   ├── test_parsers.py      # Parser logic tests
 │   └── test_services.py     # Service layer tests
 └── integration/             # Integration tests (slower, with dependencies)
+    ├── test_sse_events.py   # Real-time SSE & Pub/Sub tests
     ├── test_ollama.py       # LLM integration tests
-    └── test_api.py          # API endpoint tests
+    └── test_api.py          # API endpoint tests (including async flows)
+```
+
+### Testing Real-time Features
+
+When testing the Pub/Sub and SSE functionality, we use specialized integration tests that simulate a background generation task:
+
+```bash
+# Verify the SSE event stream and concurrency isolation
+docker exec jobwizard-backend uv run pytest tests/integration/test_sse_events.py -v
 ```
 
 ### Writing Tests
