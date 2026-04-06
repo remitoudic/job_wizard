@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str = ""
     
     # Database Settings
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://jobwizard:jobwizard123@postgres:5432/jobwizard")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://jobwizard:jobwizard007@postgres:5432/jobwizard")
     
     # Models Source of Truth
     # Models Source of Truth

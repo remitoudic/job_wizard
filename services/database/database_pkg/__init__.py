@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, create_engine, text
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://jobwizard:jobwizard123@postgres:5432/jobwizard")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://jobwizard:jobwizard007@postgres:5432/jobwizard")
 
 engine = create_engine(DATABASE_URL)
 
