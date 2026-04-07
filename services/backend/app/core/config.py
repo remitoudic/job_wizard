@@ -1,7 +1,7 @@
-
 import os
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from pathlib import Path
 
 class Settings(BaseSettings):
     # LLM Settings
@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     
     # Cloudinary Settings
     CLOUDINARY_URL: str = ""
+
+    # Debugging & Logging
+    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
+    PROMPT_AUDIT_LOG_ENABLED: bool = True
+    LOGS_DIR: Path = Path("/app/logs")
 
     # Scraping Settings
     PROXY_FILE_PATH: str = "proxies.json"

@@ -6,6 +6,8 @@ from app.services.platform.agents import create_writing_agent, create_extraction
 from app.core.config import settings
 from app.core.pubsub import pubsub_manager
 import logfire
+from pydantic import ValidationError
+from app.core.logging.prompt_audit import prompt_audit_logger
 
 class LLMService:
     """Service for generating cover letters using Pydantic AI Agents"""
@@ -132,9 +134,23 @@ class LLMService:
                             data["surname"] = " ".join(parts[1:])
                 
                 return data
+            except ValidationError as e:
+                logfire.error("Extraction validation failed", error=str(e))
+                prompt_audit_logger.log_failure(
+                    context="Contact Extraction (Validation)",
+                    raw_output="N/A (Managed by Pydantic AI)", # Hard to get raw string from managed agent without refactor
+                    error=str(e),
+                    model_name=self.ollama_model_name
+                )
+                return {}
             except Exception as e:
                 logfire.error("Extraction failed", error=str(e))
-                print(f"Extraction failed: {e}")
+                prompt_audit_logger.log_failure(
+                    context="Contact Extraction (Generic)",
+                    raw_output="N/A (Managed by Pydantic AI)",
+                    error=str(e),
+                    model_name=self.ollama_model_name
+                )
                 return {}
 
     async def generate_cover_letter(

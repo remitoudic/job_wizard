@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends
 from typing import Dict, Any
 import httpx
 import ollama
+import cloudinary
+import cloudinary.api
 import time
 from sqlalchemy import text
 import logfire
@@ -102,6 +104,42 @@ async def debug_health(
                 results["providers"]["openrouter"] = {"status": "error", "message": str(e)}
         else:
             results["providers"]["openrouter"] = {"status": "skipped", "message": "No API key configured"}
+
+    # 4. Cloudinary Connectivity
+    if settings.CLOUDINARY_URL:
+        try:
+            start_time = time.perf_counter()
+            # cloudinary.api.ping() is a lightweight way to check connectivity
+            cloudinary.api.ping()
+            cloudinary_latency = time.perf_counter() - start_time
+            results["cloudinary"] = {
+                "status": "ok",
+                "latency_ms": round(cloudinary_latency * 1000, 2)
+            }
+        except Exception as e:
+            results["cloudinary"] = {"status": "error", "message": str(e)}
+    else:
+        results["cloudinary"] = {"status": "skipped", "message": "No Cloudinary URL configured"}
+
+    # 5. LlamaCloud (CV Parsing) Connectivity
+    if settings.LLAMA_CLOUD_API_KEY:
+        try:
+            start_time = time.perf_counter()
+            # Simple reachability check to LlamaIndex Cloud API
+            async with httpx.AsyncClient(timeout=5.0) as http_client:
+                resp = await http_client.get(
+                    "https://api.cloud.llamaindex.ai/api/health",
+                )
+                llama_latency = time.perf_counter() - start_time
+                results["llamacloud"] = {
+                    "status": "ok" if resp.status_code == 200 else "error",
+                    "status_code": resp.status_code,
+                    "latency_ms": round(llama_latency * 1000, 2)
+                }
+        except Exception as e:
+            results["llamacloud"] = {"status": "error", "message": str(e)}
+    else:
+        results["llamacloud"] = {"status": "skipped", "message": "No LlamaCloud API key configured"}
 
     logfire.info("Debug health check performed", results=results)
     return results

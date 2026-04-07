@@ -9,6 +9,7 @@ Complete guide for developing, testing, and deploying the Vite a Job! applicatio
 - [Local Development](#local-development)
 - [Testing](#testing)
 - [Debugging](#debugging)
+  - [Advanced Diagnostics (DEBUGGING.md)](DEBUGGING.md)
 - [Production Deployment](#production-deployment)
 - [Development Workflow](#development-workflow)
 - [Troubleshooting](#troubleshooting)
@@ -273,6 +274,8 @@ def test_generate_cover_letter_with_ollama():
 - ✅ Mock external services (LLM APIs, web scraping)
 
 ## 🐛 Debugging
+
+For standard debugging (logs, breakpoints), see below. For advanced real-time diagnostics, health checks, and tracing, see the **[Specialized Debugging Guide](DEBUGGING.md)**.
 
 ### Viewing Logs
 

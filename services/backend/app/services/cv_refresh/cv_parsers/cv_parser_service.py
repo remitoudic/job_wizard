@@ -6,6 +6,8 @@ from typing import Optional
 from pydantic import BaseModel
 from llama_parse import LlamaParse
 from app.core.config import settings
+from app.core.logging.prompt_audit import prompt_audit_logger
+from pydantic import ValidationError
 
 logger = logging.getLogger("app.services.cv_refresh.cv_parsers.cv_parser_service")
 
@@ -209,6 +211,21 @@ class CVParserService:
 
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse LLM JSON output: {e}\nRaw: {raw[:500]}")
+            prompt_audit_logger.log_failure(
+                context="CV Parsing (JSON Decode)",
+                raw_output=raw,
+                error=str(e),
+                model_name=settings.GROQ_MODEL_1
+            )
+            return CVData(summary=cv_markdown[:500])
+        except ValidationError as e:
+            logger.error(f"Failed to validate LLM output against CVData: {e}\nRaw: {raw[:500]}")
+            prompt_audit_logger.log_failure(
+                context="CV Parsing (Pydantic Validation)",
+                raw_output=raw,
+                error=str(e),
+                model_name=settings.GROQ_MODEL_1
+            )
             return CVData(summary=cv_markdown[:500])
         except Exception as e:
             logger.error(f"LLM structuring failed: {e}")
