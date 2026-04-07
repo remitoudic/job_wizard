@@ -10,10 +10,12 @@
 		uploadContext,
 		getAlternativeCoverLetter,
 		saveApplication,
+		getUserCVs,
 		API_URL,
 	} from "$lib/api";
 	import { auth } from "../stores/auth";
 	import SEO from "$lib/components/SEO.svelte";
+	import ContextPreview from "$lib/components/ContextPreview.svelte";
 
 	// SvelteKit automatically passes these props - declare them to avoid warnings
 	export let data: any = {};
@@ -87,6 +89,42 @@
 	let isDateManuallyEdited = false;
 	let isSubjectManuallyEdited = false;
 	let hasAutoFilled = false;
+	
+	// User CVs for context
+	let userCVs: any[] = [];
+	let activeCV: any = null;
+	let isLoadingCVs = false;
+
+	async function fetchUserCVs() {
+		if (!$auth.isAuthenticated) return;
+		try {
+			isLoadingCVs = true;
+			const cvs = await getUserCVs();
+			userCVs = cvs;
+			activeCV = cvs.find(cv => cv.is_active) || null;
+			
+			// If we have an active CV, and contextText is currently empty, 
+			// use the CV data as the context for LLM
+			if (activeCV && !contextText) {
+				// Use the parsed JSON data or raw content
+				contextText = activeCV.cv_data || "";
+			}
+		} catch (err) {
+			console.error("Failed to fetch user CVs:", err);
+		} finally {
+			isLoadingCVs = false;
+		}
+	}
+
+	// Fetch CVs when user loggs in
+	$: if ($auth.isAuthenticated) {
+		fetchUserCVs();
+	}
+
+	// Sync contextText when activeCV changes (if not manually overridden by a file upload)
+	$: if (activeCV && !contextFilename && !imageFile) {
+		contextText = activeCV.cv_data || "";
+	}
 
 	// Update defaults when format changes
 	$: if (selectedFormat && !isGenerating && (jobData || isManualInput)) {
@@ -356,6 +394,21 @@
                         }];
                         step.set(3);
                     }
+                    
+                    // If backend provided pre-finished alternatives, add them now
+                    if (data.alternatives && Array.isArray(data.alternatives)) {
+                        data.alternatives.forEach(alt => {
+                            if (!allCoverLetters.some(l => l.source === alt.source)) {
+                                allCoverLetters = [...allCoverLetters, {
+                                    text: alt.text,
+                                    rawText: alt.text,
+                                    source: alt.source,
+                                    status: alt.status || "completed"
+                                }];
+                            }
+                        });
+                    }
+
                     isGenerating = false;
                     eventSource.close();
                 }
@@ -1111,6 +1164,13 @@
 							<div
 								class="pb-6 space-y-6 animate-in fade-in slide-in-from-top-2"
 							>
+								<!-- Source of Truth (LLM Context) -->
+								<ContextPreview 
+									activeCVName={activeCV ? activeCV.name : null}
+									contextSnippet={contextText}
+									isAuthenticated={$auth.isAuthenticated}
+								/>
+
 								<div>
 									<label
 										for="letter-language"
@@ -1168,11 +1228,11 @@
 											accept="image/*,.pdf"
 											on:change={handleFileUpload}
 											class="hidden"
-											disabled={isParsing}
+											disabled={isParsing || activeCV}
 										/>
 										<label
 											for="file-upload-section"
-											class="btn btn-secondary text-sm cursor-pointer flex items-center gap-2"
+											class="btn btn-secondary text-sm cursor-pointer flex items-center gap-2 {activeCV ? 'opacity-50 cursor-not-allowed grayscale' : ''}"
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"

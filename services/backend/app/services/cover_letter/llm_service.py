@@ -476,16 +476,17 @@ CUSTOM USER GUIDANCE:
                      task.add_done_callback(self.background_tasks.discard)
                      
                  else:
-                     # Notify: All completed immediately
-                     await pubsub_manager.notify({
-                         "job_id": job_id,
-                         "status": "completed",
-                         "message": "Generation complete!",
-                         "winner": winner_source,
-                         "text": winner_text,
-                         "source": winner_source,
-                         "alternative_id": alt_id
-                     })
+                    # Notify: All completed immediately
+                    await pubsub_manager.notify({
+                        "job_id": job_id,
+                        "status": "completed",
+                        "message": "Generation complete!",
+                        "winner": winner_source,
+                        "text": winner_text,
+                        "source": winner_source,
+                        "alternative_id": alt_id,
+                        "alternatives": current_alts
+                    })
                      
                  return winner_text, winner_source, alt_id
             
@@ -549,6 +550,14 @@ CUSTOM USER GUIDANCE:
                             usage=result.get("usage")
                         )
                         logger.info(f"Alternative completed: {result['source']} in {task_duration:.2f}s")
+                        
+                        # Notify frontend that an alternative is ready
+                        await pubsub_manager.notify({
+                            "job_id": job_id,
+                            "status": "alternative_ready",
+                            "text": alt["text"],
+                            "source": alt["source"]
+                        })
                     except Exception as e:
                         task_duration = time.perf_counter() - task_start_times.get(id(task), 0)
                         alt = {
@@ -558,6 +567,14 @@ CUSTOM USER GUIDANCE:
                         }
                         current_alternatives.append(alt)
                         logger.error(f"Alternative failed: {task.get_name()} - {e}")
+                        
+                        # Notify frontend of failure
+                        await pubsub_manager.notify({
+                            "job_id": job_id,
+                            "status": "alternative_ready",
+                            "text": alt["text"],
+                            "source": alt["source"]
+                        })
                 
                 # Update store incrementally
                 self.alternatives_store[alt_id] = {
