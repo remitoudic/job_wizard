@@ -1,10 +1,11 @@
 import asyncio
 import json
 import logging
-from typing import AsyncGenerator, Dict, Any, Set
+from typing import AsyncGenerator, Dict, Any, Set, Optional
 import psycopg
 from psycopg import sql
 from app.core.config import settings
+import logfire
 
 logger = logging.getLogger(__name__)
 
@@ -105,17 +106,69 @@ class PubSubManager:
             self._listeners.remove(queue)
 
     async def notify(self, payload: Dict[str, Any]):
-        """Helper to send a NOTIFY event."""
-        try:
-            async with await self._get_conn() as conn:
-                await conn.execute(
-                    sql.SQL("NOTIFY {channel}, {payload}").format(
-                        channel=sql.Identifier(self.channel),
-                        payload=sql.Literal(json.dumps(payload))
+        """Helper to send a NOTIFY event. Also persists the status to the database."""
+        job_id = payload.get("job_id")
+        status = payload.get("status")
+        
+        with logfire.span("PubSub Notify: {status}", status=status, job_id=job_id):
+            # 1. Persist to Database for SSE Replay/Fallback
+            if job_id and status:
+                try:
+                    from sqlmodel import Session
+                    from app.core.db import engine
+                    from database_pkg.models.job_status import JobStatus
+                    from datetime import datetime
+                    
+                    with Session(engine) as session:
+                        # Try to get existing job status or create new one
+                        job_status = session.get(JobStatus, job_id)
+                        if not job_status:
+                            job_status = JobStatus(job_id=job_id, status=status, payload=payload)
+                        else:
+                            job_status.status = status
+                            job_status.payload = payload
+                            job_status.updated_at = datetime.utcnow()
+                        
+                        session.add(job_status)
+                        session.commit()
+                except Exception as db_err:
+                    logger.error(f"Failed to persist job status for {job_id}: {db_err}")
+
+            # 2. Send Real-time Notification
+            try:
+                async with await self._get_conn() as conn:
+                    await conn.execute(
+                        sql.SQL("NOTIFY {channel}, {payload}").format(
+                            channel=sql.Identifier(self.channel),
+                            payload=sql.Literal(json.dumps(payload))
+                        )
                     )
-                )
+                
+                # 3. Also notify ephemeral listeners
+                for queue in self._listeners:
+                    await queue.put(payload)
+            except Exception as e:
+                logger.error(f"Notification error for {job_id}: {e}")
+
+    async def get_job_status(self, job_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch the latest status for a job from the database."""
+        try:
+            from sqlmodel import Session, select
+            from app.core.db import engine
+            from database_pkg.models.job_status import JobStatus
+            
+            with Session(engine) as session:
+                statement = select(JobStatus).where(JobStatus.job_id == job_id)
+                result = session.exec(statement).first()
+                if result:
+                    return {
+                        "job_id": result.job_id,
+                        "status": result.status,
+                        "payload": result.payload or {}
+                    }
         except Exception as e:
-            logger.error(f"Failed to send NOTIFY: {e}")
+            logger.error(f"Error fetching job status for {job_id}: {e}")
+        return None
 
 # Singleton instance
 pubsub_manager = PubSubManager()

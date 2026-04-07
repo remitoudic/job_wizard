@@ -42,24 +42,25 @@ class LLMProviderService:
         """
         Report that a provider has hit a rate limit.
         """
-        current_time = time.time()
-        
-        if provider == "groq":
-            if reset_time:
-                self._groq_rate_limit_until = reset_time
-            else:
-                self._groq_rate_limit_until = current_time + self._default_cooldown
-                
-            self._active_provider = "openrouter"
-            logfire.warning(
-                "Rate limit reported for Groq", 
-                active_provider_now="openrouter",
-                downtime_seconds=self._groq_rate_limit_until - current_time
-            )
-        elif provider == "openrouter":
-             # If OpenRouter also fails, we just log it.
-             # We rely on Groq being available after cooldown.
-             logfire.error("OpenRouter (Secondary) also reported rate limit!")
+        with logfire.span("Provider Rate Limit: {provider}", provider=provider):
+            current_time = time.time()
+            
+            if provider == "groq":
+                if reset_time:
+                    self._groq_rate_limit_until = reset_time
+                else:
+                    self._groq_rate_limit_until = current_time + self._default_cooldown
+                    
+                self._active_provider = "openrouter"
+                logfire.warning(
+                    "Rate limit reported for Groq", 
+                    active_provider_now="openrouter",
+                    downtime_seconds=self._groq_rate_limit_until - current_time
+                )
+            elif provider == "openrouter":
+                 # If OpenRouter also fails, we just log it.
+                 # We rely on Groq being available after cooldown.
+                 logfire.error("OpenRouter (Secondary) also reported rate limit!")
 
     def get_provider_config(self) -> Dict[str, Any]:
         """

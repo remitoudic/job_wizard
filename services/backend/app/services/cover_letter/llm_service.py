@@ -106,30 +106,36 @@ class LLMService:
         """
         Extract contact info using Pydantic AI Agent
         """
-        try:
-            # Agent.run is async
-            logfire.info("Starting contact extraction")
-            result = await self.extractor.run(text)
-            data = result.output.model_dump()
-            
-            # Robustness: Backfill first/surname from name if missing
-            full_name = data.get("name", "").strip()
-            if full_name:
-                if not data.get("first_name"):
-                    parts = full_name.split(" ")
-                    if parts:
-                        data["first_name"] = parts[0]
+        with logfire.span("Contact Info Extraction"):
+            try:
+                # Agent.run is async
+                logfire.info("Starting contact extraction")
+                result = await self.extractor.run(text)
+                data = result.output.model_dump()
                 
-                if not data.get("surname"):
-                    parts = full_name.split(" ")
-                    if len(parts) > 1:
-                        # Join all remaining parts as surname
-                        data["surname"] = " ".join(parts[1:])
-            
-            return data
-        except Exception as e:
-            print(f"Extraction failed: {e}")
-            return {}
+                # Capture usage
+                usage = result.usage()
+                logfire.info("Extraction usage", tokens=usage.total_tokens)
+                
+                # Robustness: Backfill first/surname from name if missing
+                full_name = data.get("name", "").strip()
+                if full_name:
+                    if not data.get("first_name"):
+                        parts = full_name.split(" ")
+                        if parts:
+                            data["first_name"] = parts[0]
+                    
+                    if not data.get("surname"):
+                        parts = full_name.split(" ")
+                        if len(parts) > 1:
+                            # Join all remaining parts as surname
+                            data["surname"] = " ".join(parts[1:])
+                
+                return data
+            except Exception as e:
+                logfire.error("Extraction failed", error=str(e))
+                print(f"Extraction failed: {e}")
+                return {}
 
     async def generate_cover_letter(
         self,
@@ -147,8 +153,9 @@ class LLMService:
         """
         Generate cover letter with race mode (Local vs Remote)
         """
-        import time
-        import logging
+        with logfire.span("Generate Cover Letter {job_id}", job_id=job_id) as span:
+            import time
+            import logging
         
         # Configure logger
         logger = logging.getLogger("app.services.cover_letter.llm_service")
@@ -239,18 +246,26 @@ CUSTOM USER GUIDANCE:
             
             # Helper to wrap agent run with source info
             async def run_agent(agent, p, name):
-                res = await agent.run(p)
-                # Post-process: Aggressive cleaning using heuristic cleaner
-                clean_text = LLMService.clean_model_output(res.output)
-                
-                # Append standard signature
-                final_text = f"{clean_text}{STANDARD_SIGNATURE}"
-                
-                # Replace name placeholder
-                display_name = user_name if user_name else "[Your Name]"
-                final_text = final_text.replace("[Your Name]", display_name).replace("[Ihr Name]", display_name)
-                
-                return {"output": final_text, "source": name}
+                with logfire.span("Agent Generation: {source}", source=name) as agent_span:
+                    res = await agent.run(p)
+                    
+                    # Capture token usage
+                    usage = res.usage()
+                    agent_span.set_attribute("request_tokens", usage.request_tokens)
+                    agent_span.set_attribute("response_tokens", usage.response_tokens)
+                    agent_span.set_attribute("total_tokens", usage.total_tokens)
+                    
+                    # Post-process: Aggressive cleaning using heuristic cleaner
+                    clean_text = LLMService.clean_model_output(res.output)
+                    
+                    # Append standard signature
+                    final_text = f"{clean_text}{STANDARD_SIGNATURE}"
+                    
+                    # Replace name placeholder
+                    display_name = user_name if user_name else "[Your Name]"
+                    final_text = final_text.replace("[Your Name]", display_name).replace("[Ihr Name]", display_name)
+                    
+                    return {"output": final_text, "source": name, "usage": usage}
 
             # Task 1: Logic to prefer Local but Failover if Busy
             
@@ -362,7 +377,8 @@ CUSTOM USER GUIDANCE:
                                 winner=winner_source,
                                 winner_duration_seconds=round(winner_duration, 2),
                                 race_duration_seconds=round(race_duration, 2),
-                                failed_attempts=len(failed_attempts)
+                                failed_attempts=len(failed_attempts),
+                                usage=result.get("usage")
                             )
                             logger.info(f"Race won by {winner_source} in {winner_duration:.2f}s")
                         else:
@@ -370,7 +386,8 @@ CUSTOM USER GUIDANCE:
                             finished_alternatives.append({
                                 "text": result["output"],
                                 "source": result["source"],
-                                "status": "completed"
+                                "status": "completed",
+                                "usage": result.get("usage")
                             })
                             
                     except Exception as e:
@@ -504,14 +521,16 @@ CUSTOM USER GUIDANCE:
                         alt = {
                             "text": result["output"],
                             "source": result["source"],
-                            "status": "completed"
+                            "status": "completed",
+                            "usage": result.get("usage")
                         }
                         current_alternatives.append(alt)
                         logfire.info(
                             "Alternative completed", 
                             id=alt_id, 
                             source=result["source"],
-                            duration_seconds=round(task_duration, 2)
+                            duration_seconds=round(task_duration, 2),
+                            usage=result.get("usage")
                         )
                         logger.info(f"Alternative completed: {result['source']} in {task_duration:.2f}s")
                     except Exception as e:

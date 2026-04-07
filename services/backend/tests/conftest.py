@@ -5,6 +5,13 @@ from httpx import AsyncClient, ASGITransport
 from app.main import app
 from app.core.pubsub import pubsub_manager
 
+from database_pkg import init_db
+
+@pytest.fixture(scope="session", autouse=True)
+def db_init():
+    """Ensure the database tables are created before any tests run."""
+    init_db()
+
 @pytest.fixture(scope="session", autouse=True)
 def event_loop():
     """Create an instance of the default event loop for each test case."""

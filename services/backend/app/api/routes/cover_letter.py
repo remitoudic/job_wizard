@@ -89,9 +89,24 @@ async def generate_cover_letter(request: CoverLetterRequest):
 async def cover_letter_events(job_id: str):
     """
     SSE endpoint to listen for cover letter generation events for a specific job_id.
+    Includes initial synchronization to replay the latest status if it exists.
     """
     async def event_generator():
         try:
+            # 1. Initial Sync (Replay latest status if it exists)
+            last_status = await pubsub_manager.get_job_status(job_id)
+            if last_status:
+                yield {
+                    "event": "message",
+                    "id": str(uuid.uuid4()),
+                    "data": json.dumps(last_status["payload"])
+                }
+                
+                # If the job was already terminal, stop here
+                if last_status["status"] in ("completed", "error"):
+                    return
+
+            # 2. Regular Subscription
             async for msg in pubsub_manager.subscribe():
                 # Filter by job_id
                 if msg.get("job_id") == job_id:
