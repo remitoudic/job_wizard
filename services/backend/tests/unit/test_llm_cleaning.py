@@ -1,0 +1,80 @@
+import pytest
+from app.services.cover_letter.llm_service import LLMService
+
+def test_clean_model_output_english():
+    text = """
+    John Doe
+    123 Main St
+    
+    Dear Hiring Manager,
+    
+    I am writing to apply for the position.
+    
+    Sincerely,
+    John Doe
+    """
+    cleaned = LLMService.clean_model_output(text)
+    assert "Dear Hiring Manager" in cleaned
+    assert "John Doe" not in cleaned # Header and signature stripped
+    assert "Sincerely" not in cleaned
+
+def test_clean_model_output_german():
+    text = """
+    Max Mustermann
+    Musterstraße 1
+    
+    Sehr geehrte Damen und Herren,
+    
+    hiermit bewerbe ich mich auf die Stelle.
+    
+    Mit freundlichen Grüßen,
+    Max Mustermann
+    """
+    cleaned = LLMService.clean_model_output(text)
+    assert "Sehr geehrte Damen und Herren" in cleaned
+    assert "hiermit bewerbe ich mich" in cleaned
+    assert "Mit freundlichen Grüßen" not in cleaned
+    assert "Max Mustermann" not in cleaned
+
+def test_clean_model_output_aggressive_header():
+    text = """
+    Date: 2026-04-07
+    To: HR Team
+    Subject: Application
+    
+    Hello,
+    
+    This is the body.
+    """
+    cleaned = LLMService.clean_model_output(text)
+    assert "Hello," in cleaned
+    assert "Subject:" not in cleaned
+    assert "Date:" not in cleaned
+
+def test_clean_model_output_no_header():
+    text = "Just the body text here."
+    cleaned = LLMService.clean_model_output(text)
+    assert cleaned == "Just the body text here."
+
+def test_clean_model_output_long_body_start():
+    text = """
+    Some junk here.
+    This is a very long sentence that should be recognized as the start of the body because it exceeds one hundred characters in length and doesn't look like a header line.
+    """
+    cleaned = LLMService.clean_model_output(text)
+    assert "This is a very long sentence" in cleaned
+    assert "Some junk" not in cleaned
+
+def test_placeholder_replacement():
+    user_name = "Jane Smith"
+    text = "Dear HR,\n\nBody.\n\nSincerely,\n\n[Your Name]"
+    replaced = text.replace("[Your Name]", user_name).replace("[Ihr Name]", user_name)
+    assert "[Your Name]" not in replaced
+    assert "Jane Smith" in replaced
+
+def test_placeholder_replacement_german():
+    user_name = "Max Mustermann"
+    text = "Sehr geehrte Damen,\n\nText.\n\nMit freundlichen Grüßen,\n\n[Ihr Name]"
+    replaced = text.replace("[Your Name]", user_name).replace("[Ihr Name]", user_name)
+    assert "[Ihr Name]" not in replaced
+    assert "Max Mustermann" in replaced

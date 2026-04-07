@@ -109,10 +109,10 @@ class PubSubManager:
         try:
             async with await self._get_conn() as conn:
                 await conn.execute(
-                    sql.SQL("NOTIFY {channel}, %s").format(
-                        channel=sql.Identifier(self.channel)
-                    ),
-                    (json.dumps(payload),)
+                    sql.SQL("NOTIFY {channel}, {payload}").format(
+                        channel=sql.Identifier(self.channel),
+                        payload=sql.Literal(json.dumps(payload))
+                    )
                 )
         except Exception as e:
             logger.error(f"Failed to send NOTIFY: {e}")

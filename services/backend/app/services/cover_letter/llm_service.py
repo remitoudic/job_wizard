@@ -60,13 +60,16 @@ class LLMService:
         # - "Subject:" lines
         
         start_index = 0
+        # English and German salutations (handle trailing colon or comma)
+        salutation_regex = r"^(Dear|Hi|Hello|Sehr|Hallo|Guten)\b"
+        
         for i, line in enumerate(lines[:15]): # Only check first 15 lines
             line_str = line.strip()
             if not line_str:
                 continue
                 
             # Stop if we hit a Salutation
-            if re.match(r"^(Dear|To|Hi|Hello)\s+", line_str, re.IGNORECASE):
+            if re.match(salutation_regex, line_str, re.IGNORECASE):
                 start_index = i
                 break
             
@@ -77,31 +80,26 @@ class LLMService:
                 
             # Otherwise, assume it's header junk and skip
             # (aggressive, but tailored for the prompt 'OUTPUT BODY ONLY')
-            pass
-            # If we went through all 15 lines without finding a clear start, 
-            # maybe the whole thing is the body? Fallback to 0.
             if i == 14:
                 start_index = 0
 
         # If we found a specific start point, use it. 
-        # But if start_index > 0, we effectively stripped the header.
         if start_index > 0:
              lines = lines[start_index:]
              
         # 2. Strip Footer/Signature
-        # Find "Sincerely" or equivalents and cut
         joined_text = "\n".join(lines).strip()
         
         # Regex to find signature block and removing it
-        # Matches "Sincerely," followed by anything until end of string
-        sig_pattern = re.compile(r"(Sincerely|Best regards|Yours truly|Respectfully|Kind regards)[\s,]*(\n|$)[\s\S]*$", re.IGNORECASE)
+        # Includes English and German variants
+        sig_pattern = re.compile(
+            r"(Sincerely|Best regards|Yours truly|Respectfully|Kind regards|Mit freundlichen Grüßen|Beste Grüße|Herzliche Grüße|Viele Grüße)[\s,]*(\n|$)[\s\S]*$", 
+            re.IGNORECASE
+        )
         match = sig_pattern.search(joined_text)
         if match:
              joined_text = joined_text[:match.start()].strip()
              
-        # double check for trailing names if signature keyword was missing but name persists?
-        # Hard to do without killing valid text. The strict signature append will cover most cases.
-        
         return joined_text
     
     async def extract_contact_info(self, text: str) -> Dict[str, Any]:
@@ -247,6 +245,11 @@ CUSTOM USER GUIDANCE:
                 
                 # Append standard signature
                 final_text = f"{clean_text}{STANDARD_SIGNATURE}"
+                
+                # Replace name placeholder
+                display_name = user_name if user_name else "[Your Name]"
+                final_text = final_text.replace("[Your Name]", display_name).replace("[Ihr Name]", display_name)
+                
                 return {"output": final_text, "source": name}
 
             # Task 1: Logic to prefer Local but Failover if Busy
