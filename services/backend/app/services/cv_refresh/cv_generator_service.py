@@ -112,6 +112,63 @@ class CVGeneratorService:
                 style_tag,
             )
 
+        # ── PREVIEW MODE STYLING ─────────────────────────────────────────────
+        # Fixes scaling and aesthetics for the browser preview panel.
+        # Uses 'zoom' (Chromium/Safari) and 'transform: scale' (Firefox) helper.
+        # Forces a width of 820px (A4-ish) then scales down to fit the iframe.
+        preview_styles = """
+    <style>
+        /* Override body for document-like preview */
+        body {
+            background-color: #f8fafc !important; /* slate-50 */
+            display: flex !important;
+            justify-content: center !important;
+            padding: 24px !important;
+            margin: 0 !important;
+            min-width: 820px !important; /* Force document width */
+            
+            /* Scaling factor: 0.75 fits ~800px into ~600px container */
+            zoom: 0.75;
+            -moz-transform: scale(0.75);
+            -moz-transform-origin: top center;
+        }
+
+        .cv-container {
+            background-color: white !important;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+            border: 1px solid #e2e8f0 !important;
+            width: 100% !important;
+            max-width: 800px !important;
+            min-height: 1100px !important;
+            border-radius: 4px !important;
+            overflow: hidden !important;
+        }
+
+        /* Prevent scroll jump on scale */
+        html {
+            overflow-x: hidden !important;
+        }
+
+        @media print {
+            body { 
+                zoom: 1 !important; 
+                -moz-transform: none !important;
+                background-color: white !important;
+                padding: 0 !important;
+            }
+            .cv-container {
+                box-shadow: none !important;
+                border: none !important;
+            }
+        }
+    </style>
+"""
+        # Inject just before </body>
+        if "</body>" in html_string:
+            html_string = html_string.replace("</body>", f"{preview_styles}</body>")
+        else:
+            html_string += preview_styles
+
         return html_string
 
     def generate_pdf(
