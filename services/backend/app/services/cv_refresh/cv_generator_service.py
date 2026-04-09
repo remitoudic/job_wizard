@@ -200,9 +200,55 @@ class CVGeneratorService:
             .cv-container {
                 box-shadow: none !important;
                 border: none !important;
+                background-image: none !important;
             }
         }
     </style>
+    <script>
+        /**
+         * Smart Page-Break Reconciliation Script
+         * Calibrates the preview to match WeasyPrint's "page-break-inside: avoid" logic.
+         */
+        function reconcilePageBreaks() {
+            const A4_HEIGHT_MM = 297;
+            const GAP_HEIGHT_MM = 2;
+            const totalCycleMm = A4_HEIGHT_MM + GAP_HEIGHT_MM;
+
+            // Select elements that should not be split (Classic, Modern, Timeline classes)
+            const selectors = '.entry-item, .experience-item, .education-item, .skill-category, .section';
+            const elements = document.querySelectorAll(selectors);
+            
+            elements.forEach(el => {
+                // Reset any previous pushes
+                el.style.marginTop = '0';
+                
+                const rect = el.getBoundingClientRect();
+                // Account for 0.6 zoom factor in coordinate calculation
+                const logicalTop = rect.top / 0.6;
+                const logicalBottom = rect.bottom / 0.6;
+                
+                // Calculate which A4 page (0-indexed) the top and bottom are on
+                const pageIndexTop = Math.floor(logicalTop / (totalCycleMm * (96 / 25.4)));
+                const pageIndexBottom = Math.floor(logicalBottom / (totalCycleMm * (96 / 25.4)));
+
+                if (pageIndexTop !== pageIndexBottom) {
+                    // This element crosses a page break!
+                    // We push it to the start of the next page cycle.
+                    const nextPageStartLog = (pageIndexBottom * totalCycleMm * (96 / 25.4));
+                    const pushAmountLog = nextPageStartLog - logicalTop + 2; // +2 for safety
+                    
+                    if (pushAmountLog > 0 && pushAmountLog < (A4_HEIGHT_MM * 0.5 * (96 / 25.4))) {
+                        // Only push if it's a reasonable amount (don't push huge sections)
+                        el.style.marginTop = pushAmountLog + "pt";
+                    }
+                }
+            });
+        }
+
+        // Run on load and after short delay for font rendering
+        window.addEventListener('load', reconcilePageBreaks);
+        setTimeout(reconcilePageBreaks, 500);
+    </script>
 """
         # Inject just before </body>
         if "</body>" in html_string:
