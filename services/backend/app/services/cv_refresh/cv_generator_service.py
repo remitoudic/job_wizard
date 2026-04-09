@@ -206,48 +206,56 @@ class CVGeneratorService:
     </style>
     <script>
         /**
-         * Smart Page-Break Reconciliation Script
+         * Precision Page-Break Reconciliation Script
          * Calibrates the preview to match WeasyPrint's "page-break-inside: avoid" logic.
          */
         function reconcilePageBreaks() {
-            const A4_HEIGHT_MM = 297;
-            const GAP_HEIGHT_MM = 2;
-            const totalCycleMm = A4_HEIGHT_MM + GAP_HEIGHT_MM;
+            // 1. Calibration: Measure exactly how many pixels are in 100mm in this browser
+            const ruler = document.createElement('div');
+            ruler.style.height = '100mm';
+            ruler.style.visibility = 'hidden';
+            ruler.style.position = 'absolute';
+            document.body.appendChild(ruler);
+            const pxPerMm = ruler.offsetHeight / 100;
+            document.body.removeChild(ruler);
 
-            // Select elements that should not be split (Classic, Modern, Timeline classes)
+            const A4_HEIGHT_PX = 297 * pxPerMm;
+            const GAP_HEIGHT_PX = 2 * pxPerMm; // Matches our 2mm CSS gap
+            const totalCyclePx = A4_HEIGHT_PX + GAP_HEIGHT_PX;
+
+            // 2. Identification: Find entries that should not be split
             const selectors = '.entry-item, .experience-item, .education-item, .skill-category, .section';
             const elements = document.querySelectorAll(selectors);
             
             elements.forEach(el => {
-                // Reset any previous pushes
+                // Reset to measure natural position
                 el.style.marginTop = '0';
                 
-                const rect = el.getBoundingClientRect();
-                // Account for 0.6 zoom factor in coordinate calculation
-                const logicalTop = rect.top / 0.6;
-                const logicalBottom = rect.bottom / 0.6;
+                // Document-relative coordinates (stable regardless of scroll)
+                const top = el.offsetTop;
+                const bottom = top + el.offsetHeight;
                 
-                // Calculate which A4 page (0-indexed) the top and bottom are on
-                const pageIndexTop = Math.floor(logicalTop / (totalCycleMm * (96 / 25.4)));
-                const pageIndexBottom = Math.floor(logicalBottom / (totalCycleMm * (96 / 25.4)));
+                // Calculate which A4 page cycle these are in
+                const pageIndexTop = Math.floor(top / totalCyclePx);
+                const pageIndexBottom = Math.floor(bottom / totalCyclePx);
 
                 if (pageIndexTop !== pageIndexBottom) {
-                    // This element crosses a page break!
-                    // We push it to the start of the next page cycle.
-                    const nextPageStartLog = (pageIndexBottom * totalCycleMm * (96 / 25.4));
-                    const pushAmountLog = nextPageStartLog - logicalTop + 2; // +2 for safety
+                    // Element is being cut! Push to start of next page
+                    const nextPageStart = (pageIndexBottom * totalCyclePx);
+                    const pushAmount = nextPageStart - top;
                     
-                    if (pushAmountLog > 0 && pushAmountLog < (A4_HEIGHT_MM * 0.5 * (96 / 25.4))) {
-                        // Only push if it's a reasonable amount (don't push huge sections)
-                        el.style.marginTop = pushAmountLog + "pt";
+                    // Only push logical chunks (e.g. up to 60% of a page)
+                    if (pushAmount > 0 && pushAmount < (A4_HEIGHT_PX * 0.6)) {
+                        el.style.marginTop = pushAmount + "px";
                     }
                 }
             });
         }
 
-        // Run on load and after short delay for font rendering
+        // Run when fonts/images are ready
         window.addEventListener('load', reconcilePageBreaks);
-        setTimeout(reconcilePageBreaks, 500);
+        setTimeout(reconcilePageBreaks, 300);
+        setTimeout(reconcilePageBreaks, 1000); // Re-calibrate for slow fonts
     </script>
 """
         # Inject just before </body>
