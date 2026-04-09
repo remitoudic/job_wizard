@@ -122,18 +122,21 @@ class CVGeneratorService:
         body {
             background-color: #f1f5f9 !important; /* slate-100 */
             display: flex !important;
-            justify-content: center !important;
-            padding: 0 !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            padding: 40px 20px !important;
             margin: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            overflow-x: hidden !important;
             
-            /* High-fidelity font rendering calibration */
+            /* Scaling factor: Reverting to zoom as it preserves layout ratios better */
+            zoom: 0.6 !important;
+            -moz-transform: scale(0.6) !important;
+            -moz-transform-origin: top center !important;
+
+            /* Vertical Calibration: Prevent stretching */
+            line-height: normal !important;
             -webkit-font-smoothing: antialiased !important;
             -moz-osx-font-smoothing: grayscale !important;
             text-rendering: optimizeLegibility !important;
-            font-feature-settings: "kern" 1, "liga" 1 !important;
         }
 
         .cv-container {
@@ -144,14 +147,8 @@ class CVGeneratorService:
             min-height: 297mm !important; /* A4 height */
             border-radius: 2px !important;
             position: relative !important;
+            margin: 0 auto !important;
             
-            /* ── ACCURACY CALIBRATION ─────────────────────────────────────── */
-            /* transform: scale preserves layout (lines/wrap) better than zoom */
-            transform: scale(0.6) !important;
-            transform-origin: top center !important;
-            margin-top: 40px !important;
-            margin-bottom: -150mm !important; /* Counteract empty space from scale */
-
             /* Simulate @page margins for screen rendering */
             padding: 1.25cm 1.5cm !important;
             box-sizing: border-box !important;
@@ -161,9 +158,9 @@ class CVGeneratorService:
             background-image: repeating-linear-gradient(
                 to bottom,
                 transparent 0,
-                transparent 296.8mm,
-                #cbd5e1 296.8mm, /* slate-300 divider start */
-                #cbd5e1 297mm,   /* slate-300 divider end */
+                transparent 296.7mm,
+                #cbd5e1 296.7mm, /* slate-300 divider */
+                #cbd5e1 297mm,
                 transparent 297mm
             ) !important;
             background-size: 100% 297mm !important;
