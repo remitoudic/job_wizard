@@ -139,11 +139,42 @@ class CVGeneratorService:
             width: 210mm !important; /* Fixed A4 width */
             min-height: 297mm !important; /* A4 height */
             border-radius: 2px !important;
-            overflow: hidden !important;
+            position: relative !important;
             
             /* Simulate @page margins for screen rendering */
             padding: 1.25cm 1.5cm !important;
             box-sizing: border-box !important;
+
+            /* ── PRO MAX: Multi-page Visualization ─────────────────────────── */
+            /* Draws a subtle dashed divider exactly every 297mm (A4 height) */
+            background-image: repeating-linear-gradient(
+                to bottom,
+                transparent 0,
+                transparent 296.8mm,
+                #cbd5e1 296.8mm, /* slate-300 divider start */
+                #cbd5e1 297mm,   /* slate-300 divider end */
+                transparent 297mm
+            ) !important;
+            background-size: 100% 297mm !important;
+        }
+
+        /* Dash overlay for the page break */
+        .cv-container::after {
+            content: "PAGE BREAK INDICATOR (A4)";
+            position: absolute;
+            top: 297mm;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #f8fafc;
+            padding: 2px 10px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 99px;
+            font-size: 9px;
+            font-weight: 700;
+            color: #94a3b8;
+            letter-spacing: 0.05em;
+            pointer-events: none;
+            z-index: 10;
         }
 
         /* Prevent scroll jump on scale */
