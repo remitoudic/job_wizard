@@ -123,13 +123,17 @@ class CVGeneratorService:
             background-color: #f1f5f9 !important; /* slate-100 */
             display: flex !important;
             justify-content: center !important;
-            padding: 40px 20px !important;
+            padding: 0 !important;
             margin: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow-x: hidden !important;
             
-            /* Aggressive scaling: 0.6 fits A4 height better into the 680px frame */
-            zoom: 0.6;
-            -moz-transform: scale(0.6);
-            -moz-transform-origin: top center;
+            /* High-fidelity font rendering calibration */
+            -webkit-font-smoothing: antialiased !important;
+            -moz-osx-font-smoothing: grayscale !important;
+            text-rendering: optimizeLegibility !important;
+            font-feature-settings: "kern" 1, "liga" 1 !important;
         }
 
         .cv-container {
@@ -141,6 +145,13 @@ class CVGeneratorService:
             border-radius: 2px !important;
             position: relative !important;
             
+            /* ── ACCURACY CALIBRATION ─────────────────────────────────────── */
+            /* transform: scale preserves layout (lines/wrap) better than zoom */
+            transform: scale(0.6) !important;
+            transform-origin: top center !important;
+            margin-top: 40px !important;
+            margin-bottom: -150mm !important; /* Counteract empty space from scale */
+
             /* Simulate @page margins for screen rendering */
             padding: 1.25cm 1.5cm !important;
             box-sizing: border-box !important;
@@ -158,7 +169,7 @@ class CVGeneratorService:
             background-size: 100% 297mm !important;
         }
 
-        /* Dash overlay for the page break */
+        /* Dash overlay for the first page break */
         .cv-container::after {
             content: "PAGE BREAK INDICATOR (A4)";
             position: absolute;
