@@ -133,7 +133,6 @@ class CVGeneratorService:
             -moz-transform-origin: top center !important;
 
             /* Vertical Calibration: Prevent stretching */
-            line-height: normal !important;
             -webkit-font-smoothing: antialiased !important;
             -moz-osx-font-smoothing: grayscale !important;
             text-rendering: optimizeLegibility !important;
@@ -153,44 +152,35 @@ class CVGeneratorService:
             padding: 1.5cm !important; /* Classic standard align */
             box-sizing: border-box !important;
 
-            /* ── PRO MAX: Physical Multi-page Visualization ───────────────── */
-            /* This creates a 10mm physical gap showing the workspace background */
-            /* every 297mm, with a subtle shadow for depth. */
+            /* ── PRO MAX: Sharp Cut Visualization ─────────────────────────── */
+            /* This creates a very thin 2mm gap with strong shadows on both sides, */
+            /* simulating stacked sheets of paper without hiding text. */
             background-image: 
-                /* 1. Bottom Page shadow for depth */
-                linear-gradient(
-                    to bottom,
-                    transparent 295mm,
-                    rgba(15, 23, 42, 0.03) 296mm,
-                    rgba(15, 23, 42, 0.08) 297mm,
-                    transparent 297mm
-                ),
-                /* 2. The physical paper vs workspace gap */
-                linear-gradient(
-                    to bottom,
-                    white 297mm,
-                    #f1f5f9 297mm,
-                    #f1f5f9 307mm,
-                    white 307mm
-                ) !important;
-            background-size: 100% 307mm !important; /* Cycle = 297A4 + 10Gap */
+                /* 1. Page Bottom Shadow */
+                linear-gradient(to top, rgba(15,23,42,0.12) 0, transparent 4mm),
+                /* 2. Page Top Shadow (for next page) */
+                linear-gradient(to bottom, transparent 299mm, rgba(15,23,42,0.08) 300mm),
+                /* 3. The physical 2mm Gap */
+                linear-gradient(to bottom, #fff 297mm, #f1f5f9 297mm, #f1f5f9 299mm, #fff 299mm)
+            !important;
+            background-size: 100% 299mm !important; /* A4 297mm + 2mm Gap */
         }
 
-        /* Dash overlay for the first page break - positioned in the gap */
+        /* Dash overlay for the first page break - positioned precisely in the thin gap */
         .cv-container::after {
             content: "PAGE BREAK (A4)";
             position: absolute;
-            top: 302mm; /* Centered in the 10mm gap (297 + 5) */
+            top: 298mm; /* Exactly in the middle of the 2mm gap */
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #f1f5f9; /* Match background */
-            padding: 2px 12px;
+            background: #f1f5f9;
+            padding: 1px 12px;
             border: 1px dashed #cbd5e1;
             border-radius: 99px;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: 800;
             color: #64748b;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.12em;
             pointer-events: none;
             z-index: 10;
         }
