@@ -150,37 +150,47 @@ class CVGeneratorService:
             margin: 0 auto !important;
             
             /* Simulate @page margins for screen rendering */
-            padding: 1.25cm 1.5cm !important;
+            padding: 1.5cm !important; /* Classic standard align */
             box-sizing: border-box !important;
 
-            /* ── PRO MAX: Multi-page Visualization ─────────────────────────── */
-            /* Draws a subtle dashed divider exactly every 297mm (A4 height) */
-            background-image: repeating-linear-gradient(
-                to bottom,
-                transparent 0,
-                transparent 296.7mm,
-                #cbd5e1 296.7mm, /* slate-300 divider */
-                #cbd5e1 297mm,
-                transparent 297mm
-            ) !important;
-            background-size: 100% 297mm !important;
+            /* ── PRO MAX: Physical Multi-page Visualization ───────────────── */
+            /* This creates a 10mm physical gap showing the workspace background */
+            /* every 297mm, with a subtle shadow for depth. */
+            background-image: 
+                /* 1. Bottom Page shadow for depth */
+                linear-gradient(
+                    to bottom,
+                    transparent 295mm,
+                    rgba(15, 23, 42, 0.03) 296mm,
+                    rgba(15, 23, 42, 0.08) 297mm,
+                    transparent 297mm
+                ),
+                /* 2. The physical paper vs workspace gap */
+                linear-gradient(
+                    to bottom,
+                    white 297mm,
+                    #f1f5f9 297mm,
+                    #f1f5f9 307mm,
+                    white 307mm
+                ) !important;
+            background-size: 100% 307mm !important; /* Cycle = 297A4 + 10Gap */
         }
 
-        /* Dash overlay for the first page break */
+        /* Dash overlay for the first page break - positioned in the gap */
         .cv-container::after {
-            content: "PAGE BREAK INDICATOR (A4)";
+            content: "PAGE BREAK (A4)";
             position: absolute;
-            top: 297mm;
+            top: 302mm; /* Centered in the 10mm gap (297 + 5) */
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #f8fafc;
-            padding: 2px 10px;
+            background: #f1f5f9; /* Match background */
+            padding: 2px 12px;
             border: 1px dashed #cbd5e1;
             border-radius: 99px;
             font-size: 9px;
-            font-weight: 700;
-            color: #94a3b8;
-            letter-spacing: 0.05em;
+            font-weight: 800;
+            color: #64748b;
+            letter-spacing: 0.1em;
             pointer-events: none;
             z-index: 10;
         }
