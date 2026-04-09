@@ -140,6 +140,10 @@ class CVGeneratorService:
             min-height: 297mm !important; /* A4 height */
             border-radius: 2px !important;
             overflow: hidden !important;
+            
+            /* Simulate @page margins for screen rendering */
+            padding: 1.25cm 1.5cm !important;
+            box-sizing: border-box !important;
         }
 
         /* Prevent scroll jump on scale */
