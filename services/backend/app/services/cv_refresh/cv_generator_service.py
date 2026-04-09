@@ -115,32 +115,30 @@ class CVGeneratorService:
         # ── PREVIEW MODE STYLING ─────────────────────────────────────────────
         # Fixes scaling and aesthetics for the browser preview panel.
         # Uses 'zoom' (Chromium/Safari) and 'transform: scale' (Firefox) helper.
-        # Forces a width of 820px (A4-ish) then scales down to fit the iframe.
+        # Forces a width of 210mm (A4) then scales down to fit the iframe.
         preview_styles = """
     <style>
         /* Override body for document-like preview */
         body {
-            background-color: #f8fafc !important; /* slate-50 */
+            background-color: #f1f5f9 !important; /* slate-100 */
             display: flex !important;
             justify-content: center !important;
-            padding: 24px !important;
+            padding: 40px 20px !important;
             margin: 0 !important;
-            min-width: 820px !important; /* Force document width */
             
-            /* Scaling factor: 0.75 fits ~800px into ~600px container */
-            zoom: 0.75;
-            -moz-transform: scale(0.75);
+            /* Aggressive scaling: 0.6 fits A4 height better into the 680px frame */
+            zoom: 0.6;
+            -moz-transform: scale(0.6);
             -moz-transform-origin: top center;
         }
 
         .cv-container {
             background-color: white !important;
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
             border: 1px solid #e2e8f0 !important;
-            width: 100% !important;
-            max-width: 800px !important;
-            min-height: 1100px !important;
-            border-radius: 4px !important;
+            width: 210mm !important; /* Fixed A4 width */
+            min-height: 297mm !important; /* A4 height */
+            border-radius: 2px !important;
             overflow: hidden !important;
         }
 
