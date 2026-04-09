@@ -26,6 +26,8 @@ CMD ["bun", "run", "dev", "--", "--host", "0.0.0.0"]
 FROM node:20-alpine AS builder
 
 WORKDIR /app
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
 
 # Install bun in builder stage to run installs and builds
 RUN apk add --no-cache curl ca-certificates bash \

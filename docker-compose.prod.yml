@@ -83,6 +83,8 @@ services:
       context: ./services/frontend
       dockerfile: Dockerfile
       target: production
+      args:
+        - VITE_API_URL=${VITE_API_URL}
     container_name: jobwizard-frontend-prod
     restart: unless-stopped
     environment:
