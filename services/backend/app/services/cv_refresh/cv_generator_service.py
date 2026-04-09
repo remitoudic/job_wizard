@@ -206,11 +206,11 @@ class CVGeneratorService:
     </style>
     <script>
         /**
-         * Precision Page-Break Reconciliation Script
-         * Calibrates the preview to match WeasyPrint's "page-break-inside: avoid" logic.
+         * Ultra-Calibrated Page-Break Reconciliation Script (Pro Max)
+         * Forces the browser rendering to match WeasyPrint's tight PDF logic.
          */
         function reconcilePageBreaks() {
-            // 1. Calibration: Measure exactly how many pixels are in 100mm in this browser
+            // 1. Calibration: Measure pixel/mm ratio for THIS browser instance
             const ruler = document.createElement('div');
             ruler.style.height = '100mm';
             ruler.style.visibility = 'hidden';
@@ -219,43 +219,56 @@ class CVGeneratorService:
             const pxPerMm = ruler.offsetHeight / 100;
             document.body.removeChild(ruler);
 
-            const A4_HEIGHT_PX = 297 * pxPerMm;
-            const GAP_HEIGHT_PX = 2 * pxPerMm; // Matches our 2mm CSS gap
+            // 2. Safety Factor: WeasyPrint (PDF) renders ~1.5% tighter than browsers.
+            // Applying a 0.985 factor synchronizes the vertical "trigger" points.
+            const A4_HEIGHT_PX = (297 * pxPerMm) * 0.985;
+            const GAP_HEIGHT_PX = 2 * pxPerMm;
             const totalCyclePx = A4_HEIGHT_PX + GAP_HEIGHT_PX;
 
-            // 2. Identification: Find entries that should not be split
-            const selectors = '.entry-item, .experience-item, .education-item, .skill-category, .section';
-            const elements = document.querySelectorAll(selectors);
-            
-            elements.forEach(el => {
-                // Reset to measure natural position
-                el.style.marginTop = '0';
-                
-                // Document-relative coordinates (stable regardless of scroll)
-                const top = el.offsetTop;
-                const bottom = top + el.offsetHeight;
-                
-                // Calculate which A4 page cycle these are in
-                const pageIndexTop = Math.floor(top / totalCyclePx);
-                const pageIndexBottom = Math.floor(bottom / totalCyclePx);
+            // Detect current scale factor (handles dynamic zoom)
+            const container = document.querySelector('.cv-container');
+            const scale = container.getBoundingClientRect().width / (210 * pxPerMm);
+            const containerTop = container.getBoundingClientRect().top;
 
-                if (pageIndexTop !== pageIndexBottom) {
-                    // Element is being cut! Push to start of next page
-                    const nextPageStart = (pageIndexBottom * totalCyclePx);
-                    const pushAmount = nextPageStart - top;
+            const selectors = '.entry-item, .experience-item, .education-item, .skill-category, .section';
+            
+            function processCascade() {
+                let shifted = false;
+                const elements = document.querySelectorAll(selectors);
+                
+                for (let el of elements) {
+                    // Reset to measure natural flow
+                    const oldMargin = el.style.marginTop;
+                    el.style.marginTop = '0';
                     
-                    // Only push logical chunks (e.g. up to 60% of a page)
-                    if (pushAmount > 0 && pushAmount < (A4_HEIGHT_PX * 0.6)) {
-                        el.style.marginTop = pushAmount + "px";
+                    const rect = el.getBoundingClientRect();
+                    const top = (rect.top - containerTop) / scale;
+                    const bottom = (rect.bottom - containerTop) / scale;
+                    
+                    const pageOfTop = Math.floor(top / totalCyclePx);
+                    const pageOfBottom = Math.floor(bottom / totalCyclePx);
+
+                    if (pageOfTop !== pageOfBottom) {
+                        const nextPageStart = (pageOfBottom * totalCyclePx);
+                        const pushAmount = nextPageStart - top + 1; // +1px nudge
+                        
+                        if (pushAmount > 0 && pushAmount < (A4_HEIGHT_PX * 0.5)) {
+                            el.style.marginTop = pushAmount + "px";
+                            shifted = true;
+                            break; // Stop and re-run entire cascade to handle shifted offsets
+                        }
                     }
                 }
-            });
+                if (shifted) processCascade();
+            }
+
+            processCascade();
         }
 
-        // Run when fonts/images are ready
+        // Multiple triggers for stable rendering (font loading is async)
         window.addEventListener('load', reconcilePageBreaks);
         setTimeout(reconcilePageBreaks, 300);
-        setTimeout(reconcilePageBreaks, 1000); // Re-calibrate for slow fonts
+        setTimeout(reconcilePageBreaks, 1500); // Final check for slow Type 1 fonts
     </script>
 """
         # Inject just before </body>
