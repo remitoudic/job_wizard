@@ -2,6 +2,7 @@ import os
 import json
 import uuid
 from datetime import datetime
+from typing import Optional
 from pathlib import Path
 from app.core.config import settings
 

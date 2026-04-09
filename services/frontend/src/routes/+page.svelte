@@ -1145,13 +1145,8 @@
 							>
 								<div class="flex items-center gap-3">
 									<span class="text-sm font-semibold">Personalize your letter</span>
-									{#if activeCV}
-										<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[9px] font-bold text-emerald-600 uppercase tracking-tight">
-											<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-											Ready
-										</div>
-									{/if}
 								</div>
+
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
 									class="h-5 w-5 transition-transform duration-200 group-open:rotate-180"
