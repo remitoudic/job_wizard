@@ -72,6 +72,48 @@ class CVGeneratorService:
             )
         return templates
 
+    def render_html(
+        self,
+        cv_data: CVData,
+        template_name: str = "modern",
+    ) -> str:
+        """
+        Render CV data to self-contained HTML (CSS inlined) for browser preview.
+
+        Returns the full HTML string ready for iframe srcdoc injection.
+        """
+        template_file = f"{template_name}.html"
+        css_file = TEMPLATES_DIR / f"{template_name}.css"
+
+        if not (TEMPLATES_DIR / template_file).exists():
+            available = [t.name for t in self.list_templates()]
+            raise ValueError(
+                f"Template '{template_name}' not found. "
+                f"Available: {available}"
+            )
+
+        template = self.env.get_template(template_file)
+
+        html_string = template.render(
+            contact=cv_data.contact,
+            summary=cv_data.summary,
+            experiences=cv_data.experiences,
+            education=cv_data.education,
+            skills=cv_data.skills,
+            languages=cv_data.languages,
+        )
+
+        # Inline CSS so the HTML is fully self-contained for iframe srcdoc
+        if css_file.exists():
+            css_content = css_file.read_text()
+            style_tag = f"<style>{css_content}</style>"
+            html_string = html_string.replace(
+                f'<link rel="stylesheet" href="{template_name}.css">',
+                style_tag,
+            )
+
+        return html_string
+
     def generate_pdf(
         self,
         cv_data: CVData,

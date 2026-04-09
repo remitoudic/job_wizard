@@ -87,6 +87,28 @@ async def list_cv_templates():
     return [t.to_dict() for t in templates]
 
 
+@router.post("/cv/preview")
+async def preview_cv(request: CVGenerateRequest):
+    """Return self-contained HTML preview of the CV (no PDF generation)."""
+    try:
+        html_content = cv_generator_service.render_html(
+            cv_data=request.cv_data,
+            template_name=request.template_name,
+        )
+        return Response(
+            content=html_content,
+            media_type="text/html",
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"CV preview failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to preview CV: {str(e)}",
+        )
+
+
 @router.post("/cv/generate")
 async def generate_cv(request: CVGenerateRequest):
     """
@@ -116,3 +138,4 @@ async def generate_cv(request: CVGenerateRequest):
             status_code=500,
             detail=f"Failed to generate CV: {str(e)}",
         )
+

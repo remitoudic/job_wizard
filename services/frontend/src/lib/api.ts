@@ -547,3 +547,16 @@ export async function generateCV(data: CVData, template: string): Promise<Blob> 
 
     return response.blob();
 }
+
+export async function previewCV(data: CVData, template: string): Promise<string> {
+    const response = await fetch(`${API_URL}/api/cv/preview`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ cv_data: data, template_name: template }),
+    });
+    if (!response.ok) {
+        throw new Error('Failed to load preview');
+    }
+    return response.text();
+}
+
