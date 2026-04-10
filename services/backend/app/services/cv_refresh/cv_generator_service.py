@@ -151,36 +151,6 @@ class CVGeneratorService:
             /* Simulate @page margins for screen rendering */
             padding: 1.5cm !important; /* Classic standard align */
             box-sizing: border-box !important;
-
-            /* ── PRO MAX: Sharp Cut Visualization ─────────────────────────── */
-            /* This creates a very thin 2mm gap with strong shadows on both sides, */
-            /* simulating stacked sheets of paper without hiding text. */
-            background-image: 
-                /* 1. Page Bottom Shadow */
-                linear-gradient(to top, rgba(15,23,42,0.12) 0, transparent 4mm),
-                /* 2. Page Top Shadow (for next page) */
-                linear-gradient(to bottom, transparent 299mm, rgba(15,23,42,0.08) 300mm),
-                /* 3. The physical 2mm Gap */
-                linear-gradient(to bottom, #fff 297mm, #f1f5f9 297mm, #f1f5f9 299mm, #fff 299mm)
-            !important;
-            background-size: 100% 299mm !important; /* A4 297mm + 2mm Gap */
-        }
-
-        /* Dash overlay for the first page break - positioned precisely in the thin gap */
-        .cv-container::after {
-            content: "PAGE BREAK (A4)";
-            position: absolute;
-            top: 298mm; /* Exactly in the middle of the 2mm gap */
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #f1f5f9;
-            padding: 1px 12px;
-            border: 1px dashed #cbd5e1;
-            border-radius: 99px;
-            font-size: 8px;
-            font-weight: 800;
-            color: #64748b;
-            letter-spacing: 0.12em;
             pointer-events: none;
             z-index: 10;
         }
@@ -204,72 +174,6 @@ class CVGeneratorService:
             }
         }
     </style>
-    <script>
-        /**
-         * Ultra-Calibrated Page-Break Reconciliation Script (Pro Max)
-         * Forces the browser rendering to match WeasyPrint's tight PDF logic.
-         */
-        function reconcilePageBreaks() {
-            // 1. Calibration: Measure pixel/mm ratio for THIS browser instance
-            const ruler = document.createElement('div');
-            ruler.style.height = '100mm';
-            ruler.style.visibility = 'hidden';
-            ruler.style.position = 'absolute';
-            document.body.appendChild(ruler);
-            const pxPerMm = ruler.offsetHeight / 100;
-            document.body.removeChild(ruler);
-
-            // 2. Safety Factor: WeasyPrint (PDF) renders ~1.5% tighter than browsers.
-            // Applying a 0.985 factor synchronizes the vertical "trigger" points.
-            const A4_HEIGHT_PX = (297 * pxPerMm) * 0.985;
-            const GAP_HEIGHT_PX = 2 * pxPerMm;
-            const totalCyclePx = A4_HEIGHT_PX + GAP_HEIGHT_PX;
-
-            // Detect current scale factor (handles dynamic zoom)
-            const container = document.querySelector('.cv-container');
-            const scale = container.getBoundingClientRect().width / (210 * pxPerMm);
-            const containerTop = container.getBoundingClientRect().top;
-
-            const selectors = '.entry-item, .experience-item, .education-item, .skill-category, .section';
-            
-            function processCascade() {
-                let shifted = false;
-                const elements = document.querySelectorAll(selectors);
-                
-                for (let el of elements) {
-                    // Reset to measure natural flow
-                    const oldMargin = el.style.marginTop;
-                    el.style.marginTop = '0';
-                    
-                    const rect = el.getBoundingClientRect();
-                    const top = (rect.top - containerTop) / scale;
-                    const bottom = (rect.bottom - containerTop) / scale;
-                    
-                    const pageOfTop = Math.floor(top / totalCyclePx);
-                    const pageOfBottom = Math.floor(bottom / totalCyclePx);
-
-                    if (pageOfTop !== pageOfBottom) {
-                        const nextPageStart = (pageOfBottom * totalCyclePx);
-                        const pushAmount = nextPageStart - top + 1; // +1px nudge
-                        
-                        if (pushAmount > 0 && pushAmount < (A4_HEIGHT_PX * 0.5)) {
-                            el.style.marginTop = pushAmount + "px";
-                            shifted = true;
-                            break; // Stop and re-run entire cascade to handle shifted offsets
-                        }
-                    }
-                }
-                if (shifted) processCascade();
-            }
-
-            processCascade();
-        }
-
-        // Multiple triggers for stable rendering (font loading is async)
-        window.addEventListener('load', reconcilePageBreaks);
-        setTimeout(reconcilePageBreaks, 300);
-        setTimeout(reconcilePageBreaks, 1500); // Final check for slow Type 1 fonts
-    </script>
 """
         # Inject just before </body>
         if "</body>" in html_string:
