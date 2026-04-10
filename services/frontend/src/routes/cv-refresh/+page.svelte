@@ -1058,7 +1058,7 @@
                                 <!-- Fade in when ready -->
                                 <iframe
                                     srcdoc={previewHtml}
-                                    sandbox="allow-same-origin"
+                                    sandbox="allow-same-origin allow-scripts"
                                     title="CV Template Preview"
                                     aria-label="Live preview of your CV with the selected template"
                                     class="w-full h-full border-0 transition-opacity duration-200"

@@ -82,6 +82,11 @@ body {
     border-bottom: 1px solid #000;
     padding-bottom: 4px;
     margin-bottom: 12px;
+    page-break-after: avoid;
+}
+
+h3 {
+    page-break-after: avoid;
 }
 
 /* ── Professional Summary ───────────────────────────────── */

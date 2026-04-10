@@ -109,6 +109,11 @@ body {
     border-bottom: 2px solid #0369a1;
     padding-bottom: 4px;
     margin-bottom: 10px;
+    page-break-after: avoid;
+}
+
+h3 {
+    page-break-after: avoid;
 }
 
 /* ── Skills ──────────────────────────────────────────────── */
@@ -151,6 +156,15 @@ body {
     font-size: 8pt;
     color: #64748b;
     font-style: italic;
+    margin-bottom: 4px;
+}
+
+.education-item .description {
+    font-size: 8.5pt;
+    color: #334155;
+    line-height: 1.4;
+    white-space: pre-line;
+    margin-top: 4px;
 }
 
 /* ── Experience ─────────────────────────────────────────── */

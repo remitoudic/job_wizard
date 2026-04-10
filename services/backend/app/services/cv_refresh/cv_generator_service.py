@@ -206,69 +206,87 @@ class CVGeneratorService:
     </style>
     <script>
         /**
-         * Ultra-Calibrated Page-Break Reconciliation Script (Pro Max)
+         * Ultra-Calibrated Page-Break Reconciliation Script (v2.1 - High Stability)
          * Forces the browser rendering to match WeasyPrint's tight PDF logic.
          */
         function reconcilePageBreaks() {
-            // 1. Calibration: Measure pixel/mm ratio for THIS browser instance
-            const ruler = document.createElement('div');
-            ruler.style.height = '100mm';
-            ruler.style.visibility = 'hidden';
-            ruler.style.position = 'absolute';
-            document.body.appendChild(ruler);
-            const pxPerMm = ruler.offsetHeight / 100;
-            document.body.removeChild(ruler);
-
-            // 2. Safety Factor: WeasyPrint (PDF) renders ~1.5% tighter than browsers.
-            // Applying a 0.985 factor synchronizes the vertical "trigger" points.
-            const A4_HEIGHT_PX = (297 * pxPerMm) * 0.985;
-            const GAP_HEIGHT_PX = 2 * pxPerMm;
-            const totalCyclePx = A4_HEIGHT_PX + GAP_HEIGHT_PX;
-
-            // Detect current scale factor (handles dynamic zoom)
+            console.log("[CV Preview] Calibration Triggered");
             const container = document.querySelector('.cv-container');
-            const scale = container.getBoundingClientRect().width / (210 * pxPerMm);
-            const containerTop = container.getBoundingClientRect().top;
+            if (!container) return;
 
-            const selectors = '.entry-item, .experience-item, .education-item, .skill-category, .section';
+            // 1. Internal Calibration: Measure px/mm INSIDE the container to bake in zoom/scaling
+            const ruler = document.createElement('div');
+            ruler.style.cssText = 'height:100mm; width:1px; position:absolute; visibility:hidden; pointer-events:none;';
+            container.appendChild(ruler);
+            const pxPerMm = ruler.offsetHeight / 100;
+            container.removeChild(ruler);
+
+            // 2. Constants: Must align EXACTLY with the CSS background-size (299mm)
+            const A4_HEIGHT_MM = 297;
+            const GAP_HEIGHT_MM = 2;
+            const TOTAL_CYCLE_MM = A4_HEIGHT_MM + GAP_HEIGHT_MM; // 299mm
             
-            function processCascade() {
-                let shifted = false;
-                const elements = document.querySelectorAll(selectors);
+            // 3. Precision Threshold: 0.980 (6mm safety buffer) 
+            const TRIGGER_THRESHOLD_MM = A4_HEIGHT_MM * 0.980; 
+
+            const TOTAL_CYCLE_PX = TOTAL_CYCLE_MM * pxPerMm;
+            const THRESHOLD_PX = TRIGGER_THRESHOLD_MM * pxPerMm;
+
+            const containerTop = container.getBoundingClientRect().top;
+            const containerWidth = container.getBoundingClientRect().width;
+            const scale = containerWidth / (210 * pxPerMm);
+
+            // Selectors for Atomic Blocks (Tracking entries and headers across all templates)
+            // Note: We avoid tracking 'section.section' here because it is a container that SHOULD be able to split across pages.
+            const selectors = '.experience-item, .education-item, .skill-category, h2, h3, .entry-item, .timeline-item';
+            
+            function processSinglePass() {
+                const elements = Array.from(document.querySelectorAll(selectors));
                 
-                for (let el of elements) {
-                    // Reset to measure natural flow
-                    const oldMargin = el.style.marginTop;
-                    el.style.marginTop = '0';
-                    
+                // Reset all first to find pure natural flow
+                elements.forEach(el => el.style.marginTop = '0');
+
+                elements.forEach((el, i) => {
                     const rect = el.getBoundingClientRect();
                     const top = (rect.top - containerTop) / scale;
-                    const bottom = (rect.bottom - containerTop) / scale;
-                    
-                    const pageOfTop = Math.floor(top / totalCyclePx);
-                    const pageOfBottom = Math.floor(bottom / totalCyclePx);
+                    const height = (rect.height) / scale;
 
-                    if (pageOfTop !== pageOfBottom) {
-                        const nextPageStart = (pageOfBottom * totalCyclePx);
-                        const pushAmount = nextPageStart - top + 1; // +1px nudge
+                    const currentSheetIndex = Math.floor(top / TOTAL_CYCLE_PX);
+                    const sheetStart = currentSheetIndex * TOTAL_CYCLE_PX;
+                    const topInSheet = top - sheetStart;
+                    
+                    const spillsIntoNextSheet = (topInSheet + height) > THRESHOLD_PX;
+                    const canFitOnOnePage = height <= THRESHOLD_PX;
+
+                    if (spillsIntoNextSheet && canFitOnOnePage) {
+                        const nextPageStart = (currentSheetIndex + 1) * TOTAL_CYCLE_PX;
+                        const pushAmount = nextPageStart - top;
                         
-                        if (pushAmount > 0 && pushAmount < (A4_HEIGHT_PX * 0.5)) {
+                        if (pushAmount > 0) {
                             el.style.marginTop = pushAmount + "px";
-                            shifted = true;
-                            break; // Stop and re-run entire cascade to handle shifted offsets
+                            
+                            // ORPHAN PROTECTION: If we push this entry, also push the header if it was right before
+                            // This prevents headers like "EDUCATION" from staying at the bottom of the previous page
+                            if (i > 0) {
+                                const prev = elements[i-1];
+                                if (prev.tagName.match(/H[1-6]/i) || prev.classList.contains('section-header')) {
+                                    prev.style.marginTop = (parseFloat(prev.style.marginTop) || 0) + pushAmount + "px";
+                                }
+                            }
                         }
                     }
-                }
-                if (shifted) processCascade();
+                });
             }
 
-            processCascade();
+            // Execute single-pass
+            processSinglePass();
         }
 
-        // Multiple triggers for stable rendering (font loading is async)
+        // Multiple triggers for stable rendering
         window.addEventListener('load', reconcilePageBreaks);
+        window.addEventListener('resize', reconcilePageBreaks);
         setTimeout(reconcilePageBreaks, 300);
-        setTimeout(reconcilePageBreaks, 1500); // Final check for slow Type 1 fonts
+        setTimeout(reconcilePageBreaks, 2000); 
     </script>
 """
         # Inject just before </body>

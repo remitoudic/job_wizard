@@ -87,6 +87,9 @@
                         <p class="dates">{{ edu.start_date }}{% if edu.start_date and edu.end_date %} — {% endif %}{{
                             edu.end_date }}</p>
                         {% endif %}
+                        {% if edu.description %}
+                        <p class="description">{{ edu.description }}</p>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 </section>
