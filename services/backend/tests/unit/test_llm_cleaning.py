@@ -75,6 +75,21 @@ def test_placeholder_replacement():
 def test_placeholder_replacement_german():
     user_name = "Max Mustermann"
     text = "Sehr geehrte Damen,\n\nText.\n\nMit freundlichen Grüßen,\n\n[Ihr Name]"
-    replaced = text.replace("[Your Name]", user_name).replace("[Ihr Name]", user_name)
+    replaced = text.replace("[Your Name]", user_name).replace("[Ihr Name]", user_name).replace("[Votre Nom]", user_name)
     assert "[Ihr Name]" not in replaced
     assert "Max Mustermann" in replaced
+
+def test_clean_model_output_french():
+    text = """
+    Madame, Monsieur,
+    
+    Ceci est le corps du message.
+    
+    Cordialement,
+    Jean Dupont
+    """
+    cleaned = LLMService.clean_model_output(text)
+    assert "Madame, Monsieur" in cleaned
+    assert "Ceci est le corps" in cleaned
+    assert "Cordialement" not in cleaned
+    assert "Jean Dupont" not in cleaned

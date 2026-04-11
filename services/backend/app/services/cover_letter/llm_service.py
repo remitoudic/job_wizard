@@ -62,8 +62,8 @@ class LLMService:
         # - "Subject:" lines
         
         start_index = 0
-        # English and German salutations (handle trailing colon or comma)
-        salutation_regex = r"^(Dear|Hi|Hello|Sehr|Hallo|Guten)\b"
+        # salutations (handle trailing colon or comma)
+        salutation_regex = r"^(Dear|Hi|Hello|Sehr|Hallo|Guten|Madame|Monsieur|Bonjour)\b"
         
         for i, line in enumerate(lines[:15]): # Only check first 15 lines
             line_str = line.strip()
@@ -95,7 +95,7 @@ class LLMService:
         # Regex to find signature block and removing it
         # Includes English and German variants
         sig_pattern = re.compile(
-            r"(Sincerely|Best regards|Yours truly|Respectfully|Kind regards|Mit freundlichen Grüßen|Beste Grüße|Herzliche Grüße|Viele Grüße)[\s,]*(\n|$)[\s\S]*$", 
+            r"(Sincerely|Best regards|Yours truly|Respectfully|Kind regards|Mit freundlichen Grüßen|Beste Grüße|Herzliche Grüße|Viele Grüße|Cordialement|Bien à vous|Sincères salutations|Je vous prie d'agréer)[\s,]*(\n|$)[\s\S]*$", 
             re.IGNORECASE
         )
         match = sig_pattern.search(joined_text)
@@ -181,6 +181,8 @@ class LLMService:
         
         # Language-specific instructions
         is_german = language.lower() == "german"
+        is_french = language.lower() == "french"
+
         if is_german:
             lang_block = """
 LANGUAGE: Write the ENTIRE letter in German (Deutsch).
@@ -190,6 +192,16 @@ LANGUAGE: Write the ENTIRE letter in German (Deutsch).
 - Tone: Formal, structured, professional (Bewerbungsschreiben standard)."""
             STANDARD_SIGNATURE = "\n\nMit freundlichen Grüßen\n\n[Ihr Name]"
             salutation_hint = '"Sehr geehrte/r [Name]," (or "Sehr geehrte Damen und Herren,")'
+        elif is_french:
+            lang_block = """
+LANGUAGE: Write the ENTIRE letter in French (Français).
+- Use formal French ("vouvoiement") throughout.
+- Salutation: "Madame, Monsieur,".
+- Do NOT write in English. Every word must be in French.
+- Structure: Follow the "Vous, Moi, Nous" standard for French cover letters.
+- Tone: Professional, motivated, and formal (Lettre de Motivation)."""
+            STANDARD_SIGNATURE = "\n\nCordialement,\n\n[Votre Nom]"
+            salutation_hint = '"Madame, Monsieur,"'
         else:
             lang_block = "\nLANGUAGE: Write in British English."
             STANDARD_SIGNATURE = "\n\nSincerely,\n\n[Your Name]"
@@ -279,7 +291,7 @@ CUSTOM USER GUIDANCE:
                     
                     # Replace name placeholder
                     display_name = user_name if user_name else "[Your Name]"
-                    final_text = final_text.replace("[Your Name]", display_name).replace("[Ihr Name]", display_name)
+                    final_text = final_text.replace("[Your Name]", display_name).replace("[Ihr Name]", display_name).replace("[Votre Nom]", display_name)
                     
                     return {"output": final_text, "source": name, "usage": usage}
 

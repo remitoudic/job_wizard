@@ -34,7 +34,13 @@
 	// Single unified format selector: drives both template (PDF format) and language (AI writing)
 	let selectedFormat: string = "british";
 	$: templateName = selectedFormat; // maps 1-to-1 to backend template_name
-	$: language = selectedFormat === "german" ? "german" : "english";
+	$: language = selectedFormat === "french" ? "french" : (selectedFormat === "german" ? "german" : "english");
+
+	function handleLanguageChange(newLang: string) {
+		if (newLang === "french") selectedFormat = "french";
+		else if (newLang === "german") selectedFormat = "german";
+		else selectedFormat = "british";
+	}
 
 	// Contact Info
 	let email = "";
@@ -150,12 +156,40 @@
 					"November",
 					"Dezember",
 				];
-				editableDate = `${now.getDate()}. ${deMonths[now.getMonth()]} ${now.getFullYear()}`;
+				editableDate = `${now.getDate()}. ${
+					deMonths[now.getMonth()]
+				} ${now.getFullYear()}`;
 			}
 			if (!isSubjectManuallyEdited) {
 				editableSubject = `Bewerbung als ${currentTitle}`;
 			}
+		} else if (selectedFormat === "french") {
+			if (!isDateManuallyEdited) {
+				const now = new Date();
+				const frMonths = [
+					"janvier",
+					"février",
+					"mars",
+					"avril",
+					"mai",
+					"juin",
+					"juillet",
+					"août",
+					"septembre",
+					"octobre",
+					"novembre",
+					"décembre",
+				];
+				const cityPrefix = addressCity ? `À ${addressCity}, le ` : "Le ";
+				editableDate = `${cityPrefix}${now.getDate()} ${
+					frMonths[now.getMonth()]
+				} ${now.getFullYear()}`;
+			}
+			if (!isSubjectManuallyEdited) {
+				editableSubject = `Objet : Candidature au poste de ${currentTitle}`;
+			}
 		} else {
+
 			if (!isDateManuallyEdited) {
 				editableDate = new Date().toLocaleDateString("en-GB", {
 					year: "numeric",
@@ -1184,11 +1218,13 @@
 									</p>
 									<select
 										id="letter-language"
-										bind:value={language}
+										value={language}
+										on:change={(e) => handleLanguageChange(e.target.value)}
 										class="w-full px-4 py-3 rounded-lg border border-[#E2E8F0] bg-white text-[#0F172A] focus:border-[#0369A1] focus:ring-2 focus:ring-[#0369A1]/20 outline-none transition-all text-sm mb-6"
 									>
 										<option value="english">English</option>
 										<option value="german">German</option>
+										<option value="french">French</option>
 									</select>
 								</div>
 
@@ -1718,6 +1754,49 @@
 													</svg>
 												{/if}
 											</button>
+											<button
+												id="format-french"
+												type="button"
+												on:click={() => {
+													selectedFormat = "french";
+													invalidatePdf();
+												}}
+												class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border text-left transition-all {selectedFormat ===
+												'french'
+													? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]'
+													: 'border-[#E2E8F0] bg-white text-[#334155] hover:bg-[#F8FAFC]'}"
+											>
+												<span
+													class="text-xl leading-none select-none"
+													>🇫🇷</span
+												>
+												<div class="flex-1 min-w-0">
+													<div
+														class="text-sm font-semibold leading-tight"
+													>
+														Français
+													</div>
+													<div
+														class="text-[11px] text-[#64748B] mt-0.5"
+													>
+														Motivation · Format standard
+													</div>
+												</div>
+												{#if selectedFormat === "french"}
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														class="h-4 w-4 text-[#0369A1] shrink-0"
+														viewBox="0 0 20 20"
+														fill="currentColor"
+													>
+														<path
+															fill-rule="evenodd"
+															d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+															clip-rule="evenodd"
+														/>
+													</svg>
+												{/if}
+											</button>
 										</div>
 									</div>
 								</div>
@@ -1734,7 +1813,7 @@
 					></div>
 					<!-- Live Header Preview -->
 					<div
-						class="mb-8 {selectedFormat === 'german'
+						class="mb-8 {['german', 'french'].includes(selectedFormat)
 							? 'font-sans'
 							: 'font-serif'}"
 					>
@@ -1881,14 +1960,83 @@
 									class="text-base font-bold text-gray-900 mb-0.5"
 								>
 									{editableCompany ||
-										jobData.company ||
+										jobData?.company ||
 										"[Company]"}
 								</div>
 								<div class="text-base text-gray-900 italic">
 									{editableJobTitle ||
-										jobData.title ||
+										jobData?.title ||
 										"[Role]"}
 								</div>
+							</div>
+						{:else if selectedFormat === "french"}
+							<!-- French Layout: Recipient Right, then Date Right -->
+							<div class="mb-6 flex flex-col items-end">
+								<div
+									class="text-base font-bold text-gray-900 mb-0.5"
+								>
+									{editableCompany ||
+										jobData?.company ||
+										"[Company]"}
+								</div>
+								<div class="text-base text-gray-900 italic">
+									{editableJobTitle ||
+										jobData?.title ||
+										"[Role]"}
+								</div>
+							</div>
+
+							<div
+								class="text-gray-800 mb-10 relative group w-fit ml-auto"
+							>
+								{#if isEditingDate}
+									<div
+										class="flex items-center space-x-2 justify-end"
+									>
+										<input
+											type="text"
+											bind:value={editableDate}
+											on:input={() =>
+												(isDateManuallyEdited = true)}
+											class="input py-1 px-2 text-right w-48"
+										/>
+										<button
+											on:click={() => {
+												isEditingDate = false;
+												invalidatePdf();
+											}}
+											class="p-1 text-green-600 hover:bg-green-50 rounded"
+											>✓</button
+										>
+										<button
+											on:click={() =>
+												(isEditingDate = false)}
+											class="p-1 text-red-500 hover:bg-red-50 rounded"
+											>✕</button
+										>
+									</div>
+								{:else}
+									<div class="pl-8">
+										{editableDate || "[Lieu et Date]"}
+										<button
+											on:click={() =>
+												(isEditingDate = true)}
+											class="absolute -left-2 top-0 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
+											title="Edit Date"
+										>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-4 w-4"
+												viewBox="0 0 20 20"
+												fill="currentColor"
+											>
+												<path
+													d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+												/>
+											</svg>
+										</button>
+									</div>
+								{/if}
 							</div>
 						{:else}
 							<!-- German DIN 5008 Layout: Recipient then Date -->
@@ -1897,12 +2045,12 @@
 									class="text-base font-bold text-gray-900 mb-0.5"
 								>
 									{editableCompany ||
-										jobData.company ||
+										jobData?.company ||
 										"[Company]"}
 								</div>
 								<div class="text-base text-gray-900 italic">
 									{editableJobTitle ||
-										jobData.title ||
+										jobData?.title ||
 										"[Role]"}
 								</div>
 							</div>
@@ -1962,8 +2110,7 @@
 						{/if}
 
 						<div
-							class="text-gray-800 mb-8 {selectedFormat ===
-							'german'
+							class="text-gray-800 mb-8 {['german', 'french'].includes(selectedFormat)
 								? 'font-sans font-bold'
 								: 'font-serif font-semibold'} relative group w-fit"
 						>
