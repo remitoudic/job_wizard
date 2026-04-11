@@ -10,6 +10,7 @@ A web application that generates personalized cover letters from job description
 - 📄 **PDF Export**: Professional PDF format with embedded photo styling and multiple layout options.
 - 🖼️ **Profile Picture Support**: Upload and crop your professional photo. High-quality scaling and storage via **Cloudinary** ensuring your PDFs always look premium.
 - 🎨 **Modern UI**: Beautiful, responsive SvelteKit interface.
+- 🌍 **Multi-language Support**: Generate and format cover letters in **English**, **German** (DIN 5008), and **French** (Lettre de Motivation).
 - 🐳 **Docker Ready** : Complete multi-service architecture.
 
 ## Architecture
