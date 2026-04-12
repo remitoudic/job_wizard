@@ -34,11 +34,12 @@
 	// Single unified format selector: drives both template (PDF format) and language (AI writing)
 	let selectedFormat: string = "british";
 	$: templateName = selectedFormat; // maps 1-to-1 to backend template_name
-	$: language = selectedFormat === "french" ? "french" : (selectedFormat === "german" ? "german" : "english");
+	$: language = selectedFormat === "french" ? "french" : (selectedFormat === "german" ? "german" : (selectedFormat === "spanish" ? "spanish" : "english"));
 
 	function handleLanguageChange(newLang: string) {
 		if (newLang === "french") selectedFormat = "french";
 		else if (newLang === "german") selectedFormat = "german";
+		else if (newLang === "spanish") selectedFormat = "spanish";
 		else selectedFormat = "british";
 	}
 
@@ -188,8 +189,32 @@
 			if (!isSubjectManuallyEdited) {
 				editableSubject = `Objet : Candidature au poste de ${currentTitle}`;
 			}
+		} else if (selectedFormat === "spanish") {
+			if (!isDateManuallyEdited) {
+				const now = new Date();
+				const esMonths = [
+					"enero",
+					"febrero",
+					"marzo",
+					"abril",
+					"mayo",
+					"junio",
+					"julio",
+					"agosto",
+					"septiembre",
+					"octubre",
+					"noviembre",
+					"diciembre",
+				];
+				const cityPart = addressCity || "Madrid"; // Fallback to Madrid
+				editableDate = `${cityPart}, ${now.getDate()} de ${
+					esMonths[now.getMonth()]
+				} de ${now.getFullYear()}`;
+			}
+			if (!isSubjectManuallyEdited) {
+				editableSubject = `Asunto: Candidatura para el puesto de ${currentTitle}`;
+			}
 		} else {
-
 			if (!isDateManuallyEdited) {
 				editableDate = new Date().toLocaleDateString("en-GB", {
 					year: "numeric",
@@ -1225,6 +1250,7 @@
 										<option value="english">English</option>
 										<option value="german">German</option>
 										<option value="french">French</option>
+										<option value="spanish">Spanish</option>
 									</select>
 								</div>
 
