@@ -16,6 +16,7 @@
 	import { auth } from "../stores/auth";
 	import SEO from "$lib/components/SEO.svelte";
 	import ContextPreview from "$lib/components/ContextPreview.svelte";
+	import { generateCoverLetterFilename } from "$lib/pdfUtils";
 
 	// SvelteKit automatically passes these props - declare them to avoid warnings
 	export let data: any = {};
@@ -737,7 +738,7 @@
 					: (userName || "Applicant").replace(/[^a-zA-Z0-9_]/g, "_");
 			const date = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-			link.download = `cover_letter_${company}_${name}_${date}.pdf`;
+			link.download = generateCoverLetterFilename(language, name, company, date);
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
