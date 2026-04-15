@@ -434,24 +434,33 @@ CUSTOM USER GUIDANCE:
                         logger.warning(f"Model failed: {failed_source} - {e}")
                         logfire.warning("Model failed", source=failed_source, error=str(e))
                         
-                        # Detect Rate Limit or Failure for Primary
+                        # Classify the error to decide if provider failover is needed
                         error_str = str(e).lower()
                         is_rate_limit = "429" in error_str or "rate limit" in error_str
+                        is_server_error = "502" in error_str or "503" in error_str or "server error" in error_str
+                        is_model_error = (
+                            "404" in error_str 
+                            or "not found" in error_str 
+                            or "deprecated" in error_str 
+                            or "invalid model" in error_str
+                            or "does not exist" in error_str
+                        )
                         
-                        if self.current_provider_name == "groq":
-                            # For Groq (Primary), failover on most errors to try OpenRouter
-                            # We treat it as a rate limit/downtime to trigger the switch
-                            logfire.warning(f"Groq failed ({e}), failover to OpenRouter")
-                            self.provider_service.report_rate_limit("groq")
-                            # Do NOT break the race immediately. Let the Local model (and others) continue.
-                            # If Local succeeds, we win.
-                            # If Local fails, we'll see the provider changed (via report_rate_limit) 
-                            # and trigger a retry with the new provider (OpenRouter) naturally.
-                            # should_break_race = True
-                        
-                        elif is_rate_limit and self.current_provider_name == "openrouter":
-                            # For OpenRouter (Secondary), only report if it's a rate limit
-                            self.provider_service.report_rate_limit("openrouter")
+                        # Only trigger provider failover for rate limits or server-wide outages.
+                        # Model-specific errors (deprecated, not found) should NOT poison the
+                        # entire provider — other models on the same provider may still work.
+                        if is_rate_limit or is_server_error:
+                            if self.current_provider_name == "groq":
+                                logfire.warning(f"Groq provider issue ({e}), failover to OpenRouter")
+                                self.provider_service.report_rate_limit("groq")
+                            elif self.current_provider_name == "openrouter":
+                                self.provider_service.report_rate_limit("openrouter")
+                        elif is_model_error:
+                            logfire.warning(
+                                "Model-specific error (no provider failover)", 
+                                source=failed_source, 
+                                error=str(e)
+                            )
                 
                 if winner_text or should_break_race:
                     break

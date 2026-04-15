@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # Groq Settings
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     GROQ_MODEL_1: str = "llama-3.3-70b-versatile"
-    GROQ_MODEL_2: str = "moonshotai/kimi-k2-instruct-0905"
+    GROQ_MODEL_2: str = "openai/gpt-oss-120b"
 
     # LlamaCloud Settings (CV Parsing)
     LLAMA_CLOUD_API_KEY: str = ""
