@@ -7,6 +7,61 @@ from reportlab.lib.colors import HexColor
 from reportlab.lib.enums import TA_LEFT
 from PIL import Image as PILImage
 import os
+import re
+import unicodedata
+
+
+# Unicode → Latin-1 safe replacement map.
+# ReportLab's built-in fonts only support Latin-1; unsupported codepoints
+# render as black boxes (tofu). This map normalises them to safe equivalents.
+_UNICODE_REPLACEMENTS = {
+    # Hyphens and dashes
+    '\u2010': '-',   # HYPHEN
+    '\u2011': '-',   # NON-BREAKING HYPHEN
+    '\u2012': '-',   # FIGURE DASH
+    '\u2013': '-',   # EN DASH
+    '\u2014': '-',   # EM DASH  (use '--' if you prefer)
+    '\u2015': '-',   # HORIZONTAL BAR
+    '\u00AD': '',    # SOFT HYPHEN (invisible, remove)
+    '\uFE63': '-',   # SMALL HYPHEN-MINUS
+    '\uFF0D': '-',   # FULLWIDTH HYPHEN-MINUS
+    # Quotation marks
+    '\u2018': "'",   # LEFT SINGLE QUOTATION MARK
+    '\u2019': "'",   # RIGHT SINGLE QUOTATION MARK
+    '\u201A': "'",   # SINGLE LOW-9 QUOTATION MARK
+    '\u201B': "'",   # SINGLE HIGH-REVERSED-9 QUOTATION MARK
+    '\u201C': '"',   # LEFT DOUBLE QUOTATION MARK
+    '\u201D': '"',   # RIGHT DOUBLE QUOTATION MARK
+    '\u201E': '"',   # DOUBLE LOW-9 QUOTATION MARK
+    '\u201F': '"',   # DOUBLE HIGH-REVERSED-9 QUOTATION MARK
+    '\u00AB': '"',   # LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+    '\u00BB': '"',   # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+    # Spaces / invisible characters
+    '\u200B': '',    # ZERO WIDTH SPACE
+    '\u200C': '',    # ZERO WIDTH NON-JOINER
+    '\u200D': '',    # ZERO WIDTH JOINER
+    '\uFEFF': '',    # BYTE ORDER MARK / ZERO WIDTH NO-BREAK SPACE
+    '\u00A0': ' ',   # NON-BREAKING SPACE → regular space
+    '\u2002': ' ',   # EN SPACE
+    '\u2003': ' ',   # EM SPACE
+    '\u2009': ' ',   # THIN SPACE
+    '\u202F': ' ',   # NARROW NO-BREAK SPACE
+    # Dots / ellipsis
+    '\u2026': '...',  # HORIZONTAL ELLIPSIS
+    '\u2022': '-',    # BULLET
+    '\u2023': '>',    # TRIANGULAR BULLET
+    '\u2043': '-',    # HYPHEN BULLET
+    # Misc
+    '\u2032': "'",    # PRIME
+    '\u2033': '"',    # DOUBLE PRIME
+    '\u2044': '/',    # FRACTION SLASH
+}
+
+# Pre-compiled regex for all keys
+_UNICODE_PATTERN = re.compile(
+    '|'.join(re.escape(k) for k in _UNICODE_REPLACEMENTS)
+)
+
 
 class BaseTemplate(ABC):
     """Abstract base class for cover letter PDF templates."""
@@ -14,6 +69,45 @@ class BaseTemplate(ABC):
     def __init__(self):
         self.styles = getSampleStyleSheet()
         self._setup_custom_styles()
+
+    @staticmethod
+    def sanitize_text(text: str) -> str:
+        """Replace Unicode characters unsupported by ReportLab built-in fonts.
+
+        Built-in PDF fonts (Helvetica, Times-Roman, Courier) only cover
+        Latin-1 (ISO 8859-1). Characters outside that range — commonly
+        produced by LLMs — appear as black boxes. This method normalises
+        them to safe ASCII/Latin-1 equivalents while preserving valid
+        Latin-1 characters (German umlauts, French accents, etc.).
+        """
+        if not text:
+            return text
+
+        # Fast-path: apply known replacements via single regex pass
+        result = _UNICODE_PATTERN.sub(
+            lambda m: _UNICODE_REPLACEMENTS[m.group()], text
+        )
+
+        # Fallback: handle any remaining non-Latin-1 characters.
+        # Process character-by-character: keep Latin-1 chars as-is,
+        # attempt NFKD decomposition for ligatures (e.g. ﬁ → fi),
+        # and silently drop anything else.
+        cleaned = []
+        for ch in result:
+            try:
+                ch.encode('latin-1')
+                cleaned.append(ch)
+            except UnicodeEncodeError:
+                # Try NFKD decomposition (handles ligatures like ﬁ → fi)
+                decomposed = unicodedata.normalize('NFKD', ch)
+                for sub_ch in decomposed:
+                    try:
+                        sub_ch.encode('latin-1')
+                        cleaned.append(sub_ch)
+                    except UnicodeEncodeError:
+                        pass  # Drop truly unsupported characters
+
+        return ''.join(cleaned)
 
     def get_margins(self) -> Dict[str, float]:
         """Return page margins. Override in subclasses for non-standard formats."""
@@ -93,6 +187,8 @@ class BaseTemplate(ABC):
 
     def _add_paragraphs(self, story: List, text: str):
         """Helper to add cover letter body paragraphs."""
+        # Sanitize text to remove unsupported Unicode characters
+        text = self.sanitize_text(text)
         # Split by double newlines for actual paragraph spacing
         paragraphs = text.split('\n\n')
         for para in paragraphs:

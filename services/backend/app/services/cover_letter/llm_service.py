@@ -48,8 +48,15 @@ class LLMService:
         """
         Heuristically clean the model output to remove headers, addresses, 
         and signatures that the model might have hallucinated.
+        Also sanitizes Unicode characters that cause rendering issues in PDFs.
         """
         import re
+        
+        # --- Phase 0: Sanitize problematic Unicode characters ---
+        # LLMs frequently emit special hyphens, smart quotes, and zero-width
+        # characters that ReportLab's built-in fonts can't render (black boxes).
+        from app.services.cover_letter.templates.base import BaseTemplate
+        text = BaseTemplate.sanitize_text(text)
         
         lines = text.strip().split('\n')
         
