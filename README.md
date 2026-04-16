@@ -1,4 +1,4 @@
-# Vite a Job !
+# Vite a Job!
 
 A web application that generates personalized cover letters from job descriptions using AI, and revitalizes your old CVs into clean, beautiful PDFs. Simply paste a job URL and your background info to get a custom cover letter, or upload your old CV to automatically parse and render it into a modern or classic template.
 
