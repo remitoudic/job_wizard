@@ -1,93 +1,82 @@
-# Vite a Job!
+# Vite a Job! 🚀
 
-A web application that generates personalized cover letters from job descriptions using AI, and revitalizes your old CVs into clean, beautiful PDFs. Simply paste a job URL and your background info to get a custom cover letter, or upload your old CV to automatically parse and render it into a modern or classic template.
+A premium web application that generates personalized, high-fidelity cover letters and revitalizes old CVs into professional PDFs using advanced AI. Simply paste a job URL or description to get a custom cover letter, or upload your old CV to automatically parse and render it into modern, classic, or timeline templates.
 
-## Features
+## ✨ Features
 
-- 📄 **CV Refresh**: Upload your old PDF CV. Our AI (LlamaParse + Groq) extracts your experience, education, and contact details so you can quickly generate a sleek new CV using our Modern or Classic templates. (Requires `LLAMA_CLOUD_API_KEY`).
-- 🔗 **Smart Job Parsing**: Extracts job details from URLs using customizable proxies. Supports LinkedIn, Indeed, StepStone, We Work Remotely, and Arbeitnow.
-- 🚀 **Hybrid LLM Engine**: "Race Mode" runs local (Ollama) and remote (Groq/OpenRouter) models in parallel for maximum speed.
-- 📄 **PDF Export**: Professional PDF format with embedded photo styling and multiple layout options.
-- 🖼️ **Profile Picture Support**: Upload and crop your professional photo. High-quality scaling and storage via **Cloudinary** ensuring your PDFs always look premium.
-- 🎨 **Modern UI**: Beautiful, responsive SvelteKit interface.
-- 🌍 **Multi-language Support**: Generate and format cover letters in **English**, **German** (DIN 5008), **French** (Lettre de Motivation), and **Spanish** (Carta de Presentación).
-- 🐳 **Docker Ready** : Complete multi-service architecture.
+- 📄 **CV Refresh**: Transform your old PDF CV into a sleek, professional document. Our AI (LlamaParse + Groq) extracts your experience, education, and skills.
+- 🎨 **Premium Templates**: Choose from **Modern**, **Classic**, or the new **Timeline** templates, all designed for maximum impact.
+- 🌍 **Global Support**: Full localization for cover letters and CVs in:
+  - 🇬🇧 **English** (Standard Professional)
+  - 🇩🇪 **German** (DIN 5008 compliant)
+  - 🇫🇷 **French** (Lettre de Motivation)
+  - 🇪🇸 **Spanish** (Carta de Presentación)
+- 👁️ **High-Fidelity Preview**: What you see is what you get. Our "Atomic Block" reconciliation ensures 1:1 parity between the web preview and the final PDF output.
+- 🔗 **Smart Job Parsing**: Instant extraction of job details from LinkedIn, Indeed, StepStone, We Work Remotely, and Arbeitnow.
+- 🚀 **Hybrid LLM Engine**: "Race Mode" orchestration between local (Ollama) and remote (Groq/OpenRouter) models for sub-second generation.
+- 🖼️ **Profile Picture Suite**: Professional photo cropping and high-quality scaling via **Cloudinary** integration.
+- 📂 **Smart Filenames**: Automatically generated, localized filenames (e.g., `John_Doe_2024_Google_CoverLetter.pdf`) for better organization.
+- 🐳 **Docker Ready**: Fully containerized multi-service architecture for easy deployment.
 
-## Architecture
+## 🏗️ Architecture
 
-```
-┌─────────────┐
-│   Certbot   │
-└──────┬──────┘
-       │ SSL
-       ▼
-┌─────────────┐                                      ┌─────────────┐
-│    Nginx    │                                 ┌───▶│   Ollama    │
-│  (Gateway)  │         ┌─────────────┐         │    │   (Local)   │
-└───┬──────┬──┘         │   FastAPI   │         │    └─────────────┘
-    │      └───────────▶│   Backend   │─────────┤
-    ▼                   └─────┬───────┘         │    ┌─────────────┐
-┌─────────────┐               │                 ├───▶│    Groq     │
-│  SvelteKit  │               │                 │    │  (Primary)  │
-│  Frontend   │               ▼                 │    └─────────────┘
-└─────────────┘         ┌─────────────┐         │    ┌─────────────┐
-                        │ PostgreSQL  │         └───▶│ OpenRouter  │
-                        │  Database   │              │ (Failover)  │
-                        └─────────────┘              └─────────────┘
+```mermaid
+graph TD
+    Client[Browser / SvelteKit] <--> Nginx{Nginx Gateway}
+    Nginx <--> Backend[FastAPI Backend]
+    Backend <--> DB[(PostgreSQL)]
+    Backend <--> AI_Local[Ollama]
+    Backend <--> AI_Remote[Groq / OpenRouter]
+    Backend <--> Storage[Cloudinary / Local FS]
 ```
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-- **Backend**: FastAPI + Python 3.11 + uv (dependency management)
-- **Frontend**: SvelteKit + TailwindCSS
-- **LLM Strategy**: Hybrid (Ollama + Groq + OpenRouter)
-- **Scraping**: httpx + BeautifulSoup4 + Smart Proxy Rotation
-- **Database**: PostgreSQL 16 + SQLModel
-- **Orchestration**: Docker Compose
-- **Storage**: Cloudinary (profile pictures)
-- **Analytics**: Microsoft Clarity
+- **Backend**: Python 3.11 + **FastAPI** + **uv** (Dependency Management)
+- **Frontend**: **SvelteKit** + **TailwindCSS** + **TypeScript**
+- **LLM Orchestration**: Local (Ollama) & Remote (Groq, OpenRouter)
+- **Data & Parsing**: PostgreSQL 16, LlamaParse, BeautifulSoup4
+- **Infrastructure**: Docker & Docker Compose, Nginx, Certbot
+- **Storage & Assets**: Cloudinary (Profiles), Local Backups
 
-## Prerequisites
-
-- Docker & Docker Compose
-- Git
-
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
-git clone git@github.com:remitoudic/job_wizard.git
+# Clone the repository
+git clone https://github.com/remitoudic/job_wizard.git
 cd job_wizard
 
-# Start services (automatically sets up .env and localhost URLs)
+# Start all services (auto-configures .env)
 ./scripts/start_locally.sh
 
-# First time: pull the Ollama model
+# Initial setup: pull the local LLM model
 docker exec jobwizard-ollama ollama pull llama3.2:1b
 ```
 
-**Access**: http://localhost:5173
+**Access the application at**: [http://localhost:5173](http://localhost:5173)
 
-📖 **Full Development & Deployment Guide**: See [DEVELOPMENT.md](DEVELOPMENT.md) for complete instructions on local setup, environment variables, testing, and production deployment.
+> [!NOTE]
+> For a deep dive into environment variables, testing, and production deployment, check out [DEVELOPMENT.md](DEVELOPMENT.md).
 
-## Usage
+## 💡 Usage
 
-1. Open http://localhost:5173 in your browser
-2. Paste a job description URL (LinkedIn, Indeed, etc.) or paste text manually
-3. Upload your CV/PDF for context
-4. Click "Generate Cover Letter" (Watch the race between AI models!)
-5. Review the AI-generated content
-6. Download your PDF
+1. **Input**: Paste a job URL or manual text.
+2. **Context**: Upload your existing CV for background extraction.
+3. **Customize**: Choose your language and template.
+4. **Generate**: Watch the AI race to create your content.
+5. **Review**: Use the high-fidelity preview to make final tweaks.
+6. **Download**: Get your localized, professionally formatted PDF.
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
-- **Ollama model not found?** Run `docker exec jobwizard-ollama ollama pull llama3.2:1b`
-- **CV Parsing failing?** Ensure `LLAMA_CLOUD_API_KEY` is set in your `.env` (get it from [LlamaIndex Cloud](https://cloud.llamaindex.ai/)).
-- **Profile picture not saving?** Verify `CLOUDINARY_URL` is set correctly in your `.env`.
-- **Scraping failed?** Check `proxies.json` or ensure the target URL is accessible.
-- **Race mode issues?** Ensure at least one remote API key is set in `.env`.
+- **Model Issues**: Ensure Ollama is running and the model is pulled: `ollama pull llama3.2:1b`.
+- **Parsing Errors**: Verify your `LLAMA_CLOUD_API_KEY` in `.env`.
+- **Image Uploads**: Check `CLOUDINARY_URL` configuration.
+- **Preview Parity**: If the preview looks different, ensure you are using a modern Chromium-based browser.
 
-## License
+## ⚖️ License
 
-MIT
+MIT - See [LICENSE](LICENSE) for details.
+
 
 
