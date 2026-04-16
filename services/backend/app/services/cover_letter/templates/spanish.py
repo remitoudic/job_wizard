@@ -42,11 +42,11 @@ class SpanishTemplate(BaseTemplate):
     """
 
     def get_margins(self) -> Dict[str, float]:
-        """Standard professional margins."""
+        """Standard professional margins (reduced top margin)."""
         return {
             "leftMargin": 2.5 * cm,
             "rightMargin": 2.5 * cm,
-            "topMargin": 3.0 * cm,
+            "topMargin": 2.0 * cm,
             "bottomMargin": 2.5 * cm,
         }
 
