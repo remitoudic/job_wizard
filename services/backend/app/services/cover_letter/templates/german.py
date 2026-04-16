@@ -42,11 +42,11 @@ class GermanTemplate(BaseTemplate):
     """
 
     def get_margins(self) -> Dict[str, float]:
-        """DIN 5008 standard margins."""
+        """DIN 5008 standard margins (reduced top margin)."""
         return {
             "leftMargin": 2.5 * cm,
             "rightMargin": 2.0 * cm,
-            "topMargin": 4.5 * cm,
+            "topMargin": 2.0 * cm,
             "bottomMargin": 2.0 * cm,
         }
 
