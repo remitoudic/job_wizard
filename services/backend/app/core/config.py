@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     PROXY_FILE_PATH: str = "proxies.json"
     USE_PLAYWRIGHT: bool = True
     
+    # Temporal Settings
+    TEMPORAL_HOST: str = os.getenv("TEMPORAL_HOST", "temporal:7233")
+    TEMPORAL_NAMESPACE: str = os.getenv("TEMPORAL_NAMESPACE", "jobwizard")
+    TEMPORAL_RETENTION_DAYS: int = int(os.getenv("TEMPORAL_RETENTION_DAYS", "7"))
+    
     model_config = SettingsConfigDict(
         env_file=[".env/.env.local", ".env/.env", "../../.env/.env.local", "../../.env/.env"],
         case_sensitive=True,

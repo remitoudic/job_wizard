@@ -11,6 +11,7 @@ services:
       - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./services/database/init-temporal.sql:/docker-entrypoint-initdb.d/init-temporal.sql
     networks:
       - jobwizard-network
     healthcheck:
@@ -91,6 +92,63 @@ services:
     depends_on:
       - backend
     command: bun run dev -- --host 0.0.0.0 --port 5173
+
+  worker:
+    build:
+      context: .
+      dockerfile: services/backend/Dockerfile
+    container_name: jobwizard-worker
+    env_file:
+      - .env/.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://jobwizard:changeme123@postgres:5432/jobwizard}
+      TEMPORAL_HOST: ${TEMPORAL_HOST:-temporal:7233}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      LOGFIRE_TOKEN: ${LOGFIRE_TOKEN}
+    volumes:
+      - ./services/backend/app:/app/app
+      - backend_uploads:/app/uploads
+      - ./backups:/app/backups
+    networks:
+      - jobwizard-network
+    depends_on:
+      temporal:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    command: uv run python -m app.worker
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    container_name: jobwizard-temporal
+    ports:
+      - "7233:7233"
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-jobwizard}
+      - POSTGRES_PWD=${POSTGRES_PASSWORD:-changeme123}
+      - POSTGRES_SEEDS=postgres
+      - DBNAME=temporal
+      - VISIBILITY_DBNAME=temporal_visibility
+      - SKIP_SCHEMA_SETUP=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - jobwizard-network
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    container_name: jobwizard-temporal-ui
+    ports:
+      - "8080:8080"
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    depends_on:
+      - temporal
+    networks:
+      - jobwizard-network
 
 networks:
   jobwizard-network:

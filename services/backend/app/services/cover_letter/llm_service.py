@@ -8,6 +8,7 @@ from app.core.pubsub import pubsub_manager
 import logfire
 from pydantic import ValidationError
 from app.core.logging.prompt_audit import prompt_audit_logger
+from app.services.platform.llm_provider_service import llm_provider_service
 
 class LLMService:
     """Service for generating cover letters using Pydantic AI Agents"""
@@ -17,8 +18,6 @@ class LLMService:
         self.ollama_host = settings.OLLAMA_HOST
         self.ollama_model_name = settings.OLLAMA_MODEL
         
-        # Import here to avoid circular dependencies if any
-        from app.services.platform.llm_provider_service import llm_provider_service
         self.provider_service = llm_provider_service
         
         # Initialize Agents
@@ -102,7 +101,7 @@ class LLMService:
         # Regex to find signature block and removing it
         # Includes English and German variants
         sig_pattern = re.compile(
-            r"(Sincerely|Best regards|Yours truly|Respectfully|Kind regards|Mit freundlichen Grüßen|Beste Grüße|Herzliche Grüße|Viele Grüße|Cordialement|Bien à vous|Sincères salutations|Je vous prie d'agréer|Atentamente|Cordialmente|Un cordial saludo|Suyo sinceramente)[\s,]*(\n|$)[\s\S]*$", 
+            r"(Sincerely|Best regards|Yours truly|Respectfully|Kind regards|Mit freundlichen Grüßen|Beste Grüße|Herzliche Grüße|Viele Grüße|Cordialement|Bien à vous|Sincères salutations|Je vous prie d'agréer|Atentamente|Cordialmente|Un cordial saludo|Suyo sinceramente)[\s,]*[\s\S]*$", 
             re.IGNORECASE
         )
         match = sig_pattern.search(joined_text)
@@ -452,11 +451,12 @@ CUSTOM USER GUIDANCE:
                             or "invalid model" in error_str
                             or "does not exist" in error_str
                         )
-                        
+                        is_auth_error = "401" in error_str or "unauthorized" in error_str or "403" in error_str
+                         
                         # Only trigger provider failover for rate limits or server-wide outages.
                         # Model-specific errors (deprecated, not found) should NOT poison the
                         # entire provider — other models on the same provider may still work.
-                        if is_rate_limit or is_server_error:
+                        if is_rate_limit or is_server_error or is_auth_error:
                             if self.current_provider_name == "groq":
                                 logfire.warning(f"Groq provider issue ({e}), failover to OpenRouter")
                                 self.provider_service.report_rate_limit("groq")

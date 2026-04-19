@@ -55,8 +55,14 @@ docker exec jobwizard-ollama ollama pull llama3.2:1b
 
 **Access the application at**: [http://localhost:5173](http://localhost:5173)
 
-> [!NOTE]
-> For a deep dive into environment variables, testing, and production deployment, check out [DEVELOPMENT.md](DEVELOPMENT.md).
+## 📚 Documentation
+
+Detailed documentation for various aspects of the system can be found in the `docs/` directory:
+- [Debugging Guide](docs/DEBUGGING.md)
+- [Deployment Guide](docs/DEPLOYMENT.md)
+- [Development Guide](docs/DEVELOPMENT.md)
+- [Temporal Workflow Integration](docs/TEMPORAL_WORKFLOWS.md)
+- [Monorepo Guide](docs/MONOREPO_GUIDE.md)
 
 ## 💡 Usage
 

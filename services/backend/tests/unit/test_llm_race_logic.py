@@ -74,6 +74,7 @@ async def test_race_alternatives_with_failure():
             job_title="title",
             company="company",
             requirements=[],
+            job_id="test-race-fail",
             user_name="user"
         )
         
@@ -130,7 +131,12 @@ async def test_race_all_fail():
         
         with pytest.raises(Exception) as exc:
             await service.generate_cover_letter(
-                job_description="d", job_title="t", company="c", requirements=[], user_name="u"
+                job_description="d", 
+                job_title="t", 
+                company="c", 
+                requirements=[], 
+                job_id="test-all-fail",
+                user_name="u"
             )
         
         assert "All models failed" in str(exc.value)

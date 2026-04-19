@@ -71,7 +71,7 @@ def test_clean_model_output_french_long_closing():
     Jean Dupont
     """
     cleaned = LLMService.clean_model_output(text)
-    assert "Corps du mail" in cleaned
+    assert "corps du mail" in cleaned.lower()
     assert "Je vous prie d'agréer" not in cleaned
 
 def test_placeholder_replacement_french():

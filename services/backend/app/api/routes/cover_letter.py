@@ -17,6 +17,8 @@ from app.core.pubsub import pubsub_manager
 from sse_starlette.sse import EventSourceResponse
 import json
 import asyncio
+from app.core.temporal import get_temporal_client
+from app.services.cover_letter.workflows import CoverLetterWorkflow
 
 router = APIRouter(tags=["cover_letter"])
 
@@ -37,50 +39,17 @@ async def generate_cover_letter(request: CoverLetterRequest):
     """
     job_id = str(uuid.uuid4())
     
-    # Define the background task
-    async def background_generation():
-        try:
-            # 1. Extraction (Async if context provided)
-            # We notify that we are starting extraction
-            if request.context_text:
-                await pubsub_manager.notify({
-                    "job_id": job_id,
-                    "status": "extracting",
-                    "message": "Analyzing your profile context..."
-                })
-                contact_info = await llm_service.extract_contact_info(request.context_text)
-                await pubsub_manager.notify({
-                    "job_id": job_id,
-                    "status": "extracted",
-                    "message": "Profile analysis complete.",
-                    "contact_info": contact_info
-                })
-            else:
-                contact_info = {}
-
-            # 2. Generation (Race mode)
-            # This already notifies within the service
-            await llm_service.generate_cover_letter(
-                job_description=request.job_description.description,
-                job_title=request.job_description.title,
-                company=request.job_description.company,
-                requirements=request.job_description.requirements,
-                job_id=job_id,
-                user_name=request.user_name,
-                user_skills=request.user_skills,
-                context_text=request.context_text,
-                custom_instructions=request.custom_instructions,
-                language=request.language or "english",
-            )
-        except Exception as e:
-            await pubsub_manager.notify({
-                "job_id": job_id,
-                "status": "error",
-                "message": f"Generation failed: {str(e)}"
-            })
-
-    # Start the background task
-    asyncio.create_task(background_generation())
+    # Start the Temporal Workflow
+    try:
+        temporal_client = await get_temporal_client()
+        await temporal_client.start_workflow(
+            CoverLetterWorkflow.run,
+            request.model_dump(),
+            id=job_id,
+            task_queue="cover-letter-tasks",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to start workflow: {str(e)}")
     
     return {"job_id": job_id}
 

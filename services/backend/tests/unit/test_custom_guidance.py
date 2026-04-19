@@ -30,6 +30,7 @@ async def test_generate_cover_letter_with_custom_instructions():
             job_title="Software Engineer",
             company="TechCorp",
             requirements=["Python"],
+            job_id="test-job-id",
             custom_instructions="Include a joke about Java"
         )
         

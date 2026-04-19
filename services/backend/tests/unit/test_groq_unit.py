@@ -5,8 +5,8 @@ from app.services.cover_letter.llm_service import LLMService
 
 @pytest.fixture
 def mock_provider_service():
-    # Patch the singleton instance
-    with patch("app.services.platform.llm_provider_service.llm_provider_service") as mock_service:
+    # Patch the singleton instance in the service module
+    with patch("app.services.cover_letter.llm_service.llm_provider_service") as mock_service:
         # Default to Groq being active
         mock_service.get_active_provider.return_value = "groq"
         mock_service.get_provider_config.return_value = {
@@ -45,7 +45,11 @@ async def test_groq_failover_trigger(mock_provider_service):
             # First attempt: Groq is active. It fails.
             # Service catches, calls report_rate_limit("groq")
             await service.generate_cover_letter(
-                job_description="Job", job_title="Title", company="Comp", requirements=["Req"]
+                job_description="Job", 
+                job_title="Title", 
+                company="Comp", 
+                requirements=["Req"],
+                job_id="test-failover"
             )
         except Exception:
             # We might fail on retry exhaustion or similar, which is fine for this test
@@ -76,7 +80,11 @@ async def test_groq_success(mock_provider_service):
         service = LLMService()
         
         result, source, _ = await service.generate_cover_letter(
-             job_description="Job", job_title="Title", company="Comp", requirements=["Req"]
+             job_description="Job", 
+             job_title="Title", 
+             company="Comp", 
+             requirements=["Req"],
+             job_id="test-success"
         )
         
         # Since it's a race, either can win. 
