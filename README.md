@@ -25,8 +25,10 @@ graph TD
     Client[Browser / SvelteKit] <--> Nginx{Nginx Gateway}
     Nginx <--> Backend[FastAPI Backend]
     Backend <--> DB[(PostgreSQL)]
-    Backend <--> AI_Local[Ollama]
-    Backend <--> AI_Remote[Groq / OpenRouter]
+    Backend <--> Temporal[Temporal Server]
+    Temporal <--> Worker[Temporal Worker]
+    Worker <--> AI_Local[Ollama]
+    Worker <--> AI_Remote[Groq / OpenRouter]
     Backend <--> Storage[Cloudinary / Local FS]
 ```
 
@@ -34,7 +36,8 @@ graph TD
 
 - **Backend**: Python 3.11 + **FastAPI** + **uv** (Dependency Management)
 - **Frontend**: **SvelteKit** + **TailwindCSS** + **TypeScript**
-- **LLM Orchestration**: Local (Ollama) & Remote (Groq, OpenRouter)
+- **Orchestration**: **Temporal.io** (Workflow Management)
+- **LLM Engine**: Local (Ollama) & Remote (Groq, OpenRouter)
 - **Data & Parsing**: PostgreSQL 16, LlamaParse, BeautifulSoup4
 - **Infrastructure**: Docker & Docker Compose, Nginx, Certbot
 - **Storage & Assets**: Cloudinary (Profiles), Local Backups
