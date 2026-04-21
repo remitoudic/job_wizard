@@ -42,9 +42,14 @@ async def generate_cover_letter(request: CoverLetterRequest):
     # Start the Temporal Workflow
     try:
         temporal_client = await get_temporal_client()
+        
+        # Inject job_id into the request data for tracking inside the workflow/activities
+        workflow_data = request.model_dump()
+        workflow_data["job_id"] = job_id
+        
         await temporal_client.start_workflow(
             CoverLetterWorkflow.run,
-            request.model_dump(),
+            workflow_data,
             id=job_id,
             task_queue="cover-letter-tasks",
         )

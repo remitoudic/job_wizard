@@ -6,7 +6,10 @@ from typing import Dict, Any
 class CoverLetterWorkflow:
     @workflow.run
     async def run(self, request_data: Dict[str, Any]) -> Dict[str, Any]:
-        job_id = request_data["job_id"]
+        # Fallback to workflow ID if job_id is missing in payload
+        job_id = request_data.get("job_id") or workflow.info().workflow_id
+        # Ensure it's in the dict for downstream activities
+        request_data["job_id"] = job_id
         
         # 1. Extraction phase
         if request_data.get("context_text"):
