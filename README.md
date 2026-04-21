@@ -1,6 +1,6 @@
 # Vite a Job! 🚀
 
-A premium web application that generates personalized, high-fidelity cover letters and revitalizes old CVs into professional PDFs using advanced AI. Simply paste a job URL or description to get a custom cover letter, or upload your old CV to automatically parse and render it into modern, classic, or timeline templates.
+A web application that generates personalized, high-fidelity cover letters and revitalizes old CVs into professional PDFs using advanced AI. Simply paste a job URL or description to get a custom cover letter, or upload your old CV to automatically parse and render it into modern, classic, or timeline templates.
 
 ## ✨ Features
 
