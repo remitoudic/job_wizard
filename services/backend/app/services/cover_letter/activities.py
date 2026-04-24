@@ -8,15 +8,30 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Service helpers for activities
-def get_llm_service():
-    return LLMService()
+# Module-level singletons — must be shared across activity calls
+# in the same worker process so that semaphores, alternatives_store,
+# and provider failover state are preserved.
+_llm_service: LLMService | None = None
+_pdf_service: PDFService | None = None
+_backup_service: BackupService | None = None
 
-def get_pdf_service():
-    return PDFService()
+def get_llm_service() -> LLMService:
+    global _llm_service
+    if _llm_service is None:
+        _llm_service = LLMService()
+    return _llm_service
 
-def get_backup_service():
-    return BackupService()
+def get_pdf_service() -> PDFService:
+    global _pdf_service
+    if _pdf_service is None:
+        _pdf_service = PDFService()
+    return _pdf_service
+
+def get_backup_service() -> BackupService:
+    global _backup_service
+    if _backup_service is None:
+        _backup_service = BackupService()
+    return _backup_service
 
 # Standalone activities (preferred for Temporal Python for simplicity/validation)
 

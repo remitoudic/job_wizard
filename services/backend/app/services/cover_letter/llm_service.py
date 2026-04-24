@@ -1,4 +1,6 @@
 import asyncio
+import time
+import logging
 import uuid
 from typing import Optional, Dict, Any
 
@@ -175,11 +177,7 @@ class LLMService:
         """
         Generate cover letter with race mode (Local vs Remote)
         """
-        with logfire.span("Generate Cover Letter {job_id}", job_id=job_id) as span:
-            import time
-            import logging
-        
-        # Configure logger
+        logfire.info("Generate Cover Letter start", job_id=job_id)
         logger = logging.getLogger("app.services.cover_letter.llm_service")
         
         # Build optimized prompt (concise for speed)
@@ -551,8 +549,6 @@ CUSTOM USER GUIDANCE:
 
     async def _process_alternatives(self, pending_tasks, alt_id: str, job_id: str, task_start_times: dict):
         """Handle the slower tasks incrementally"""
-        import time
-        import logging
         logger = logging.getLogger("app.services.cover_letter.llm_service")
         
         # Initialize tasks set
