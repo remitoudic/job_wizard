@@ -34,8 +34,7 @@ A dedicated service runs the Temporal Worker, which listens on the `cover-letter
 
 The cover letter generation process spans across the frontend, API, Temporal, PubSub, and external services. The sequence is broken down into four phases below:
 
-````carousel
-# Phase 1: Initiation
+### Phase 1: Initiation
 ```mermaid
 sequenceDiagram
     autonumber
@@ -53,8 +52,8 @@ sequenceDiagram
     Temporal-->>API: Workflow Enqueued
     API-->>User: Returns { job_id }
 ```
-<!-- slide -->
-# Phase 2: Live Updates
+
+### Phase 2: Live Updates
 ```mermaid
 sequenceDiagram
     autonumber
@@ -67,8 +66,8 @@ sequenceDiagram
     API->>PubSub: subscribe(job_id)
     API-->>User: Open SSE Stream
 ```
-<!-- slide -->
-# Phase 3: Extraction & Generation
+
+### Phase 3: Extraction & Generation
 ```mermaid
 sequenceDiagram
     autonumber
@@ -97,8 +96,8 @@ sequenceDiagram
     LLM->>PubSub: notify_status("completed", result)
     PubSub-->>User: SSE Event (Closes stream)
 ```
-<!-- slide -->
-# Phase 4: Finalization & PDF
+
+### Phase 4: Finalization & PDF
 ```mermaid
 sequenceDiagram
     autonumber
@@ -118,7 +117,6 @@ sequenceDiagram
     User->>API: GET /download/{filename}
     API-->>User: PDF File Stream
 ```
-````
 
 ---
 
