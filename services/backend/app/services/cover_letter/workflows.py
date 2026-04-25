@@ -13,34 +13,49 @@ class CoverLetterWorkflow:
         
         # 1. Extraction phase
         if request_data.get("context_text"):
-            await workflow.execute_activity(
-                "notify_status",
-                {
-                    "job_id": job_id,
-                    "status": "extracting",
-                    "message": "Analyzing your profile context..."
-                },
-                start_to_close_timeout=timedelta(seconds=10),
-            )
-            
-            contact_info = await workflow.execute_activity(
-                "extract_contact_info",
-                request_data["context_text"],
-                start_to_close_timeout=timedelta(minutes=2),
-            )
-            
-            await workflow.execute_activity(
-                "notify_status",
-                {
-                    "job_id": job_id,
-                    "status": "extracted",
-                    "message": "Profile analysis complete.",
-                    "contact_info": contact_info
-                },
-                start_to_close_timeout=timedelta(seconds=10),
-            )
-            # Update request data for generation if needed
-            request_data["contact_info"] = contact_info
+            if request_data.get("contact_info"):
+                # Fast path: JSON was pre-parsed in API route
+                contact_info = request_data["contact_info"]
+                await workflow.execute_activity(
+                    "notify_status",
+                    {
+                        "job_id": job_id,
+                        "status": "extracted",
+                        "message": "Loaded profile from stored CV.",
+                        "contact_info": contact_info
+                    },
+                    start_to_close_timeout=timedelta(seconds=10),
+                )
+            else:
+                # Slow path: Extract from raw text
+                await workflow.execute_activity(
+                    "notify_status",
+                    {
+                        "job_id": job_id,
+                        "status": "extracting",
+                        "message": "Analyzing your profile context..."
+                    },
+                    start_to_close_timeout=timedelta(seconds=10),
+                )
+                
+                contact_info = await workflow.execute_activity(
+                    "extract_contact_info",
+                    request_data["context_text"],
+                    start_to_close_timeout=timedelta(minutes=2),
+                )
+                
+                await workflow.execute_activity(
+                    "notify_status",
+                    {
+                        "job_id": job_id,
+                        "status": "extracted",
+                        "message": "Profile analysis complete.",
+                        "contact_info": contact_info
+                    },
+                    start_to_close_timeout=timedelta(seconds=10),
+                )
+                # Update request data for generation if needed
+                request_data["contact_info"] = contact_info
 
         # 2. Generation phase
         generation_result = await workflow.execute_activity(

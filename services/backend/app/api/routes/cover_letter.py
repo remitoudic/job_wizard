@@ -47,6 +47,43 @@ async def generate_cover_letter(request: CoverLetterRequest):
         workflow_data = request.model_dump()
         workflow_data["job_id"] = job_id
         
+        # --- Pre-processing for stored CVs to bypass bottleneck ---
+        # If context_text is a JSON string of CVData (which activeCV passes),
+        # we can instantly extract contact info and compress the payload.
+        if workflow_data.get("context_text"):
+            try:
+                cv_dict = json.loads(workflow_data["context_text"])
+                if isinstance(cv_dict, dict) and "contact" in cv_dict:
+                    # 1. Skip LLM extraction by pre-filling contact_info
+                    workflow_data["contact_info"] = cv_dict.get("contact", {})
+                    
+                    # 2. Compact JSON to Markdown prose to save tokens & improve generation quality
+                    prose = []
+                    if cv_dict.get("summary"):
+                        prose.append(f"Summary: {cv_dict['summary']}\n")
+                    
+                    if cv_dict.get("experiences"):
+                        prose.append("Experience:")
+                        for exp in cv_dict["experiences"]:
+                            desc = exp.get("description", "").strip()
+                            prose.append(f"- {exp.get('title', 'Role')} at {exp.get('company', 'Company')} ({exp.get('start_date', '')} to {exp.get('end_date', '')})")
+                            if desc:
+                                prose.append(f"  {desc}")
+                        prose.append("")
+                        
+                    if cv_dict.get("education"):
+                        prose.append("Education:")
+                        for edu in cv_dict["education"]:
+                            prose.append(f"- {edu.get('degree', '')} in {edu.get('field_of_study', '')} from {edu.get('institution', '')}")
+                        prose.append("")
+                        
+                    if cv_dict.get("skills"):
+                        prose.append(f"Skills: {', '.join(cv_dict['skills'])}")
+                        
+                    workflow_data["context_text"] = "\n".join(prose)
+            except Exception:
+                pass # Not JSON, treat as raw text for normal extraction
+        
         await temporal_client.start_workflow(
             CoverLetterWorkflow.run,
             workflow_data,
