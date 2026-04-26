@@ -1,91 +1,169 @@
 # Vite a Job! 🚀
 
-A web application that generates personalized, high-fidelity cover letters and revitalizes old CVs into professional PDFs using advanced AI. Simply paste a job URL or description to get a custom cover letter, or upload your old CV to automatically parse and render it into modern, classic, or timeline templates.
+**The ultimate AI-powered career assistant.**  
+Transform your job application process from hours of manual writing to seconds of AI-orchestrated precision. Job Wizard generates high-fidelity, personalized cover letters and revitalizes old CVs into professional, modern PDFs.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
+[![FastAPI](https://img.shields.io/badge/Framework-FastAPI-green.svg)](https://fastapi.tiangolo.com/)
+[![Temporal.io](https://img.shields.io/badge/Orchestration-Temporal.io-red.svg)](https://temporal.io/)
+
+---
 
 ## ✨ Features
 
-- 📄 **CV Refresh**: Transform your old PDF CV into a sleek, professional document. Our AI (LlamaParse + Groq) extracts your experience, education, and skills.
-- 🎨 **Premium Templates**: Choose from **Modern**, **Classic**, or the new **Timeline** templates, all designed for maximum impact.
-- 🌍 **Global Support**: Full localization for cover letters and CVs in:
-  - 🇬🇧 **English** (Standard Professional)
-  - 🇩🇪 **German** (DIN 5008 compliant)
-  - 🇫🇷 **French** (Lettre de Motivation)
-  - 🇪🇸 **Spanish** (Carta de Presentación)
-- 👁️ **High-Fidelity Preview**: What you see is what you get. Our "Atomic Block" reconciliation ensures 1:1 parity between the web preview and the final PDF output.
-- 🔗 **Smart Job Parsing**: Instant extraction of job details from LinkedIn, Indeed, StepStone, We Work Remotely, and Arbeitnow.
-- 🚀 **Hybrid LLM Engine**: "Race Mode" orchestration between local (Ollama) and remote (Groq/OpenRouter) models for sub-second generation.
-- 🖼️ **Profile Picture Suite**: Professional photo cropping and high-quality scaling via **Cloudinary** integration.
-- 📂 **Smart Filenames**: Automatically generated, localized filenames (e.g., `John_Doe_2024_Google_CoverLetter.pdf`) for better organization.
-- 🐳 **Docker Ready**: Fully containerized multi-service architecture for easy deployment.
+- 📄 **CV Revitalization**: Transform legacy PDF CVs into sleek, professional documents. Powered by **LlamaParse** and **Groq** for high-accuracy extraction.
+- 🎨 **Premium Templates**: Choose from **Modern**, **Classic**, or **Timeline** templates, engineered for ATS compatibility and visual impact.
+- 🌍 **Deep Localization**: Standardized professional formatting for:
+  - 🇬🇧 **English** (Standard) | 🇩🇪 **German** (DIN 5008) | 🇫🇷 **French** (Lettre de Motivation) | 🇪🇸 **Spanish** (Standard)
+- 👁️ **Atomic Block Preview**: 1:1 parity between the web preview and final PDF output via specialized reconciliation logic.
+- 🔗 **Intelligent Scraping**: Instant extraction from LinkedIn, Indeed, StepStone, We Work Remotely, and Arbeitnow.
+- 🚀 **Hybrid LLM Race Mode**: Sub-second generation using a concurrent race between local (**Ollama**) and remote (**Groq/OpenRouter**) providers.
+- 📂 **Smart Filenames**: Auto-generated, localized, and context-aware filenames (e.g., `John_Doe_2024_Google_CoverLetter.pdf`).
+
+---
 
 ## 🏗️ Architecture
 
 ```mermaid
 graph TD
-    Client[Browser / SvelteKit] <--> Nginx{Nginx Gateway}
-    Nginx <--> Backend[FastAPI Backend]
-    Backend <--> DB[(PostgreSQL)]
-    Backend <--> Temporal[Temporal Server]
-    Temporal <--> Worker[Temporal Worker]
-    Worker <--> AI_Local[Ollama]
-    Worker <--> AI_Remote[Groq / OpenRouter]
-    Backend <--> Storage[Cloudinary / Local FS]
+    subgraph Client_Layer [Client Layer]
+        Browser[Browser / SvelteKit]
+    end
+
+    subgraph Gateway_Layer [Gateway & Security]
+        Nginx{Nginx Reverse Proxy}
+        Certbot[Certbot / SSL]
+    end
+
+    subgraph Service_Mesh [Service Mesh]
+        Backend[FastAPI Backend]
+        Worker[Temporal Worker]
+        Frontend[SvelteKit Node Server]
+    end
+
+    subgraph Persistence_Layer [Persistence & Orchestration]
+        PostgreSQL[(PostgreSQL 16)]
+        Temporal[Temporal Server]
+        Redis[PubSub / SSE]
+    end
+
+    subgraph AI_Engine [Hybrid LLM Engine]
+        Ollama[Ollama - Local Llama 3.2]
+        Groq[Groq - Remote Llama 3.3]
+        OpenRouter[OpenRouter - Failover]
+    end
+
+    Browser <--> Nginx
+    Nginx <--> Frontend
+    Nginx <--> Backend
+    Backend <--> PostgreSQL
+    Backend <--> Temporal
+    Backend <--> Redis
+    Temporal <--> Worker
+    Worker <--> AI_Engine
+    Backend <--> AI_Engine
 ```
+
+---
+
+## 🧠 Technical Deep Dive
+
+### 1. Hybrid LLM Race Mode
+To ensure maximum speed and reliability, Job Wizard employs a **Race Mode** for all LLM calls:
+- **Concurrency**: A local Ollama instance (llama3.2) races against remote cloud providers (Groq/OpenRouter).
+- **Failover**: If a provider returns a 429 (Rate Limit) or 5xx (Server Error), the system automatically fails over to a secondary provider (e.g., Groq -> OpenRouter) mid-request.
+- **Throttling**: Intelligent semaphore management ensures local resources are never overwhelmed.
+
+### 2. Fault-Tolerant Orchestration (Temporal.io)
+All generation workflows are managed by **Temporal**, providing:
+- **Durability**: Workflows resume exactly where they left off if a container restarts.
+- **Observability**: Real-time tracking of generation phases (Extraction -> Generation -> Rendering).
+- **Retry Polices**: Exponential backoff for flaky external APIs.
+
+### 3. Production-Ready Infrastructure
+- **Nginx Dynamic Resolution**: Uses Docker's embedded resolver to prevent `502 Bad Gateway` errors during container rolling updates.
+- **Logfire Observability**: Deep tracing of every LLM span and database transaction.
+- **Atomic Rendering**: A custom ReportLab engine that guarantees the PDF exactly matches the "Atomic Blocks" seen in the browser preview.
+
+---
+
+## 🚀 Life of a Generation
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Applicant
+    participant FE as SvelteKit UI
+    participant BE as FastAPI
+    participant T as Temporal
+    participant LLM as Hybrid LLM Engine
+    participant PS as PubSub (SSE)
+
+    User->>FE: Upload CV & Paste Job URL
+    FE->>BE: POST /api/generate
+    BE->>T: Start Workflow (job_id)
+    BE-->>FE: Return { job_id }
+    FE->>BE: Subscribe SSE /events/{job_id}
+    
+    T->>LLM: Extraction Race (Local vs Remote)
+    LLM-->>T: Extraction Results
+    T->>PS: Broadcast "Extracted"
+    PS-->>FE: Update UI (Extraction Done)
+    
+    T->>LLM: Generation Race (Ollama vs Groq)
+    Note over LLM: Provider Failover & Throttling
+    LLM-->>T: Winner Found
+    T->>PS: Broadcast "Completed" + Content
+    PS-->>FE: Update UI (Show Cover Letter)
+    
+    User->>FE: Download PDF
+    FE->>BE: POST /api/pdf
+    BE-->>User: Localized PDF Stream
+```
+
+---
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Python 3.11 + **FastAPI** + **uv** (Dependency Management)
-- **Frontend**: **SvelteKit** + **TailwindCSS** + **TypeScript**
-- **Orchestration**: **Temporal.io** (Workflow Management)
-- **LLM Engine**: Local (Ollama) & Remote (Groq, OpenRouter)
-- **Data & Parsing**: PostgreSQL 16, LlamaParse, BeautifulSoup4
-- **Infrastructure**: Docker & Docker Compose, Nginx, Certbot
-- **Storage & Assets**: Cloudinary (Profiles), Local Backups
+- **Backend**: Python 3.11, FastAPI, Pydantic AI
+- **Frontend**: SvelteKit, TailwindCSS, TypeScript
+- **Orchestration**: Temporal.io
+- **Database**: PostgreSQL 16
+- **Real-time**: SSE (Server-Sent Events) via Redis/PubSub
+- **Infrastructure**: Docker Compose, Nginx, Certbot
 
-## 🚀 Quick Start
-
-```bash
-# Clone the repository
-git clone https://github.com/remitoudic/job_wizard.git
-cd job_wizard
-
-# Start all services (auto-configures .env)
-./scripts/start_locally.sh
-
-# Initial setup: pull the local LLM model
-docker exec jobwizard-ollama ollama pull llama3.2:1b
-```
-
-**Access the application at**: [http://localhost:5173](http://localhost:5173)
+---
 
 ## 📚 Documentation
 
-Detailed documentation for various aspects of the system can be found in the `docs/` directory:
-- [Debugging Guide](docs/DEBUGGING.md)
-- [Deployment Guide](docs/DEPLOYMENT.md)
-- [Development Guide](docs/DEVELOPMENT.md)
-- [Temporal Workflow Integration](docs/TEMPORAL_WORKFLOWS.md)
-- [Monorepo Guide](docs/MONOREPO_GUIDE.md)
+Detailed guides for developers and operators:
+- [Development Guide](docs/DEVELOPMENT.md) - Local setup, environment variables, and testing.
+- [Deployment Guide](docs/DEPLOYMENT.md) - Production deployment with Docker & Nginx.
+- [Temporal Workflows](docs/TEMPORAL_WORKFLOWS.md) - Deep dive into the orchestration logic.
+- [Debugging Guide](docs/DEBUGGING.md) - Troubleshooting common issues.
+- [Monorepo Guide](docs/MONOREPO_GUIDE.md) - Overview of the project structure.
 
-## 💡 Usage
+---
 
-1. **Input**: Paste a job URL or manual text.
-2. **Context**: Upload your existing CV for background extraction.
-3. **Customize**: Choose your language and template.
-4. **Generate**: Watch the AI race to create your content.
-5. **Review**: Use the high-fidelity preview to make final tweaks.
-6. **Download**: Get your localized, professionally formatted PDF.
+## 🏁 Quick Start
 
-## 🔧 Troubleshooting
+```bash
+# 1. Clone the repository
+git clone https://github.com/remitoudic/job_wizard.git
+cd job_wizard
 
-- **Model Issues**: Ensure Ollama is running and the model is pulled: `ollama pull llama3.2:1b`.
-- **Parsing Errors**: Verify your `LLAMA_CLOUD_API_KEY` in `.env`.
-- **Image Uploads**: Check `CLOUDINARY_URL` configuration.
-- **Preview Parity**: If the preview looks different, ensure you are using a modern Chromium-based browser.
+# 2. Start all services
+./scripts/start_locally.sh
+
+# 3. Pull the local LLM model
+docker exec jobwizard-ollama ollama pull llama3.2:1b
+```
+
+**Access the application at**: [http://localhost:5173](http://localhost:5173)  
+**Monitor Workflows at**: [http://localhost:8080](http://localhost:8080) (Temporal UI)
+
+---
 
 ## ⚖️ License
-
 MIT - See [LICENSE](LICENSE) for details.
-
-
-
