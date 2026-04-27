@@ -19,7 +19,7 @@ Transform your job application process from hours of manual writing to seconds o
 - 👁️ **Atomic Block Preview**: 1:1 parity between the web preview and final PDF output via specialized reconciliation logic.
 - 🔗 **Intelligent Scraping**: Instant extraction from LinkedIn, Indeed, StepStone, We Work Remotely, and Arbeitnow.
 - 🚀 **Hybrid LLM Race Mode**: Sub-second generation using a concurrent race between local (**Ollama**) and remote (**Groq/OpenRouter**) providers.
-- 📂 **Smart Filenames**: Auto-generated, localized, and context-aware filenames (e.g., `John_Doe_2024_Google_CoverLetter.pdf`).
+- 📂 **Smart Filenames**: Auto-generated, localized, and context-aware filenames (e.g.,`John_Doe_2024_Google_CoverLetter.pdf`).
 
 ---
 
