@@ -609,7 +609,8 @@ CUSTOM USER GUIDANCE:
                             "job_id": job_id,
                             "status": "alternative_ready",
                             "text": alt["text"],
-                            "source": alt["source"]
+                            "source": alt["source"],
+                            "alternatives": current_alternatives
                         })
                     except Exception as e:
                         task_duration = time.perf_counter() - task_start_times.get(id(task), 0)
@@ -626,7 +627,8 @@ CUSTOM USER GUIDANCE:
                             "job_id": job_id,
                             "status": "alternative_ready",
                             "text": alt["text"],
-                            "source": alt["source"]
+                            "source": alt["source"],
+                            "alternatives": current_alternatives
                         })
                 
                 # Update store incrementally
@@ -643,7 +645,8 @@ CUSTOM USER GUIDANCE:
                 await pubsub_manager.notify({
                     "job_id": job_id,
                     "status": "completed",
-                    "message": "All alternatives generated."
+                    "message": "All alternatives generated.",
+                    "alternatives": current_alternatives
                 })
             
         except Exception as e:
