@@ -375,7 +375,26 @@ CUSTOM USER GUIDANCE:
                 
             except Exception as e:
                 logger.error(f"Failed to create remote agents: {e}")
-                
+            
+            # NVIDIA participant — always races if API key is configured
+            try:
+                nvidia_config = self.provider_service.get_nvidia_config()
+                if nvidia_config:
+                    nvidia_writer = create_writing_agent(
+                        model_name=nvidia_config["model_1"],
+                        is_remote=True,
+                        provider_config=nvidia_config
+                    )
+                    nvidia_task = asyncio.create_task(
+                        run_agent(nvidia_writer, prompt, f"Nvidia ({nvidia_config['model_1']})"),
+                        name=f"Nvidia ({nvidia_config['model_1']})"
+                    )
+                    task_start_times[id(nvidia_task)] = time.perf_counter()
+                    tasks.append(nvidia_task)
+                    logger.info(f"NVIDIA participant added: {nvidia_config['model_1']}")
+            except Exception as e:
+                logger.error(f"Failed to create NVIDIA agent: {e}")
+
             if not tasks:
                 raise Exception("No generation agents available")
     

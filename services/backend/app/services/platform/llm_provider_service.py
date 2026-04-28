@@ -90,5 +90,20 @@ class LLMProviderService:
                 "model_2": settings.OPENROUTER_MODEL_2
             }
 
+    def get_nvidia_config(self) -> Dict[str, Any] | None:
+        """
+        Get NVIDIA NIM config if API key is present.
+        NVIDIA is an independent race participant, not a failover target.
+        Returns None if NVIDIA is not configured.
+        """
+        if not settings.NVIDIA_API_KEY:
+            return None
+        return {
+            "name": "nvidia",
+            "base_url": "https://integrate.api.nvidia.com/v1",
+            "api_key": settings.NVIDIA_API_KEY,
+            "model_1": settings.NVIDIA_MODEL_1
+        }
+
 # Global singleton instance
 llm_provider_service = LLMProviderService()

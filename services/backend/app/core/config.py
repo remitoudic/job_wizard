@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     GROQ_MODEL_1: str = "llama-3.3-70b-versatile"
     GROQ_MODEL_2: str = "openai/gpt-oss-120b"
 
+    # NVIDIA NIM Settings
+    NVIDIA_API_KEY: str = os.getenv("NVIDIA_API_KEY", "")
+    NVIDIA_MODEL_1: str =  "google/gemma-4-31b-it"
+
     # LlamaCloud Settings (CV Parsing)
     LLAMA_CLOUD_API_KEY: str = ""
 
