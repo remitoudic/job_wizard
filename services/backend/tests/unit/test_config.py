@@ -34,7 +34,8 @@ def test_valid_nvidia_model_configured():
         "google/gemma-2-27b-it",
         "google/gemma-2-9b-it",
         "mistralai/mistral-large-2-instruct",
-        "nvidia/nemotron-4-340b-instruct"
+        "nvidia/nemotron-4-340b-instruct",
+        "meta/llama-4-maverick-17b-128e-instruct"
     ]
     
     assert settings.NVIDIA_MODEL_1 in verified_models, (
