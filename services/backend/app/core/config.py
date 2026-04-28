@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     # NVIDIA NIM Settings
     NVIDIA_API_KEY: str = os.getenv("NVIDIA_API_KEY", "")
-    NVIDIA_MODEL_1: str =  "google/gemma-4-31b-it"
+    NVIDIA_MODEL_1: str =  "meta/llama-3.1-70b-instruct"
 
     # LlamaCloud Settings (CV Parsing)
     LLAMA_CLOUD_API_KEY: str = ""
