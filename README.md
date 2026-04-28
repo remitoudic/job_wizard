@@ -18,7 +18,7 @@ Transform your job application process from hours of manual writing to seconds o
   - 🇬🇧 **English** (Standard) | 🇩🇪 **German** (DIN 5008) | 🇫🇷 **French** (Lettre de Motivation) | 🇪🇸 **Spanish** (Standard)
 - 👁️ **Atomic Block Preview**: 1:1 parity between the web preview and final PDF output via specialized reconciliation logic.
 - 🔗 **Intelligent Scraping**: Instant extraction from LinkedIn, Indeed, StepStone, We Work Remotely, and Arbeitnow.
-- 🚀 **Hybrid LLM Race Mode**: Sub-second generation using a concurrent race between local (**Ollama**) and remote (**Groq/OpenRouter**) providers.
+- 🚀 **Hybrid LLM Race Mode**: Sub-second generation using a concurrent race between local (**Ollama**) and remote (**Groq/Nvidia/OpenRouter**) providers.
 - 📂 **Smart Filenames**: Auto-generated, localized, and context-aware filenames (e.g.,`John_Doe_2024_Google_CoverLetter.pdf`).
 
 ---
@@ -51,6 +51,7 @@ graph TD
     subgraph AI_Engine [Hybrid LLM Engine]
         Ollama[Ollama - Local Llama 3.2]
         Groq[Groq - Remote Llama 3.3]
+        Nvidia[Nvidia NIM - Maverick & Qwen]
         OpenRouter[OpenRouter - Failover]
     end
 
@@ -71,7 +72,7 @@ graph TD
 
 ### 1. Hybrid LLM Race Mode
 To ensure maximum speed and reliability, Job Wizard employs a **Race Mode** for all LLM calls:
-- **Concurrency**: A local Ollama instance (llama3.2) races against remote cloud providers (Groq/OpenRouter).
+- **Concurrency**: A local Ollama instance (llama3.2) races against high-speed cloud providers (**Groq** and **Nvidia NIM**).
 - **Failover**: If a provider returns a 429 (Rate Limit) or 5xx (Server Error), the system automatically fails over to a secondary provider (e.g., Groq -> OpenRouter) mid-request.
 - **Throttling**: Intelligent semaphore management ensures local resources are never overwhelmed.
 
@@ -83,6 +84,7 @@ All generation workflows are managed by **Temporal**, providing:
 
 ### 3. Production-Ready Infrastructure
 - **Nginx Dynamic Resolution**: Uses Docker's embedded resolver to prevent `502 Bad Gateway` errors during container rolling updates.
+- **Real-Time Streaming**: Unbuffered Server-Sent Events (SSE) combined with intelligent UI state reconciliation guarantees you never miss a generation update, even if your browser reconnects.
 - **Logfire Observability**: Deep tracing of every LLM span and database transaction.
 - **Atomic Rendering**: A custom ReportLab engine that guarantees the PDF exactly matches the "Atomic Blocks" seen in the browser preview.
 
@@ -111,7 +113,7 @@ sequenceDiagram
     T->>PS: Broadcast "Extracted"
     PS-->>FE: Update UI (Extraction Done)
     
-    T->>LLM: Generation Race (Ollama vs Groq)
+    T->>LLM: Generation Race (Ollama vs Groq vs Nvidia)
     Note over LLM: Provider Failover & Throttling
     LLM-->>T: Winner Found
     T->>PS: Broadcast "Completed" + Content
