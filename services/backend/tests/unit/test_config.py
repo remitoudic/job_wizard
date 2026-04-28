@@ -20,3 +20,24 @@ def test_env_file_loading():
     assert "env_file" in config
     assert config.get("extra") == "ignore"
     assert config.get("case_sensitive") is True
+
+def test_valid_nvidia_model_configured():
+    """Test that the configured NVIDIA model is in our list of known-valid models."""
+    settings = get_settings()
+    
+    # List of known valid models on NVIDIA NIM that we have verified
+    # If adding a new model to config.py, it must be added here and verified to exist
+    # on https://build.nvidia.com/explore/discover
+    verified_models = [
+        "meta/llama-3.1-70b-instruct",
+        "meta/llama3-70b-instruct",
+        "google/gemma-2-27b-it",
+        "google/gemma-2-9b-it",
+        "mistralai/mistral-large-2-instruct",
+        "nvidia/nemotron-4-340b-instruct"
+    ]
+    
+    assert settings.NVIDIA_MODEL_1 in verified_models, (
+        f"Configured NVIDIA model '{settings.NVIDIA_MODEL_1}' is not in the verified list! "
+        "If you are changing the model, please verify it exists on Nvidia NIM and update this test."
+    )
