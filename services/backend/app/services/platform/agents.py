@@ -203,6 +203,10 @@ def create_writing_agent(model_name: str, is_remote: bool = False, provider_conf
         system_prompt = SIMPLE_SYSTEM_PROMPT
         # Reduce max tokens for local model to speed up generation (shorter letter)
         model_settings["max_tokens"] = 300
+        
+    # NVIDIA NIM models (like qwen) may reject max_completion_tokens
+    if is_remote and provider_config and provider_config.get("name") == "nvidia":
+        model_settings.pop("max_tokens", None)
 
     agent = Agent(
         model,
