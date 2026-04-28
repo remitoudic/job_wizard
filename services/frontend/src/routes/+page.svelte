@@ -429,13 +429,27 @@
 
                 // Handle Step: Alternative Ready
                 if (data.status === "alternative_ready") {
-                    if (!allCoverLetters.some(l => l.source === data.source)) {
+                    if (data.text && data.source && !allCoverLetters.some(l => l.source === data.source)) {
                         allCoverLetters = [...allCoverLetters, {
                             text: data.text,
                             rawText: data.text,
                             source: data.source,
                             status: "completed"
                         }];
+                    }
+                    
+                    // Always sync from data.alternatives if backend provides it
+                    if (data.alternatives && Array.isArray(data.alternatives)) {
+                        data.alternatives.forEach(alt => {
+                            if (!allCoverLetters.some(l => l.source === alt.source)) {
+                                allCoverLetters = [...allCoverLetters, {
+                                    text: alt.text,
+                                    rawText: alt.text,
+                                    source: alt.source,
+                                    status: alt.status || "completed"
+                                }];
+                            }
+                        });
                     }
                 }
 
