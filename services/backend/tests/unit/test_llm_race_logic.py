@@ -67,6 +67,7 @@ async def test_race_alternatives_with_failure():
             "model_2": "remote-2",
             "api_key": "sk-test"
         }
+        service.provider_service.get_nvidia_config.return_value = None
         
         # Run generation
         winner_text, winner_source, alt_id = await service.generate_cover_letter(
@@ -123,6 +124,7 @@ async def test_race_all_fail():
             "model_2": "remote-2", 
             "api_key": "sk-test"
         }
+        service.provider_service.get_nvidia_config.return_value = None
         
         # Semaphore free
         service.ollama_semaphore = MagicMock()
