@@ -307,7 +307,13 @@ CUSTOM USER GUIDANCE:
                     display_name = user_name if user_name else "[Your Name]"
                     final_text = final_text.replace("[Your Name]", display_name).replace("[Ihr Name]", display_name).replace("[Votre Nom]", display_name).replace("[Su nombre]", display_name)
                     
-                    return {"output": final_text, "source": name, "usage": usage}
+                    usage_dict = {
+                        "request_tokens": usage.request_tokens,
+                        "response_tokens": usage.response_tokens,
+                        "total_tokens": usage.total_tokens
+                    } if usage else None
+                    
+                    return {"output": final_text, "source": name, "usage": usage_dict}
 
             # Task 1: Logic to prefer Local but Failover if Busy
             
