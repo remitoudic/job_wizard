@@ -64,6 +64,7 @@ services:
       OLLAMA_HOST: ${OLLAMA_HOST}
       OLLAMA_MODEL: ${OLLAMA_MODEL}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
       LOGFIRE_TOKEN: ${LOGFIRE_TOKEN}
       BACKEND_HOST: 0.0.0.0
       BACKEND_PORT: 8000
@@ -148,6 +149,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       TEMPORAL_HOST: ${TEMPORAL_HOST:-temporal:7233}
       OLLAMA_HOST: ${OLLAMA_HOST}
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY}
       LOGFIRE_TOKEN: ${LOGFIRE_TOKEN}
     volumes:
       - backend_uploads:/app/uploads
