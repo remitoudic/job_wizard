@@ -35,10 +35,17 @@ def test_valid_nvidia_model_configured():
         "google/gemma-2-9b-it",
         "mistralai/mistral-large-2-instruct",
         "nvidia/nemotron-4-340b-instruct",
-        "meta/llama-4-maverick-17b-128e-instruct"
+        "meta/llama-4-maverick-17b-128e-instruct",
+        "qwen/qwen2.5-coder-32b-instruct"
     ]
     
     assert settings.NVIDIA_MODEL_1 in verified_models, (
         f"Configured NVIDIA model '{settings.NVIDIA_MODEL_1}' is not in the verified list! "
         "If you are changing the model, please verify it exists on Nvidia NIM and update this test."
     )
+    
+    if settings.NVIDIA_MODEL_2:
+        assert settings.NVIDIA_MODEL_2 in verified_models, (
+            f"Configured NVIDIA model '{settings.NVIDIA_MODEL_2}' is not in the verified list! "
+            "If you are changing the model, please verify it exists on Nvidia NIM and update this test."
+        )

@@ -102,7 +102,8 @@ class LLMProviderService:
             "name": "nvidia",
             "base_url": "https://integrate.api.nvidia.com/v1",
             "api_key": settings.NVIDIA_API_KEY,
-            "model_1": settings.NVIDIA_MODEL_1
+            "model_1": settings.NVIDIA_MODEL_1,
+            "model_2": settings.NVIDIA_MODEL_2
         }
 
 # Global singleton instance
