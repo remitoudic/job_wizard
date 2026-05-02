@@ -39,6 +39,8 @@
     let previewHtml = "";
     let previewLoading = false;
     let previewVisible = false; // mobile toggle
+    let pageCount = 0; // estimated PDF page count
+    let previewIframe: HTMLIFrameElement | null = null;
 
     // Skills / Languages inline editing
     let newSkill = "";
@@ -138,6 +140,7 @@
 
     async function fetchPreview() {
         previewLoading = true;
+        pageCount = 0;
         try {
             previewHtml = await previewCV(cvData, resolveTemplate());
         } catch {
@@ -145,6 +148,25 @@
         } finally {
             previewLoading = false;
         }
+    }
+
+    function handleIframeLoad() {
+        // The iframe script sets document.title = 'pages:N'
+        // Poll briefly to allow DOMContentLoaded to fire inside iframe
+        let attempts = 0;
+        const poll = setInterval(() => {
+            attempts++;
+            try {
+                const title = previewIframe?.contentDocument?.title || "";
+                if (title.startsWith("pages:")) {
+                    pageCount = parseInt(title.split(":")[1], 10) || 0;
+                    clearInterval(poll);
+                }
+            } catch {
+                // cross-origin or not ready
+            }
+            if (attempts > 20) clearInterval(poll);
+        }, 150);
     }
 
     async function selectTemplate(name: string) {
@@ -1017,7 +1039,23 @@
                     >
                         <!-- Header label -->
                         <div class="flex items-center justify-between mb-2 px-1">
-                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Preview</span>
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Preview</span>
+                                {#if pageCount > 0}
+                                    <span
+                                        class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full transition-all duration-300
+                                            {pageCount > 2
+                                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                            : 'bg-[#EFF6FF] text-[#0369A1] border border-[#BFDBFE]'}"
+                                        title="Estimated PDF pages"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        {pageCount} {pageCount === 1 ? 'page' : 'pages'}
+                                    </span>
+                                {/if}
+                            </div>
                             {#if previewLoading}
                                 <span class="text-xs text-slate-400 flex items-center gap-1.5">
                                     <span class="inline-block w-3 h-3 border-2 border-slate-300 border-t-[#0369A1] rounded-full animate-spin"></span>
@@ -1057,12 +1095,14 @@
                             {:else if previewHtml}
                                 <!-- Fade in when ready -->
                                 <iframe
+                                    bind:this={previewIframe}
                                     srcdoc={previewHtml}
-                                    sandbox="allow-same-origin"
+                                    sandbox="allow-same-origin allow-scripts"
                                     title="CV Template Preview"
                                     aria-label="Live preview of your CV with the selected template"
                                     class="w-full h-full border-0 transition-opacity duration-200"
                                     style="opacity: {previewLoading ? 0.4 : 1};"
+                                    on:load={handleIframeLoad}
                                 ></iframe>
                             {:else}
                                 <!-- Empty / error state -->
