@@ -10,6 +10,27 @@ class PDFService:
     def __init__(self):
         self.page_width, self.page_height = A4
 
+    def _sanitize_text(self, text: Optional[str]) -> Optional[str]:
+        """Replace Unicode characters that ReportLab's standard fonts can't render."""
+        if not text:
+            return text
+        replacements = {
+            '\u2013': '-',   # en dash
+            '\u2014': '-',   # em dash
+            '\u2011': '-',   # non-breaking hyphen
+            '\u2018': "'",   # left single quote
+            '\u2019': "'",   # right single quote
+            '\u201c': '"',   # left double quote
+            '\u201d': '"',   # right double quote
+            '\u2022': '-',   # bullet
+            '\u2026': '...', # ellipsis
+            '\u202f': ' ',   # narrow no-break space
+            '\u00a0': ' ',   # no-break space
+        }
+        for k, v in replacements.items():
+            text = text.replace(k, v)
+        return text
+
     def generate_cover_letter_pdf(
         self,
         output_path: str,
@@ -60,26 +81,26 @@ class PDFService:
         template.generate(
             doc=doc,
             story=story,
-            cover_letter=cover_letter,
-            job_title=job_title,
-            company=company,
-            user_name=user_name,
-            first_name=first_name,
-            surname=surname,
+            cover_letter=self._sanitize_text(cover_letter),
+            job_title=self._sanitize_text(job_title),
+            company=self._sanitize_text(company),
+            user_name=self._sanitize_text(user_name),
+            first_name=self._sanitize_text(first_name),
+            surname=self._sanitize_text(surname),
             image_path=image_path,
-            email=email,
-            phone=phone,
-            linkedin=linkedin,
-            custom_date=custom_date,
-            custom_subject=custom_subject,
-            full_name=full_name,
-            address=address,
-            address_street=address_street,
-            address_postcode=address_postcode,
-            address_city=address_city,
-            address_country=address_country,
-            employer_address=employer_address,
-            recipient_name=recipient_name,
+            email=self._sanitize_text(email),
+            phone=self._sanitize_text(phone),
+            linkedin=self._sanitize_text(linkedin),
+            custom_date=self._sanitize_text(custom_date),
+            custom_subject=self._sanitize_text(custom_subject),
+            full_name=self._sanitize_text(full_name),
+            address=self._sanitize_text(address),
+            address_street=self._sanitize_text(address_street),
+            address_postcode=self._sanitize_text(address_postcode),
+            address_city=self._sanitize_text(address_city),
+            address_country=self._sanitize_text(address_country),
+            employer_address=self._sanitize_text(employer_address),
+            recipient_name=self._sanitize_text(recipient_name),
         )
         
         # Build PDF
