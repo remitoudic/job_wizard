@@ -135,7 +135,7 @@
 	}
 
 	// Update defaults when format changes
-	$: if (selectedFormat && !isGenerating && (jobData || isManualInput)) {
+	$: if (selectedFormat && (jobData || isManualInput)) {
 		const currentTitle =
 			editableJobTitle || (jobData ? jobData.title : manualTitle);
 		const currentCompany =
