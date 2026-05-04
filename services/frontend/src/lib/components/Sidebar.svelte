@@ -20,7 +20,7 @@
 >
     <!-- Logo/Home Icon -->
     <a
-        href="/"
+        href="https://job-vite.com/"
         class="p-2 text-[#64748B] hover:text-[#0369A1] transition-all duration-200 hover:scale-110 group relative"
         title="Home"
     >

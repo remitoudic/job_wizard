@@ -41,7 +41,7 @@
 				<!-- Logo / Brand -->
 				<div class="flex items-center">
 					<a
-						href="/"
+						href="https://job-vite.com/"
 						data-sveltekit-reload
 						class="flex-shrink-0 flex items-center gap-3 group"
 					>

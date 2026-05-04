@@ -150,7 +150,7 @@
         <div class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
                 <a
-                    href="/"
+                    href="https://job-vite.com/"
                     class="inline-flex items-center gap-2 text-[#0369A1] hover:text-[#0284C7] transition-colors mb-6"
                 >
                     <svg
