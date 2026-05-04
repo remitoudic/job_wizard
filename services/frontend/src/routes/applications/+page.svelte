@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import {
         fetchUserApplications,
+        fetchApplicationDetails,
         updateApplicationStatus,
         deleteApplication,
         type ApplicationListItem,
@@ -15,10 +16,15 @@
 
     let applications: ApplicationListItem[] = [];
     let isLoading = true;
+    let isLoadingMore = false;
     let error = "";
     let expandedId: number | null = null;
+    let loadingDetailsId: number | null = null;
     let viewMode: "list" | "kanban" = "list";
     let draggedAppId: number | null = null;
+    let totalApplications = 0;
+    let listSkip = 0;
+    let listLimit = 10;
 
     onMount(async () => {
         // Check if user is logged in
@@ -26,19 +32,82 @@
             goto("/login");
             return;
         }
+        await loadInitialData();
+    });
 
+    async function loadInitialData() {
+        isLoading = true;
         try {
-            const response = await fetchUserApplications();
-            applications = response.applications;
+            if (viewMode === 'list') {
+                const response = await fetchUserApplications(0, listLimit, false);
+                applications = response.applications;
+                totalApplications = response.total;
+                listSkip = applications.length;
+            } else {
+                const response = await fetchUserApplications(0, 1000, false);
+                applications = response.applications;
+                totalApplications = response.total;
+            }
         } catch (e: any) {
             error = e.message || "Failed to load applications";
         } finally {
             isLoading = false;
         }
-    });
+    }
 
-    function toggleExpand(id: number) {
-        expandedId = expandedId === id ? null : id;
+    async function loadMore() {
+        isLoadingMore = true;
+        try {
+            const response = await fetchUserApplications(listSkip, listLimit, false);
+            applications = [...applications, ...response.applications];
+            listSkip += response.applications.length;
+        } catch (e: any) {
+            error = e.message || "Failed to load more applications";
+        } finally {
+            isLoadingMore = false;
+        }
+    }
+
+    let previousViewMode: "list" | "kanban" = viewMode;
+    $: {
+        if (viewMode !== previousViewMode) {
+            previousViewMode = viewMode;
+            if (viewMode === 'kanban' && applications.length < totalApplications) {
+                isLoading = true;
+                fetchUserApplications(0, 1000, false).then(res => {
+                    applications = res.applications;
+                    totalApplications = res.total;
+                    isLoading = false;
+                }).catch(e => {
+                    error = "Failed to load kanban applications";
+                    isLoading = false;
+                });
+            }
+        }
+    }
+
+    async function toggleExpand(id: number) {
+        if (expandedId === id) {
+            expandedId = null;
+            return;
+        }
+        
+        expandedId = id;
+        
+        const appIndex = applications.findIndex(a => a.id === id);
+        if (appIndex !== -1 && !applications[appIndex].detailsLoaded) {
+            loadingDetailsId = id;
+            try {
+                const details = await fetchApplicationDetails(id);
+                applications = applications.map(a => 
+                    a.id === id ? { ...a, ...details, detailsLoaded: true } : a
+                );
+            } catch (e) {
+                console.error("Failed to load application details:", e);
+            } finally {
+                loadingDetailsId = null;
+            }
+        }
     }
 
     function handleDelete(id: number) {
@@ -433,6 +502,11 @@
                                             class="p-0 border-b border-slate-100"
                                         >
                                             <div class="p-6 space-y-6">
+                                                {#if loadingDetailsId === app.id}
+                                                    <div class="flex items-center justify-center py-8">
+                                                        <svg class="animate-spin h-8 w-8 text-[#0369A1]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                    </div>
+                                                {:else}
                                                 <!-- Cover Letter -->
                                                 <div>
                                                     <h4
@@ -448,7 +522,7 @@
                                                         >
                                                             {app
                                                                 .cover_letter_final
-                                                                .body ||
+                                                                ?.body ||
                                                                 "No cover letter body available"}
                                                         </p>
                                                     </div>
@@ -548,6 +622,7 @@
                                                         </svg>
                                                     </a>
                                                 </div>
+                                                {/if}
                                             </div>
                                         </td>
                                     </tr>
@@ -557,6 +632,23 @@
                     </table>
                 </div>
             </div>
+            
+            {#if viewMode === 'list' && applications.length < totalApplications}
+                <div class="mt-6 flex justify-center">
+                    <button 
+                        on:click={loadMore} 
+                        disabled={isLoadingMore}
+                        class="px-6 py-2.5 bg-white border border-[#E2E8F0] text-[#0F172A] font-medium rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 flex items-center gap-2"
+                    >
+                        {#if isLoadingMore}
+                            <svg class="animate-spin h-4 w-4 text-[#0369A1]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            Loading...
+                        {:else}
+                            Load More
+                        {/if}
+                    </button>
+                </div>
+            {/if}
             {:else}
             <!-- Kanban View -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
@@ -633,12 +725,17 @@
                                     <!-- Expanded Content -->
                                     {#if expandedId === app.id}
                                         <div class="bg-slate-50 border-t border-slate-200 p-4 rounded-b-lg space-y-4">
+                                            {#if loadingDetailsId === app.id}
+                                                <div class="flex items-center justify-center py-4">
+                                                    <svg class="animate-spin h-6 w-6 text-[#0369A1]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                </div>
+                                            {:else}
                                             <!-- Cover Letter -->
                                             <div>
                                                 <h4 class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2">Cover Letter</h4>
                                                 <div class="bg-white rounded p-3 border border-[#E2E8F0]">
                                                     <p class="text-xs text-[#334155] whitespace-pre-wrap leading-relaxed line-clamp-4 hover:line-clamp-none transition-all">
-                                                        {app.cover_letter_final.body || "No cover letter body available"}
+                                                        {app.cover_letter_final?.body || "No cover letter body available"}
                                                     </p>
                                                 </div>
                                             </div>
@@ -666,6 +763,7 @@
                                                     </svg>
                                                 </a>
                                             </div>
+                                            {/if}
                                         </div>
                                     {/if}
                                 </div>

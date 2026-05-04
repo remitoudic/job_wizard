@@ -350,14 +350,16 @@ export interface ApplicationListItem {
     job_url: string;
     status: string;
     created_at: string;
-    header: Record<string, any>;
-    cover_letter_final: Record<string, any>;
-    job_description: string;
-    requirements: string[];
+    header?: Record<string, any>;
+    cover_letter_final?: Record<string, any>;
+    job_description?: string;
+    requirements?: string[];
+    detailsLoaded?: boolean;
 }
 
 export interface FetchApplicationsResponse {
     applications: ApplicationListItem[];
+    total: number;
 }
 
 export async function saveApplication(
@@ -372,13 +374,29 @@ export async function saveApplication(
     return handleResponse<SaveApplicationResponse>(response, 'Failed to save application');
 }
 
-export async function fetchUserApplications(): Promise<FetchApplicationsResponse> {
-    const response = await fetch(`${API_URL}/api/applications`, {
+export async function fetchUserApplications(skip: number = 0, limit: number = 50, includeDetails: boolean = false): Promise<FetchApplicationsResponse> {
+    const response = await fetch(`${API_URL}/api/applications?skip=${skip}&limit=${limit}&include_details=${includeDetails}`, {
         method: 'GET',
         headers: getHeaders(),
     });
 
     return handleResponse<FetchApplicationsResponse>(response, 'Failed to fetch applications');
+}
+
+export interface ApplicationDetails {
+    header: Record<string, any>;
+    cover_letter_final: Record<string, any>;
+    job_description: string;
+    requirements: string[];
+}
+
+export async function fetchApplicationDetails(id: number): Promise<ApplicationDetails> {
+    const response = await fetch(`${API_URL}/api/application/${id}/details`, {
+        method: 'GET',
+        headers: getHeaders(),
+    });
+
+    return handleResponse<ApplicationDetails>(response, 'Failed to fetch application details');
 }
 
 export async function updateApplicationStatus(id: number, status: string): Promise<any> {

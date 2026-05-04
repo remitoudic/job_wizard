@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from sqlmodel import select
+from sqlmodel import select, func
 from app.api.deps import CurrentUser, SessionDep
 
 # Import validation schemas
@@ -114,20 +114,27 @@ async def get_user_applications(
     session: SessionDep,
     current_user: CurrentUser,
     limit: int = 50,
+    skip: int = 0,
+    include_details: bool = False,
 ):
     """
-    Get current user's applications with job descriptions.
+    Get current user's applications.
     Requires JWT authentication.
     
-    Returns list of applications with related job description data.
+    Returns list of applications (lightweight by default) with pagination.
     """
     try:
+        # Count total
+        count_stmt = select(func.count(Application.id)).where(Application.user_id == current_user.id)
+        total = session.exec(count_stmt).one()
+        
         # Query applications for current user with job description join
         statement = (
             select(Application, DBJobDescription)
             .join(DBJobDescription, Application.job_description_id == DBJobDescription.id)
             .where(Application.user_id == current_user.id)
             .order_by(Application.created_at.desc())
+            .offset(skip)
             .limit(limit)
         )
         
@@ -136,25 +143,69 @@ async def get_user_applications(
         # Transform to response format
         applications = []
         for app, job_desc in results:
-            applications.append({
+            app_dict = {
                 "id": app.id,
                 "job_title": job_desc.job_title,
                 "company": job_desc.company,
                 "job_url": job_desc.url,
                 "status": app.status.value,
                 "created_at": app.created_at.isoformat(),
-                "header": app.header,
-                "cover_letter_final": app.cover_letter_final,
-                "job_description": job_desc.full_description,
-                "requirements": job_desc.requirements,
-            })
+            }
+            if include_details:
+                app_dict["header"] = app.header
+                app_dict["cover_letter_final"] = app.cover_letter_final
+                app_dict["job_description"] = job_desc.full_description
+                app_dict["requirements"] = job_desc.requirements
+                
+            applications.append(app_dict)
         
-        return {"applications": applications}
+        return {"applications": applications, "total": total}
         
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Failed to fetch applications: {str(e)}"
+        )
+
+
+@router.get("/application/{application_id}/details")
+async def get_application_details(
+    application_id: int,
+    session: SessionDep,
+    current_user: CurrentUser,
+):
+    """
+    Get heavy details for a specific application.
+    Requires JWT authentication.
+    """
+    try:
+        statement = (
+            select(Application, DBJobDescription)
+            .join(DBJobDescription, Application.job_description_id == DBJobDescription.id)
+            .where(
+                Application.id == application_id,
+                Application.user_id == current_user.id
+            )
+        )
+        result = session.exec(statement).first()
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Application not found")
+            
+        app, job_desc = result
+        
+        return {
+            "header": app.header,
+            "cover_letter_final": app.cover_letter_final,
+            "job_description": job_desc.full_description,
+            "requirements": job_desc.requirements,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch application details: {str(e)}"
         )
 
 
