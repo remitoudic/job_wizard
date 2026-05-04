@@ -46,11 +46,34 @@
 
 	// Auto-detect language from job URL
 	$: if (jobUrl) {
-		const lowerUrl = jobUrl.toLowerCase();
-		if (lowerUrl.includes('.de/') || lowerUrl.endsWith('.de') || lowerUrl.includes('.de?')) {
-			selectedFormat = 'german';
-		} else if (lowerUrl.includes('.fr/') || lowerUrl.endsWith('.fr') || lowerUrl.includes('.fr?')) {
-			selectedFormat = 'french';
+		try {
+			// Ensure it has a protocol for robust URL parsing
+			const urlStr = jobUrl.startsWith('http') ? jobUrl : `https://${jobUrl}`;
+			const urlObj = new URL(urlStr);
+			const hostname = urlObj.hostname.toLowerCase();
+			const search = urlObj.search.toLowerCase();
+			
+			if (hostname.endsWith('.de') || search.includes('language=de') || search.includes('lang=de') || search.includes('hl=de')) {
+				selectedFormat = 'german';
+			} else if (hostname.endsWith('.fr') || search.includes('language=fr') || search.includes('lang=fr') || search.includes('hl=fr')) {
+				selectedFormat = 'french';
+			} else {
+				// Fallback to simple string matching
+				const lowerUrl = jobUrl.toLowerCase();
+				if (lowerUrl.includes('.de/') || lowerUrl.endsWith('.de') || lowerUrl.includes('.de?')) {
+					selectedFormat = 'german';
+				} else if (lowerUrl.includes('.fr/') || lowerUrl.endsWith('.fr') || lowerUrl.includes('.fr?')) {
+					selectedFormat = 'french';
+				}
+			}
+		} catch (e) {
+			// Fallback if URL parsing fails
+			const lowerUrl = jobUrl.toLowerCase();
+			if (lowerUrl.includes('.de/') || lowerUrl.endsWith('.de') || lowerUrl.includes('.de?')) {
+				selectedFormat = 'german';
+			} else if (lowerUrl.includes('.fr/') || lowerUrl.endsWith('.fr') || lowerUrl.includes('.fr?')) {
+				selectedFormat = 'french';
+			}
 		}
 	}
 
