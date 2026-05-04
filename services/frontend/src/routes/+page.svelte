@@ -44,6 +44,16 @@
 		else selectedFormat = "british";
 	}
 
+	// Auto-detect language from job URL
+	$: if (jobUrl) {
+		const lowerUrl = jobUrl.toLowerCase();
+		if (lowerUrl.includes('.de/') || lowerUrl.endsWith('.de') || lowerUrl.includes('.de?')) {
+			selectedFormat = 'german';
+		} else if (lowerUrl.includes('.fr/') || lowerUrl.endsWith('.fr') || lowerUrl.includes('.fr?')) {
+			selectedFormat = 'french';
+		}
+	}
+
 	// Contact Info
 	let email = "";
 	let phone = "";
