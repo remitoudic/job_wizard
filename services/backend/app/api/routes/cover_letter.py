@@ -306,15 +306,29 @@ async def generate_pdf(
 @router.get("/download/{filename}")
 async def download_file(filename: str):
     """
-    Download a file from the uploads directory
+    Download a file from the uploads directory.
+    Sanitizes the filename to prevent path traversal.
     """
-    file_path = UPLOAD_DIR / filename
-    if not file_path.exists():
+    # Sanitize filename by taking only the basename
+    safe_filename = Path(filename).name
+    file_path = UPLOAD_DIR / safe_filename
+    
+    # Ensure the file exists and is a file
+    if not file_path.exists() or not file_path.is_file():
         raise HTTPException(status_code=404, detail="File not found")
     
+    # Extra security: Ensure the resolved path is within the UPLOAD_DIR
+    try:
+        # resolve() handles symlinks and '..'
+        resolved_path = file_path.resolve()
+        if not str(resolved_path).startswith(str(UPLOAD_DIR.resolve())):
+             raise HTTPException(status_code=403, detail="Access denied")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid path")
+
     return FileResponse(
         path=file_path,
-        filename=filename,
+        filename=safe_filename,
         media_type='application/pdf'
     )
 

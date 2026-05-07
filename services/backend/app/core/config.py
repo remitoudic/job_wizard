@@ -6,7 +6,7 @@ from pathlib import Path
 class Settings(BaseSettings):
     # LLM Settings
     OLLAMA_HOST: str = "http://ollama:11434"
-    OLLAMA_MODEL: str = "qwen2:0.5b"
+    OLLAMA_MODEL: str = "gemma4:e4b"
     
     OPENROUTER_API_KEY: str = ""
     
