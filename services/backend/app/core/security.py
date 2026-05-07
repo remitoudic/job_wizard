@@ -1,3 +1,10 @@
+"""
+Security Primitives for Authentication and Authorization.
+
+Reference Documentation:
+See SECURITY.md in this directory for the full architectural sequence diagram 
+viewable on GitHub.
+"""
 from datetime import datetime, timedelta
 from typing import Optional, Any, Union
 from jose import jwt
