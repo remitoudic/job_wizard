@@ -272,18 +272,33 @@
 	let currentVersionIndex = 0;
 	let isLoadingAlternatives = false;
 	let hasAutoSelectedNvidia = false;
+	let hasAutoSelectedQwen = false;
 
-	// Reactive: Auto-select Nvidia if it's in the list and we haven't auto-selected yet
+	// Reactive: Auto-select Nvidia/Qwen if it's in the list
 	$: {
-		if (!hasAutoSelectedNvidia && allCoverLetters.length > 0) {
-			const idx = allCoverLetters.findIndex((l) =>
-				l.source.toLowerCase().includes("nvidia") ||
+		if (allCoverLetters.length > 0) {
+			console.log("[AutoSelect] Current sources:", allCoverLetters.map(l => l.source));
+			
+			// 1. Priority: Qwen (always switch to it even if we already selected a generic Nvidia)
+			const qwenIdx = allCoverLetters.findIndex((l) =>
 				l.source.toLowerCase().includes("qwen")
 			);
-			if (idx !== -1) {
-				console.log(`[AutoSelect] Found Nvidia/Qwen at index ${idx}. Switching...`);
-				switchVersion(idx);
-				hasAutoSelectedNvidia = true;
+			if (qwenIdx !== -1 && !hasAutoSelectedQwen) {
+				console.log(`[AutoSelect] Found Qwen at index ${qwenIdx}. Switching...`);
+				switchVersion(qwenIdx);
+				hasAutoSelectedQwen = true;
+				hasAutoSelectedNvidia = true; // Mark Nvidia as satisfied too
+			} 
+			// 2. Secondary: Nvidia (if no Qwen yet)
+			else if (!hasAutoSelectedNvidia) {
+				const nvidiaIdx = allCoverLetters.findIndex((l) =>
+					l.source.toLowerCase().includes("nvidia")
+				);
+				if (nvidiaIdx !== -1) {
+					console.log(`[AutoSelect] Found Nvidia at index ${nvidiaIdx}. Switching...`);
+					switchVersion(nvidiaIdx);
+					hasAutoSelectedNvidia = true;
+				}
 			}
 		}
 	}
@@ -409,6 +424,7 @@
         allCoverLetters = [];
         currentVersionIndex = 0;
         hasAutoSelectedNvidia = false;
+        hasAutoSelectedQwen = false;
 
 		try {
 			const { job_id } = await generateCoverLetter({
@@ -510,18 +526,6 @@
                         });
                     }
 
-                    // Auto-select Nvidia if it just arrived as an alternative
-                    if (!hasAutoSelectedNvidia) {
-                        const nvidiaIndex = allCoverLetters.findIndex(l => 
-                            l.source.toLowerCase().includes("nvidia") || 
-                            l.source.toLowerCase().includes("qwen")
-                        );
-                        if (nvidiaIndex !== -1) {
-                            console.log(`Auto-selecting Nvidia/Qwen alternative at index ${nvidiaIndex}`);
-                            switchVersion(nvidiaIndex);
-                            hasAutoSelectedNvidia = true;
-                        }
-                    }
                 }
 
                 // Handle Step: Completed
@@ -545,7 +549,7 @@
                             allCoverLetters = [...allCoverLetters];
                         }
 
-                        if (isUpdateNeeded) {
+                        if (isUpdateNeeded && !hasAutoSelectedNvidia && !hasAutoSelectedQwen) {
                             coverLetter = data.text;
                             originalCoverLetter = data.text;
                             source = data.source;
@@ -566,19 +570,6 @@
                                 }];
                             }
                         });
-                    }
-
-                    // Final check for Nvidia auto-selection
-                    if (!hasAutoSelectedNvidia) {
-                        const nvidiaIndex = allCoverLetters.findIndex(l => 
-                            l.source.toLowerCase().includes("nvidia") || 
-                            l.source.toLowerCase().includes("qwen")
-                        );
-                        if (nvidiaIndex !== -1) {
-                            console.log(`Final auto-selection of Nvidia/Qwen at index ${nvidiaIndex}`);
-                            switchVersion(nvidiaIndex);
-                            hasAutoSelectedNvidia = true;
-                        }
                     }
 
                     isGenerating = false;
