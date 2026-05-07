@@ -271,6 +271,7 @@
 	}> = [];
 	let currentVersionIndex = 0;
 	let isLoadingAlternatives = false;
+	let hasAutoSelectedNvidia = false;
 
 	// Reactive: Replace [Your Name] placeholder with actual name
 	// Function to replace [Your Name] placeholder with actual name
@@ -394,6 +395,7 @@
         generationProgress = [];
         allCoverLetters = [];
         currentVersionIndex = 0;
+        hasAutoSelectedNvidia = false;
 
 		try {
 			const { job_id } = await generateCoverLetter({
@@ -451,6 +453,11 @@
                         rawText: data.text,
                         source: data.source
                     }];
+
+                    // Auto-select Nvidia if it's the primary
+                    if (data.source?.toLowerCase().includes("nvidia")) {
+                        hasAutoSelectedNvidia = true;
+                    }
                     
                     if (firstName || surname) {
                         updateNameInCoverLetter();
@@ -482,7 +489,15 @@
                                     status: alt.status || "completed"
                                 }];
                             }
-                        });
+                    }
+
+                    // Auto-select Nvidia if it just arrived as an alternative
+                    if (!hasAutoSelectedNvidia) {
+                        const nvidiaIndex = allCoverLetters.findIndex(l => l.source.toLowerCase().includes("nvidia"));
+                        if (nvidiaIndex !== -1) {
+                            switchVersion(nvidiaIndex);
+                            hasAutoSelectedNvidia = true;
+                        }
                     }
                 }
 
@@ -514,6 +529,15 @@
                                 }];
                             }
                         });
+                    }
+
+                    // Final check for Nvidia auto-selection
+                    if (!hasAutoSelectedNvidia) {
+                        const nvidiaIndex = allCoverLetters.findIndex(l => l.source.toLowerCase().includes("nvidia"));
+                        if (nvidiaIndex !== -1) {
+                            switchVersion(nvidiaIndex);
+                            hasAutoSelectedNvidia = true;
+                        }
                     }
 
                     isGenerating = false;
@@ -622,6 +646,15 @@
 				if (firstName || surname) {
 					updateNameInCoverLetter();
 				}
+
+                // Check for Nvidia auto-selection during alternative polling
+                if (!hasAutoSelectedNvidia) {
+                    const nvidiaIndex = allCoverLetters.findIndex(l => l.source.toLowerCase().includes("nvidia"));
+                    if (nvidiaIndex !== -1) {
+                        switchVersion(nvidiaIndex);
+                        hasAutoSelectedNvidia = true;
+                    }
+                }
 
 				if (!isComplete) {
 					// Poll again
@@ -834,6 +867,7 @@
 		coverLetter = "";
 		pdfUrl = "";
 		downloaded = false;
+        hasAutoSelectedNvidia = false;
 		isParsing = false;
 		isGenerating = false;
 		isPdfGenerating = false;
