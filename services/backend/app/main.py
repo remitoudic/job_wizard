@@ -56,8 +56,8 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 LOGS_DIR = Path("/app/logs/prompt_audit")
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Mount static files for uploads
-app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+# Mount static files for uploads - DISABLED for security (Unauthenticated File Access)
+# app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 # Include API routes
 app.include_router(job_description.router, prefix="/api")
