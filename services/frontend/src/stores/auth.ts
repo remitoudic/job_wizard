@@ -41,44 +41,43 @@ const createAuthStore = () => {
     return {
         subscribe,
         login: (token: string, user: User) => {
-            if (browser) {
-                localStorage.setItem('token', token);
-            }
+            // We still keep token in memory for current session state,
+            // but we stop putting it in localStorage.
             set({ user, token, isAuthenticated: true });
         },
-        logout: () => {
-            if (browser) {
-                localStorage.removeItem('token');
+        logout: async () => {
+            // Call backend logout to clear cookie
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || '';
+                await fetch(`${apiUrl}/api/auth/logout`, { 
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (e) {
+                console.error('Logout error:', e);
             }
             set(initialState);
         },
         initialize: async () => {
             if (browser) {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    try {
-                        // Use configured API URL or fallback to relative path for production
-                        const apiUrl = import.meta.env.VITE_API_URL || '';
+                // We no longer check localStorage for token.
+                // We just try to fetch /me. If cookie is present, it will succeed.
+                try {
+                    const apiUrl = import.meta.env.VITE_API_URL || '';
+                    const response = await fetch(`${apiUrl}/api/users/me`, {
+                        credentials: 'include'
+                    });
 
-                        // Fetch user profile to get full user data including is_superuser
-                        const response = await fetch(`${apiUrl}/api/users/me`, {
-                            headers: {
-                                Authorization: `Bearer ${token}`
-                            }
-                        });
-
-                        if (response.ok) {
-                            const user = await response.json();
-                            set({ user, token, isAuthenticated: true });
-                        } else {
-                            // Token is invalid, clear it
-                            localStorage.removeItem('token');
-                            set(initialState);
-                        }
-                    } catch (error) {
-                        console.error('Failed to fetch user profile:', error);
+                    if (response.ok) {
+                        const user = await response.json();
+                        // Note: token is null here in memory because it's in a cookie,
+                        // but isAuthenticated is true.
+                        set({ user, token: null, isAuthenticated: true });
+                    } else {
                         set(initialState);
                     }
+                } catch (error) {
+                    set(initialState);
                 }
             }
         },

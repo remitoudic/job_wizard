@@ -16,6 +16,14 @@ function getHeaders() {
     return headers;
 }
 
+async function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
+    const fetchOptions: RequestInit = {
+        ...options,
+        credentials: 'include'
+    };
+    return fetch(url, fetchOptions);
+}
+
 async function handleResponse<T = any>(response: Response, defaultError: string): Promise<T> {
     const text = await response.text();
     if (!response.ok) {
@@ -41,7 +49,7 @@ async function handleResponse<T = any>(response: Response, defaultError: string)
 }
 
 export async function loginUser(formData: FormData) {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
+    const response = await apiFetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         body: formData,
     });
@@ -49,7 +57,7 @@ export async function loginUser(formData: FormData) {
 }
 
 export async function registerUser(userData: any) {
-    const response = await fetch(`${API_URL}/api/auth/register`, {
+    const response = await apiFetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
@@ -58,7 +66,7 @@ export async function registerUser(userData: any) {
 }
 
 export async function getProfile() {
-    const response = await fetch(`${API_URL}/api/users/me`, {
+    const response = await apiFetch(`${API_URL}/api/users/me`, {
         method: 'GET',
         headers: getHeaders(),
     });
@@ -66,14 +74,14 @@ export async function getProfile() {
 }
 
 export async function getHealth() {
-    const response = await fetch(`${API_URL}/health`, {
+    const response = await apiFetch(`${API_URL}/health`, {
         method: 'GET',
     });
     return handleResponse<any>(response, 'Health check failed');
 }
 
 export async function updateProfile(userData: any) {
-    const response = await fetch(`${API_URL}/api/users/me`, {
+    const response = await apiFetch(`${API_URL}/api/users/me`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify(userData),
@@ -122,7 +130,7 @@ export interface User {
 }
 
 export async function getUsers(token: string): Promise<User[]> {
-    const response = await fetch(`${API_URL}/api/users/`, {
+    const response = await apiFetch(`${API_URL}/api/users/`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
@@ -160,7 +168,7 @@ export async function uploadProfilePicture(token: string, file: Blob): Promise<U
     const formData = new FormData();
     formData.append('file', file, 'profile.jpg');
 
-    const response = await fetch(`${API_URL}/api/users/me/picture`, {
+    const response = await apiFetch(`${API_URL}/api/users/me/picture`, {
         method: 'POST',
         headers: {
             Authorization: `Bearer ${token}`,
@@ -172,7 +180,7 @@ export async function uploadProfilePicture(token: string, file: Blob): Promise<U
 }
 
 export async function deleteProfilePicture(token: string): Promise<User> {
-    const response = await fetch(`${API_URL}/api/users/me/picture`, {
+    const response = await apiFetch(`${API_URL}/api/users/me/picture`, {
         method: 'DELETE',
         headers: {
             Authorization: `Bearer ${token}`,
@@ -215,7 +223,7 @@ export interface GeneratePdfResponse {
 }
 
 export async function parseJobUrl(url: string): Promise<JobDescription> {
-    const response = await fetch(`${API_URL}/api/parse-job`, {
+    const response = await apiFetch(`${API_URL}/api/parse-job`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -229,7 +237,7 @@ export async function parseJobUrl(url: string): Promise<JobDescription> {
 export async function generateCoverLetter(
     request: CoverLetterRequest
 ): Promise<{ job_id: string }> {
-    const response = await fetch(`${API_URL}/api/generate-cover-letter`, {
+    const response = await apiFetch(`${API_URL}/api/generate-cover-letter`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -244,7 +252,7 @@ export async function uploadImage(file: File): Promise<UploadImageResponse> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${API_URL}/api/upload-image`, {
+    const response = await apiFetch(`${API_URL}/api/upload-image`, {
         method: 'POST',
         body: formData,
     });
@@ -256,7 +264,7 @@ export async function uploadContext(file: File): Promise<UploadContextResponse> 
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${API_URL}/api/upload-context`, {
+    const response = await apiFetch(`${API_URL}/api/upload-context`, {
         method: 'POST',
         body: formData,
     });
@@ -300,7 +308,7 @@ export async function generatePdf(request: GeneratePdfRequest): Promise<Generate
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_URL}/api/generate-pdf`, {
+    const response = await apiFetch(`${API_URL}/api/generate-pdf`, {
         method: 'POST',
         headers: headers,
         body: formData,
@@ -310,7 +318,7 @@ export async function generatePdf(request: GeneratePdfRequest): Promise<Generate
 }
 
 export async function getAlternativeCoverLetter(altId: string) {
-    const response = await fetch(`${API_URL}/api/cover-letter/alternative/${altId}`);
+    const response = await apiFetch(`${API_URL}/api/cover-letter/alternative/${altId}`);
 
     return handleResponse<any>(response, 'Alternative not ready or not found');
 }
@@ -365,7 +373,7 @@ export interface FetchApplicationsResponse {
 export async function saveApplication(
     request: SaveApplicationRequest
 ): Promise<SaveApplicationResponse> {
-    const response = await fetch(`${API_URL}/api/save-application`, {
+    const response = await apiFetch(`${API_URL}/api/save-application`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(request),
@@ -375,7 +383,7 @@ export async function saveApplication(
 }
 
 export async function fetchUserApplications(skip: number = 0, limit: number = 50, includeDetails: boolean = false): Promise<FetchApplicationsResponse> {
-    const response = await fetch(`${API_URL}/api/applications?skip=${skip}&limit=${limit}&include_details=${includeDetails}`, {
+    const response = await apiFetch(`${API_URL}/api/applications?skip=${skip}&limit=${limit}&include_details=${includeDetails}`, {
         method: 'GET',
         headers: getHeaders(),
     });
@@ -391,7 +399,7 @@ export interface ApplicationDetails {
 }
 
 export async function fetchApplicationDetails(id: number): Promise<ApplicationDetails> {
-    const response = await fetch(`${API_URL}/api/application/${id}/details`, {
+    const response = await apiFetch(`${API_URL}/api/application/${id}/details`, {
         method: 'GET',
         headers: getHeaders(),
     });
@@ -400,7 +408,7 @@ export async function fetchApplicationDetails(id: number): Promise<ApplicationDe
 }
 
 export async function updateApplicationStatus(id: number, status: string): Promise<any> {
-    const response = await fetch(`${API_URL}/api/application/${id}/status`, {
+    const response = await apiFetch(`${API_URL}/api/application/${id}/status`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify({ status }),
@@ -410,7 +418,7 @@ export async function updateApplicationStatus(id: number, status: string): Promi
 }
 
 export async function deleteApplication(id: number): Promise<any> {
-    const response = await fetch(`${API_URL}/api/application/${id}`, {
+    const response = await apiFetch(`${API_URL}/api/application/${id}`, {
         method: 'DELETE',
         headers: getHeaders(),
     });
@@ -433,7 +441,7 @@ export interface UserCVRead {
 }
 
 export async function getUserCVs(): Promise<UserCVRead[]> {
-    const response = await fetch(`${API_URL}/api/users/me/cvs/`, {
+    const response = await apiFetch(`${API_URL}/api/users/me/cvs/`, {
         method: 'GET',
         headers: getHeaders(),
     });
@@ -446,7 +454,7 @@ export async function uploadUserCV(file: File, name: string): Promise<UserCVRead
     formData.append('name', name);
 
     const token = get(auth).token;
-    const response = await fetch(`${API_URL}/api/users/me/cvs/`, {
+    const response = await apiFetch(`${API_URL}/api/users/me/cvs/`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
@@ -455,7 +463,7 @@ export async function uploadUserCV(file: File, name: string): Promise<UserCVRead
 }
 
 export async function updateUserCV(cvId: number, data: { name?: string }): Promise<UserCVRead> {
-    const response = await fetch(`${API_URL}/api/users/me/cvs/${cvId}`, {
+    const response = await apiFetch(`${API_URL}/api/users/me/cvs/${cvId}`, {
         method: 'PATCH',
         headers: getHeaders(),
         body: JSON.stringify(data),
@@ -464,7 +472,7 @@ export async function updateUserCV(cvId: number, data: { name?: string }): Promi
 }
 
 export async function activateUserCV(cvId: number): Promise<UserCVRead> {
-    const response = await fetch(`${API_URL}/api/users/me/cvs/${cvId}/activate`, {
+    const response = await apiFetch(`${API_URL}/api/users/me/cvs/${cvId}/activate`, {
         method: 'PATCH',
         headers: getHeaders(),
     });
@@ -472,7 +480,7 @@ export async function activateUserCV(cvId: number): Promise<UserCVRead> {
 }
 
 export async function deleteUserCV(cvId: number): Promise<void> {
-    const response = await fetch(`${API_URL}/api/users/me/cvs/${cvId}`, {
+    const response = await apiFetch(`${API_URL}/api/users/me/cvs/${cvId}`, {
         method: 'DELETE',
         headers: getHeaders(),
     });
@@ -523,7 +531,7 @@ export async function uploadCV(file: File): Promise<CVData> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await fetch(`${API_URL}/api/cv/upload`, {
+    const response = await apiFetch(`${API_URL}/api/cv/upload`, {
         method: 'POST',
         headers: (() => {
             const h: Record<string, string> = {};
@@ -538,7 +546,7 @@ export async function uploadCV(file: File): Promise<CVData> {
 }
 
 export async function getCVTemplates(): Promise<CVTemplate[]> {
-    const response = await fetch(`${API_URL}/api/cv/templates`, {
+    const response = await apiFetch(`${API_URL}/api/cv/templates`, {
         method: 'GET',
         headers: getHeaders(),
     });
@@ -547,7 +555,7 @@ export async function getCVTemplates(): Promise<CVTemplate[]> {
 }
 
 export async function generateCV(data: CVData, template: string): Promise<Blob> {
-    const response = await fetch(`${API_URL}/api/cv/generate`, {
+    const response = await apiFetch(`${API_URL}/api/cv/generate`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({ cv_data: data, template_name: template }),
@@ -567,7 +575,7 @@ export async function generateCV(data: CVData, template: string): Promise<Blob> 
 }
 
 export async function previewCV(data: CVData, template: string): Promise<string> {
-    const response = await fetch(`${API_URL}/api/cv/preview`, {
+    const response = await apiFetch(`${API_URL}/api/cv/preview`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({ cv_data: data, template_name: template }),

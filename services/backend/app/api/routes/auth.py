@@ -1,6 +1,6 @@
 from datetime import timedelta
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from app.api.deps import SessionDep
 from app.core.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -12,7 +12,9 @@ router = APIRouter()
 
 @router.post("/login", response_model=Token)
 def login_for_access_token(
-    session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+    session: SessionDep, 
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    response: Response
 ) -> Token:
     user = user_service.authenticate(session, form_data.username, form_data.password)
     if not user:
@@ -28,7 +30,24 @@ def login_for_access_token(
     access_token = create_access_token(
         subject=user.email, expires_delta=access_token_expires
     )
+    
+    # Set HttpOnly cookie for web clients
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        expires=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        samesite="lax",
+        secure=False, # Should be True in production (requires HTTPS)
+    )
+    
     return Token(access_token=access_token, token_type="bearer")
+
+@router.post("/logout")
+def logout(response: Response):
+    response.delete_cookie("access_token")
+    return {"message": "Successfully logged out"}
 
 @router.post("/register", response_model=User) # Should probably return UserRead but User is fine for now
 def register_user(session: SessionDep, user_in: UserCreate) -> User:
