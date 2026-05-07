@@ -6,7 +6,7 @@ from pathlib import Path
 class Settings(BaseSettings):
     # LLM Settings
     OLLAMA_HOST: str = "http://ollama:11434"
-    OLLAMA_MODEL: str = "gemma4:e4b"
+    OLLAMA_MODEL: str = "google/gemma-4-E2B-it"
     
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development") # "development" or "production"
     

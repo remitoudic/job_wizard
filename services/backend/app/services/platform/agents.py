@@ -23,7 +23,8 @@ async def strip_service_tier_hook(response: httpx.Response):
 
 def create_custom_openai_provider(base_url: str, api_key: str) -> OpenAIProvider:
     client = httpx.AsyncClient(
-        event_hooks={"response": [strip_service_tier_hook]}
+        event_hooks={"response": [strip_service_tier_hook]},
+        timeout=120.0
     )
     return OpenAIProvider(base_url=base_url, api_key=api_key, http_client=client)
 

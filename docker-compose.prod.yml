@@ -32,8 +32,12 @@ services:
     environment:
       - OLLAMA_DEBUG=0
       - OLLAMA_ORIGINS=*
-      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_NUM_PARALLEL=1
       - OLLAMA_MAX_LOADED_MODELS=1
+    deploy:
+      resources:
+        limits:
+          memory: 12G
     logging:
       driver: "json-file"
       options:
@@ -82,7 +86,7 @@ services:
         condition: service_healthy
       temporal:
         condition: service_started
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 3
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
 
   frontend:
     build:

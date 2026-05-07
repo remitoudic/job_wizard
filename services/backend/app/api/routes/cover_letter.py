@@ -8,6 +8,7 @@ from app.services.cover_letter.llm_service import LLMService
 from app.services.cover_letter.pdf_service import PDFService
 from app.services.cover_letter.pdf_parser import PDFParser
 from app.services.platform.backup_service import BackupService
+from app.services.cover_letter.workflows import CoverLetterWorkflow
 
 from app.api.validation.schemas import (
     CoverLetterRequest,
