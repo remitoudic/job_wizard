@@ -455,7 +455,8 @@
                     }];
 
                     // Auto-select Nvidia if it's the primary
-                    if (data.source?.toLowerCase().includes("nvidia")) {
+                    if (data.source?.toLowerCase().includes("nvidia") || data.source?.toLowerCase().includes("qwen")) {
+                        console.log("Nvidia/Qwen detected as primary model, auto-selecting.");
                         hasAutoSelectedNvidia = true;
                     }
                     
@@ -489,12 +490,17 @@
                                     status: alt.status || "completed"
                                 }];
                             }
+                        });
                     }
 
                     // Auto-select Nvidia if it just arrived as an alternative
                     if (!hasAutoSelectedNvidia) {
-                        const nvidiaIndex = allCoverLetters.findIndex(l => l.source.toLowerCase().includes("nvidia"));
+                        const nvidiaIndex = allCoverLetters.findIndex(l => 
+                            l.source.toLowerCase().includes("nvidia") || 
+                            l.source.toLowerCase().includes("qwen")
+                        );
                         if (nvidiaIndex !== -1) {
+                            console.log(`Auto-selecting Nvidia/Qwen alternative at index ${nvidiaIndex}`);
                             switchVersion(nvidiaIndex);
                             hasAutoSelectedNvidia = true;
                         }
@@ -533,8 +539,12 @@
 
                     // Final check for Nvidia auto-selection
                     if (!hasAutoSelectedNvidia) {
-                        const nvidiaIndex = allCoverLetters.findIndex(l => l.source.toLowerCase().includes("nvidia"));
+                        const nvidiaIndex = allCoverLetters.findIndex(l => 
+                            l.source.toLowerCase().includes("nvidia") || 
+                            l.source.toLowerCase().includes("qwen")
+                        );
                         if (nvidiaIndex !== -1) {
+                            console.log(`Final auto-selection of Nvidia/Qwen at index ${nvidiaIndex}`);
                             switchVersion(nvidiaIndex);
                             hasAutoSelectedNvidia = true;
                         }
@@ -649,8 +659,12 @@
 
                 // Check for Nvidia auto-selection during alternative polling
                 if (!hasAutoSelectedNvidia) {
-                    const nvidiaIndex = allCoverLetters.findIndex(l => l.source.toLowerCase().includes("nvidia"));
+                    const nvidiaIndex = allCoverLetters.findIndex(l => 
+                        l.source.toLowerCase().includes("nvidia") || 
+                        l.source.toLowerCase().includes("qwen")
+                    );
                     if (nvidiaIndex !== -1) {
+                        console.log(`Auto-selected Nvidia/Qwen from polled alternatives at index ${nvidiaIndex}`);
                         switchVersion(nvidiaIndex);
                         hasAutoSelectedNvidia = true;
                     }
