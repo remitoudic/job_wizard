@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from app.api.deps import SessionDep
 from app.core.security import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.core.config import settings
 from app.api.validation.schemas import Token
 from database_pkg.models.user import UserCreate, User
 from app.services.platform.user import user_service
@@ -39,14 +40,19 @@ def login_for_access_token(
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         expires=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         samesite="lax",
-        secure=False, # Should be True in production (requires HTTPS)
+        secure=settings.SECURE_COOKIES,
     )
     
     return Token(access_token=access_token, token_type="bearer")
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie("access_token")
+    response.delete_cookie(
+        "access_token", 
+        secure=settings.SECURE_COOKIES, 
+        httponly=True, 
+        samesite="lax"
+    )
     return {"message": "Successfully logged out"}
 
 @router.post("/register", response_model=User) # Should probably return UserRead but User is fine for now

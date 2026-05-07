@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     OLLAMA_HOST: str = "http://ollama:11434"
     OLLAMA_MODEL: str = "gemma4:e4b"
     
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development") # "development" or "production"
+    
     OPENROUTER_API_KEY: str = ""
     
     # Database Settings
@@ -42,6 +44,9 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
     PROMPT_AUDIT_LOG_ENABLED: bool = True
     LOGS_DIR: Path = Path("/app/logs")
+    
+    # Security Settings
+    SECURE_COOKIES: bool = os.getenv("SECURE_COOKIES", "True").lower() == "true" if ENVIRONMENT == "production" else False
 
     # Scraping Settings
     PROXY_FILE_PATH: str = "proxies.json"
