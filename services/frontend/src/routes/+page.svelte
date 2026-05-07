@@ -763,14 +763,19 @@
 	async function handleDownload() {
 		if (!pdfUrl) return;
 
-		// Check if it's a static upload path or API endpoint
-		const fullUrl = pdfUrl.startsWith("/uploads/")
-			? `${window.location.origin}${pdfUrl}`
-			: `${API_URL}${pdfUrl}`;
+		// The backend now returns a URL like /api/download/{filename}
+		// or /api/uploads/{filename}. We need to prepend API_URL if not already there.
+		const fullUrl = pdfUrl.startsWith("http") 
+            ? pdfUrl 
+            : `${API_URL}${pdfUrl}`;
 
 		try {
-			// Fetch blob to enforce filename
-			const response = await fetch(fullUrl);
+			// Fetch blob with Authorization header to bypass authentication
+			const response = await fetch(fullUrl, {
+                headers: {
+                    'Authorization': `Bearer ${$auth.token}`
+                }
+            });
 			const blob = await response.blob();
 			const blobUrl = window.URL.createObjectURL(blob);
 

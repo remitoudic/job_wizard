@@ -19,7 +19,7 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # Fix absolute path in pyproject.toml for Docker environment
-RUN sed -i 's|file:///root/job_wizard/services/database|file:///database_pkg|g' pyproject.toml
+RUN sed -i 's|file:///.*services/database|file:///database_pkg|g' pyproject.toml
 
 # Install dependencies (including dev dependencies for testing)
 ENV UV_HTTP_TIMEOUT=300
@@ -49,7 +49,7 @@ COPY services/backend/scripts/seed_user.py ./scripts/seed_user.py
 COPY services/backend/pyproject.toml .
 
 # Fix absolute path in pyproject.toml for Docker environment (same as builder)
-RUN sed -i 's|file:///root/job_wizard/services/database|file:///database_pkg|g' pyproject.toml
+RUN sed -i 's|file:///.*services/database|file:///database_pkg|g' pyproject.toml
 
 # Create uploads directory
 RUN mkdir -p /app/uploads

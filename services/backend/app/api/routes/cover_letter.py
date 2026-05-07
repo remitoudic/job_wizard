@@ -207,16 +207,13 @@ async def upload_image(file: UploadFile = File(...)):
         
         return {
             "filename": unique_filename,
-            "url": f"/uploads/{unique_filename}",
+            "url": f"/api/uploads/{unique_filename}",
         }
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
 
-
-from app.api.deps import get_current_user_optional
-from database_pkg.models.user import User
 
 @router.post("/generate-pdf")
 async def generate_pdf(
@@ -296,7 +293,7 @@ async def generate_pdf(
         
         return {
             "filename": pdf_filename,
-            "url": f"/uploads/{pdf_filename}",
+            "url": f"/api/download/{pdf_filename}",
         }
     except HTTPException:
         raise
