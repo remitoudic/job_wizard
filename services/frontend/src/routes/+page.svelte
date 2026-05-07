@@ -273,8 +273,21 @@
 	let isLoadingAlternatives = false;
 	let hasAutoSelectedNvidia = false;
 
-	// Reactive: Replace [Your Name] placeholder with actual name
-	// Function to replace [Your Name] placeholder with actual name
+	// Reactive: Auto-select Nvidia if it's in the list and we haven't auto-selected yet
+	$: {
+		if (!hasAutoSelectedNvidia && allCoverLetters.length > 0) {
+			const idx = allCoverLetters.findIndex((l) =>
+				l.source.toLowerCase().includes("nvidia") ||
+				l.source.toLowerCase().includes("qwen")
+			);
+			if (idx !== -1) {
+				console.log(`[AutoSelect] Found Nvidia/Qwen at index ${idx}. Switching...`);
+				switchVersion(idx);
+				hasAutoSelectedNvidia = true;
+			}
+		}
+	}
+
 	// Function to replace [Your Name] placeholder with actual name
 	function updateNameInCoverLetter() {
 		// Use the raw text of the current version as source
@@ -443,25 +456,29 @@
 
                 // Handle Step: Partial (Primary Ready)
                 if (data.status === "partial") {
-                    coverLetter = data.text;
-                    originalCoverLetter = data.text;
-                    source = data.source;
-                    alternativeId = data.alternative_id;
-
-                    allCoverLetters = [{
+                    const primaryVersion = {
                         text: data.text,
                         rawText: data.text,
                         source: data.source
-                    }];
+                    };
 
-                    // Auto-select Nvidia if it's the primary
-                    if (data.source?.toLowerCase().includes("nvidia") || data.source?.toLowerCase().includes("qwen")) {
-                        console.log("Nvidia/Qwen detected as primary model, auto-selecting.");
-                        hasAutoSelectedNvidia = true;
+                    if (allCoverLetters.length === 0) {
+                        allCoverLetters = [primaryVersion];
+                    } else {
+                        allCoverLetters[0] = primaryVersion;
+                        allCoverLetters = [...allCoverLetters];
                     }
-                    
-                    if (firstName || surname) {
-                        updateNameInCoverLetter();
+
+                    // Only update the active text if we are still on the primary version
+                    if (currentVersionIndex === 0) {
+                        coverLetter = data.text;
+                        originalCoverLetter = data.text;
+                        source = data.source;
+                        alternativeId = data.alternative_id;
+                        
+                        if (firstName || surname) {
+                            updateNameInCoverLetter();
+                        }
                     }
 
                     // Move to Step 3 automatically once primary is ready
@@ -510,17 +527,31 @@
                 // Handle Step: Completed
                 if (data.status === "completed") {
                     // Update final result if we don't have it yet (e.g. race was instant)
-                    if (data.text && !coverLetter) {
-                        coverLetter = data.text;
-                        originalCoverLetter = data.text;
-                        source = data.source;
-                        alternativeId = data.alternative_id;
-                        allCoverLetters = [{
-                           text: data.text,
-                           rawText: data.text,
-                           source: data.source
-                        }];
-                        step.set(3);
+                    if (data.text && currentVersionIndex === 0) {
+                        const isUpdateNeeded = !coverLetter || source !== data.source;
+                        
+                        if (allCoverLetters.length === 0) {
+                            allCoverLetters = [{
+                                text: data.text,
+                                rawText: data.text,
+                                source: data.source
+                            }];
+                        } else {
+                            allCoverLetters[0] = {
+                                text: data.text,
+                                rawText: data.text,
+                                source: data.source
+                            };
+                            allCoverLetters = [...allCoverLetters];
+                        }
+
+                        if (isUpdateNeeded) {
+                            coverLetter = data.text;
+                            originalCoverLetter = data.text;
+                            source = data.source;
+                            alternativeId = data.alternative_id;
+                            step.set(3);
+                        }
                     }
                     
                     // If backend provided pre-finished alternatives, add them now
