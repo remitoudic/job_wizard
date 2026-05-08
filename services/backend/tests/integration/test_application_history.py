@@ -133,3 +133,10 @@ def test_application_history_tracking(client: TestClient, session: Session, auth
     assert history[0]["new_status"] == "finish"
     assert history[0]["old_status"] == "interview"
     assert history[0]["notes"] == "Status manual update" # Default note
+
+    # 7. Verify details response includes job_url
+    resp = client.get(f"/api/application/{app_id}/details", headers=auth_headers)
+    assert resp.status_code == 200
+    details = resp.json()
+    assert "job_url" in details
+    assert details["job_url"] == "https://test.com/history-job"

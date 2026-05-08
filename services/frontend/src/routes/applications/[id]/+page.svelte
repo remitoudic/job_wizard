@@ -240,6 +240,20 @@
                                     class="w-full mt-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                                 />
                             </label>
+
+                            <div class="pt-2">
+                                <a 
+                                    href={details.job_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 group transition-colors"
+                                >
+                                    <span>View Original Job Posting</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                </a>
+                            </div>
                         </div>
                     </section>
 

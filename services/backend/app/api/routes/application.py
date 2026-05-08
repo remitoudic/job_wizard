@@ -213,6 +213,7 @@ async def get_application_details(
             "job_title": job_desc.job_title,
             "company": job_desc.company,
             "status": app.status.value,
+            "job_url": job_desc.url,
             "header": app.header,
             "cover_letter_final": app.cover_letter_final,
             "notes": app.notes,

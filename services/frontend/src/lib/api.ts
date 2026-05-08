@@ -396,6 +396,7 @@ export interface ApplicationDetails {
     job_title: string;
     company: string;
     status: string;
+    job_url: string;
     header: Record<string, any>;
     cover_letter_final: Record<string, any>;
     notes?: string;
