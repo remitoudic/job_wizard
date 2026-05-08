@@ -108,10 +108,7 @@
                 }
                 
                 try {
-                    const token = get(auth).token;
-                    if (!token) throw new Error("No token");
-                    
-                    const updatedUser = await uploadProfilePicture(token, blob);
+                    const updatedUser = await uploadProfilePicture(blob);
                     user = updatedUser;
                     auth.updateUser(user);
                     message = "Profile picture updated successfully!";
@@ -135,10 +132,7 @@
         
         isDeleting = true;
         try {
-            const token = get(auth).token;
-            if (!token) throw new Error("No token");
-            
-            const updatedUser = await deleteProfilePicture(token);
+            const updatedUser = await deleteProfilePicture();
             user = updatedUser;
             auth.updateUser(user);
             message = "Profile picture deleted successfully!";

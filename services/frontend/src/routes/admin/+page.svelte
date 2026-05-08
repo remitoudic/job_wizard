@@ -27,7 +27,7 @@
         }
 
         try {
-            users = await getUsers($auth.token!);
+            users = await getUsers();
         } catch (e) {
             error = "Failed to load users";
             console.error(e);

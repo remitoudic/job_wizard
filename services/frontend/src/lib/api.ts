@@ -3,17 +3,20 @@ import { get } from 'svelte/store';
 
 export const API_URL = import.meta.env.VITE_API_URL || '';
 
-function getHeaders() {
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
-
-    // Inject token if available
-    const token = get(auth).token;
+function getAuthHeaders(tokenOverride?: string) {
+    const headers: Record<string, string> = {};
+    const token = tokenOverride || get(auth).token;
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
     return headers;
+}
+
+function getHeaders(tokenOverride?: string) {
+    return {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(tokenOverride)
+    };
 }
 
 async function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
@@ -129,11 +132,9 @@ export interface User {
     is_superuser?: boolean;
 }
 
-export async function getUsers(token: string): Promise<User[]> {
+export async function getUsers(token?: string): Promise<User[]> {
     const response = await apiFetch(`${API_URL}/api/users/`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+        headers: getHeaders(token),
     });
 
     return handleResponse<User[]>(response, 'Failed to fetch users');
@@ -164,27 +165,23 @@ export interface UploadImageResponse {
     url: string;
 }
 
-export async function uploadProfilePicture(token: string, file: Blob): Promise<User> {
+export async function uploadProfilePicture(file: Blob, token?: string): Promise<User> {
     const formData = new FormData();
     formData.append('file', file, 'profile.jpg');
 
     const response = await apiFetch(`${API_URL}/api/users/me/picture`, {
         method: 'POST',
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(token),
         body: formData,
     });
 
     return handleResponse<User>(response, 'Failed to upload profile picture');
 }
 
-export async function deleteProfilePicture(token: string): Promise<User> {
+export async function deleteProfilePicture(token?: string): Promise<User> {
     const response = await apiFetch(`${API_URL}/api/users/me/picture`, {
         method: 'DELETE',
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(token),
     });
 
     return handleResponse<User>(response, 'Failed to delete profile picture');
