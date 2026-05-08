@@ -16,19 +16,23 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Check if .env.local exists, if not use .env.example
-if [ ! -f .env ]; then
-    if [ -f .env.example ]; then
-        echo "⚠️  No .env file found. Creating from .env.example..."
-        cp .env.example .env
-        echo "✅ Created .env file"
+# Check if .env/.env exists, if not use .env/.env.example
+ENV_FILE=".env/.env"
+ENV_EXAMPLE=".env/.env.example"
+
+if [ ! -f "$ENV_FILE" ]; then
+    if [ -f "$ENV_EXAMPLE" ]; then
+        echo "⚠️  No .env file found at $ENV_FILE. Creating from $ENV_EXAMPLE..."
+        mkdir -p .env
+        cp "$ENV_EXAMPLE" "$ENV_FILE"
+        echo "✅ Created $ENV_FILE"
         echo ""
-        echo "📝 NOTE: Edit .env and set your API keys if needed:"
+        echo "📝 NOTE: Edit $ENV_FILE and set your API keys if needed:"
         echo "   - OPENROUTER_API_KEY (optional, for remote LLM)"
         echo "   - LOGFIRE_TOKEN (optional, for observability)"
         echo ""
     else
-        echo "❌ Error: No .env.example file found!"
+        echo "❌ Error: No $ENV_EXAMPLE file found!"
         exit 1
     fi
 fi

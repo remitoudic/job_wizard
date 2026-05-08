@@ -40,11 +40,11 @@ else
   export CORS_ORIGINS="http://localhost:3000,http://localhost:5173"
 fi
 
-# If a .env file exists, load it but do not override variables we've just exported
-if [ -f .env ]; then
+# If a .env/.env file exists, load it but do not override variables we've just exported
+if [ -f .env/.env ]; then
   set -a
   # shellcheck disable=SC1091
-  source .env
+  source .env/.env
   set +a
 fi
 

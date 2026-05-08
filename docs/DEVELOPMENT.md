@@ -30,7 +30,7 @@ cd job_wizard
 ./scripts/start_locally.sh
 
 # 3. Pull the Ollama model (first time only)
-docker exec jobwizard-ollama ollama pull llama3.2:1b
+docker exec jobwizard-ollama ollama pull google/gemma-4-E2B-it
 
 # 4. Access the app
 open http://localhost:5173
