@@ -10,7 +10,7 @@
     } from "$lib/api";
     import { auth } from "../../../stores/auth";
 
-    const applicationId = parseInt($page.params.id);
+    const applicationId = parseInt($page.params.id || "0");
     
     let details: ApplicationDetails | null = null;
     let isLoading = true;
@@ -24,6 +24,9 @@
     let editableStatus = "";
     let editableNotes = "";
     let editableLetterBody = "";
+
+    let isInitialized = false;
+    let autoSaveTimeout: ReturnType<typeof setTimeout>;
 
     onMount(async () => {
         if (!$auth.token) {
@@ -40,6 +43,9 @@
             editableStatus = details.status || "";
             editableNotes = details.notes || "";
             editableLetterBody = details.cover_letter_final?.body || "";
+            
+            // Set initialized after values are set to avoid immediate auto-save
+            setTimeout(() => { isInitialized = true; }, 500);
         } catch (e: any) {
             error = e.message || "Failed to load application details";
         } finally {
@@ -47,10 +53,10 @@
         }
     });
 
-    async function handleSave() {
+    async function handleSave(showNotification = true) {
         if (!details) return;
         isSaving = true;
-        saveMessage = "";
+        if (showNotification) saveMessage = "";
         
         try {
             const updateData: UpdateApplicationRequest = {
@@ -62,12 +68,59 @@
             };
             
             await updateApplication(applicationId, updateData);
-            saveMessage = "Changes saved successfully!";
-            setTimeout(() => { saveMessage = ""; }, 3000);
+            
+            // Update details to match current state
+            details = {
+                ...details,
+                job_title: editableTitle,
+                company: editableCompany,
+                status: editableStatus,
+                notes: editableNotes,
+                cover_letter_final: { ...details.cover_letter_final, body: editableLetterBody }
+            };
+
+            if (showNotification) {
+                saveMessage = "Changes saved successfully!";
+                setTimeout(() => { saveMessage = ""; }, 3000);
+            }
         } catch (e: any) {
-            error = e.message || "Failed to save changes";
+            if (showNotification) {
+                error = e.message || "Failed to save changes";
+            } else {
+                console.error("Auto-save failed:", e);
+            }
         } finally {
             isSaving = false;
+        }
+    }
+
+    function triggerAutoSave() {
+        if (!isInitialized) return;
+        
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(() => {
+            if (!isSaving) {
+                handleSave(false); // Background save without full notification
+            } else {
+                // If already saving, retry in 1s
+                triggerAutoSave();
+            }
+        }, 2000);
+    }
+
+    // Reactive watcher for auto-save
+    $: {
+        if (isInitialized && details) {
+            const changed = 
+                editableTitle !== (details.job_title || "") ||
+                editableCompany !== (details.company || "") ||
+                editableStatus !== (details.status || "") ||
+                editableNotes !== (details.notes || "") ||
+                editableLetterBody !== (details.cover_letter_final?.body || "");
+            
+            if (changed) {
+                triggerAutoSave();
+            }
         }
     }
 </script>
@@ -102,7 +155,7 @@
                     <span class="text-green-600 text-sm font-medium animate-fade-in">{saveMessage}</span>
                 {/if}
                 <button 
-                    on:click={handleSave}
+                    on:click={() => handleSave()}
                     disabled={isSaving || isLoading}
                     class="bg-[#0369A1] hover:bg-[#0284C7] text-white px-6 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
                 >
@@ -138,7 +191,7 @@
                     <section class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm overflow-hidden flex flex-col h-[calc(100vh-12rem)]">
                         <div class="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                             <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500">Cover Letter Body</h2>
-                            <span class="text-xs text-slate-400">Autosave disabled - Click Save Changes to persist</span>
+                            <span class="text-xs text-slate-400">Autosave enabled - Changes are saved automatically</span>
                         </div>
                         <textarea 
                             bind:value={editableLetterBody}
