@@ -5,14 +5,17 @@
     import { 
         fetchApplicationDetails, 
         updateApplication, 
+        fetchApplicationHistory,
         type ApplicationDetails,
-        type UpdateApplicationRequest 
+        type UpdateApplicationRequest,
+        type ApplicationStatusHistory
     } from "$lib/api";
     import { auth } from "../../../stores/auth";
 
     const applicationId = parseInt($page.params.id || "0");
     
     let details: ApplicationDetails | null = null;
+    let history: ApplicationStatusHistory[] = [];
     let isLoading = true;
     let isSaving = false;
     let error = "";
@@ -35,7 +38,13 @@
         }
 
         try {
-            details = await fetchApplicationDetails(applicationId);
+            const [detailsData, historyData] = await Promise.all([
+                fetchApplicationDetails(applicationId),
+                fetchApplicationHistory(applicationId)
+            ]);
+            
+            details = detailsData;
+            history = historyData;
             
             // Initialize editable fields
             editableTitle = details.job_title || "";
@@ -59,6 +68,8 @@
         if (showNotification) saveMessage = "";
         
         try {
+            const statusChanged = editableStatus !== details.status;
+
             const updateData: UpdateApplicationRequest = {
                 job_title: editableTitle,
                 company: editableCompany,
@@ -78,6 +89,11 @@
                 notes: editableNotes,
                 cover_letter_final: { ...details.cover_letter_final, body: editableLetterBody }
             };
+
+            // If status changed, refresh history
+            if (statusChanged) {
+                history = await fetchApplicationHistory(applicationId);
+            }
 
             if (showNotification) {
                 saveMessage = "Changes saved successfully!";
@@ -122,6 +138,28 @@
                 triggerAutoSave();
             }
         }
+    }
+
+    function formatDate(dateStr: string) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString(undefined, { 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function getStatusColor(status: string) {
+        const colors: Record<string, string> = {
+            applied: 'bg-blue-100 text-blue-700',
+            waiting: 'bg-amber-100 text-amber-700',
+            interview: 'bg-purple-100 text-purple-700',
+            refused: 'bg-red-100 text-red-700',
+            accepted: 'bg-green-100 text-green-700',
+            finish: 'bg-slate-100 text-slate-700'
+        };
+        return colors[status.toLowerCase()] || 'bg-slate-100 text-slate-700';
     }
 </script>
 
@@ -254,6 +292,39 @@
                                     </svg>
                                 </a>
                             </div>
+                        </div>
+                    </section>
+
+                    <!-- Status History Timeline -->
+                    <section class="bg-white rounded-xl border border-[#E2E8F0] shadow-sm p-6 space-y-4">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500">Status History</h2>
+                        <div class="relative pl-6 space-y-6 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
+                            {#each history as item}
+                                <div class="relative">
+                                    <!-- Dot -->
+                                    <div class="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full border-2 border-white bg-blue-500 shadow-sm z-10"></div>
+                                    
+                                    <div class="flex flex-col">
+                                        <div class="flex items-center gap-2">
+                                            {#if item.old_status}
+                                                <span class="text-xs text-slate-400">{item.old_status}</span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                </svg>
+                                            {/if}
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase {getStatusColor(item.new_status)}">
+                                                {item.new_status}
+                                            </span>
+                                        </div>
+                                        <span class="text-[10px] text-slate-400 mt-1">{formatDate(item.created_at)}</span>
+                                        {#if item.notes}
+                                            <p class="text-xs text-slate-600 mt-1 italic italic-slate-500">"{item.notes}"</p>
+                                        {/if}
+                                    </div>
+                                </div>
+                            {:else}
+                                <p class="text-xs text-slate-400 italic">No history recorded yet.</p>
+                            {/each}
                         </div>
                     </section>
 

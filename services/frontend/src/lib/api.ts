@@ -432,6 +432,24 @@ export async function updateApplication(id: number, data: UpdateApplicationReque
     return handleResponse<any>(response, 'Failed to update application');
 }
 
+export interface ApplicationStatusHistory {
+    id: number;
+    application_id: number;
+    old_status: string | null;
+    new_status: string;
+    notes: string | null;
+    created_at: string;
+}
+
+export async function fetchApplicationHistory(id: number): Promise<ApplicationStatusHistory[]> {
+    const response = await apiFetch(`${API_URL}/api/application/${id}/history`, {
+        method: 'GET',
+        headers: getHeaders(),
+    });
+
+    return handleResponse<ApplicationStatusHistory[]>(response, 'Failed to fetch status history');
+}
+
 export async function updateApplicationStatus(id: number, status: string): Promise<any> {
     const response = await apiFetch(`${API_URL}/api/application/${id}/status`, {
         method: 'PATCH',
