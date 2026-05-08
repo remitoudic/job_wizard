@@ -9,6 +9,7 @@ from app.api.validation.schemas import (
     SaveApplicationResponse,
     UpdateApplicationStatusRequest,
     UpdateApplicationRequest,
+    CreateApplicationRequest,
 )
 
 # Import database models
@@ -119,6 +120,73 @@ async def save_application(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to save application: {str(e)}"
+        )
+
+
+@router.post("/application")
+async def create_manual_application(
+    request: CreateApplicationRequest,
+    session: SessionDep,
+    current_user: CurrentUser,
+):
+    """
+    Manually create a new application record.
+    """
+    try:
+        # Step 1: Create or get JobDescription
+        # We use the URL as a unique identifier if provided, otherwise create new
+        job_description = None
+        if request.job_url:
+            statement = select(DBJobDescription).where(DBJobDescription.url == request.job_url)
+            job_description = session.exec(statement).first()
+        
+        if not job_description:
+            job_description = DBJobDescription(
+                url=request.job_url or f"manual-{datetime.utcnow().timestamp()}",
+                job_title=request.job_title,
+                company=request.company,
+                full_description=f"Manually created application for {request.job_title} at {request.company}",
+                requirements=[],
+                source="Manual Entry"
+            )
+            session.add(job_description)
+            session.commit()
+            session.refresh(job_description)
+        
+        # Step 2: Create Application
+        application = Application(
+            user_id=current_user.id,
+            job_description_id=job_description.id,
+            status=ApplicationStatus(request.status),
+            notes=request.notes,
+            cover_letter_final={
+                "model": "Manual",
+                "timestamp": datetime.utcnow().isoformat(),
+                "body": request.cover_letter_body
+            },
+            header={} # Empty header for manual entry
+        )
+        session.add(application)
+        session.commit()
+        session.refresh(application)
+        
+        # Step 3: Record initial history
+        history = ApplicationStatusHistory(
+            application_id=application.id,
+            old_status=None,
+            new_status=application.status,
+            notes="Manual application creation"
+        )
+        session.add(history)
+        session.commit()
+        
+        return {"success": True, "application_id": application.id}
+        
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create manual application: {str(e)}"
         )
 
 

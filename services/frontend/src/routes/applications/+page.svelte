@@ -9,6 +9,7 @@
     } from "$lib/api";
     import { auth } from "../../stores/auth";
     import { goto } from "$app/navigation";
+    import CreateApplicationModal from "$lib/components/CreateApplicationModal.svelte";
 
     // SvelteKit may pass `data` and `params` to pages — declare to prevent runtime warnings
     export let data: any = {};
@@ -25,6 +26,7 @@
     let totalApplications = 0;
     let listSkip = 0;
     let listLimit = 10;
+    let isCreateModalOpen = false;
 
     onMount(async () => {
         // Check if user is logged in
@@ -246,23 +248,36 @@
                 </p>
             </div>
             
-            <!-- View Toggle -->
-            {#if !isLoading && !error && applications.length > 0}
-                <div class="flex items-center gap-2 bg-white p-1 rounded-lg border border-[#E2E8F0] shadow-sm self-start md:self-auto">
-                    <button 
-                        class="px-4 py-2 rounded-md text-sm font-semibold transition-all {viewMode === 'list' ? 'bg-[#0369A1] text-white shadow' : 'text-[#64748B] hover:text-[#0F172A]'}"
-                        on:click={() => viewMode = 'list'}
-                    >
-                        List
-                    </button>
-                    <button 
-                        class="px-4 py-2 rounded-md text-sm font-semibold transition-all {viewMode === 'kanban' ? 'bg-[#0369A1] text-white shadow' : 'text-[#64748B] hover:text-[#0F172A]'}"
-                        on:click={() => viewMode = 'kanban'}
-                    >
-                        Kanban
-                    </button>
-                </div>
-            {/if}
+            <div class="flex flex-wrap items-center gap-3 self-start md:self-auto">
+                <!-- Create New Button -->
+                <button 
+                    class="bg-[#0369A1] hover:bg-[#0284C7] text-white px-5 py-2.5 rounded-lg font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                    on:click={() => isCreateModalOpen = true}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Create New
+                </button>
+
+                <!-- View Toggle -->
+                {#if !isLoading && !error && applications.length > 0}
+                    <div class="flex items-center gap-1 bg-white p-1 rounded-lg border border-[#E2E8F0] shadow-sm">
+                        <button 
+                            class="px-4 py-1.5 rounded-md text-sm font-semibold transition-all {viewMode === 'list' ? 'bg-slate-100 text-[#0369A1] shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}"
+                            on:click={() => viewMode = 'list'}
+                        >
+                            List
+                        </button>
+                        <button 
+                            class="px-4 py-1.5 rounded-md text-sm font-semibold transition-all {viewMode === 'kanban' ? 'bg-slate-100 text-[#0369A1] shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}"
+                            on:click={() => viewMode = 'kanban'}
+                        >
+                            Kanban
+                        </button>
+                    </div>
+                {/if}
+            </div>
         </div>
 
         <!-- Loading State -->
@@ -783,6 +798,11 @@
         {/if}
     </div>
 </div>
+
+<CreateApplicationModal 
+    bind:isOpen={isCreateModalOpen} 
+    on:success={loadInitialData}
+/>
 
 <style>
     /* Smooth transitions */

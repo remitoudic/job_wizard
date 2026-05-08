@@ -75,6 +75,16 @@ class UpdateApplicationRequest(BaseModel):
     cover_letter_body: Optional[str] = None
 
 
+class CreateApplicationRequest(BaseModel):
+    """Request model for manually creating a new application."""
+    job_title: str
+    company: str
+    job_url: Optional[str] = ""
+    status: str = "applied"
+    notes: Optional[str] = ""
+    cover_letter_body: Optional[str] = ""
+
+
 
 
 class SaveApplicationRequest(BaseModel):

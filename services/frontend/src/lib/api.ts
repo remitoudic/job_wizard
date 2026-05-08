@@ -432,6 +432,25 @@ export async function updateApplication(id: number, data: UpdateApplicationReque
     return handleResponse<any>(response, 'Failed to update application');
 }
 
+export interface CreateApplicationRequest {
+    job_title: string;
+    company: string;
+    job_url?: string;
+    status?: string;
+    notes?: string;
+    cover_letter_body?: string;
+}
+
+export async function createApplication(data: CreateApplicationRequest): Promise<{ success: boolean, application_id: number }> {
+    const response = await apiFetch(`${API_URL}/api/application`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+    });
+
+    return handleResponse<{ success: boolean, application_id: number }>(response, 'Failed to create application');
+}
+
 export interface ApplicationStatusHistory {
     id: number;
     application_id: number;
