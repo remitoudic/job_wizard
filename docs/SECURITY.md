@@ -65,3 +65,12 @@ When a user requests a specific resource (e.g., a Job Application), the system f
     AND user_id = :current_user_id;
     ```
 3.  **Privacy by Obscurity**: If the `user_id` does not match, the system responds with a `404 Not Found` rather than a `403 Forbidden` to avoid confirming the existence of the resource to unauthorized parties.
+
+## PDF & Upload Security
+
+The system handles files (PDFs, images) differently than structured database data to support sharing:
+
+1.  **UUID-based Filenames**: All generated PDFs and uploaded assets are renamed to high-entropy UUIDs (e.g., `f9eeeac3-2a1a-49a6-9d1f-b726baa10b79.pdf`). This provides a massive search space (2^128) making it practically impossible for an attacker to "scrape" or guess another user's files.
+2.  **Publicly Accessible Downloads**: To support the "Recruiter Flow" (where a recruiter needs to open a PDF or see a profile picture without having an account), the `/api/download` and `/api/uploads` endpoints are open.
+3.  **Security by Obscurity**: Access to a file requires knowledge of its specific UUID. Since these links are only shared by the owner, this provides a balance between strict security and real-world usability.
+4.  **Backend Robustness**: The download endpoints accept optional authentication. This ensures that even if a logged-in user's session expires, they can still download their generated documents without friction.
