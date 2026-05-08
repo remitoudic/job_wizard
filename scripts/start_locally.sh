@@ -16,14 +16,14 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Check if .env/.env exists, if not use .env/.env.example
-ENV_FILE=".env/.env"
-ENV_EXAMPLE=".env/.env.example"
+# Check if .env exists, if not use .env.example
+ENV_FILE=".env"
+ENV_EXAMPLE=".env.example"
 
 if [ ! -f "$ENV_FILE" ]; then
     if [ -f "$ENV_EXAMPLE" ]; then
         echo "⚠️  No .env file found at $ENV_FILE. Creating from $ENV_EXAMPLE..."
-        mkdir -p .env
+        # Create .env from example
         cp "$ENV_EXAMPLE" "$ENV_FILE"
         echo "✅ Created $ENV_FILE"
         echo ""
