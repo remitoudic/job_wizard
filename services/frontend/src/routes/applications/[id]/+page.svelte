@@ -6,11 +6,13 @@
         fetchApplicationDetails, 
         updateApplication, 
         fetchApplicationHistory,
+        generatePdf,
         type ApplicationDetails,
         type UpdateApplicationRequest,
         type ApplicationStatusHistory
     } from "$lib/api";
     import { auth } from "../../../stores/auth";
+    import { API_URL } from "$lib/api";
 
     const applicationId = parseInt($page.params.id || "0");
     
@@ -27,6 +29,8 @@
     let editableStatus = "";
     let editableNotes = "";
     let editableLetterBody = "";
+    let isPdfGenerating = false;
+    let pdfUrl = "";
 
     let isInitialized = false;
     let autoSaveTimeout: ReturnType<typeof setTimeout>;
@@ -161,6 +165,86 @@
         };
         return colors[status.toLowerCase()] || 'bg-slate-100 text-slate-700';
     }
+
+    async function handleGeneratePdf() {
+        if (!editableLetterBody || !details) return;
+
+        isPdfGenerating = true;
+        error = "";
+
+        try {
+            const result = await generatePdf({
+                cover_letter: editableLetterBody,
+                job_title: editableTitle,
+                company: editableCompany,
+                user_name: ($auth.user?.first_name && $auth.user?.surname) 
+                    ? `${$auth.user.first_name} ${$auth.user.surname}` 
+                    : ($auth.user?.email || "Applicant"),
+                first_name: $auth.user?.first_name || "",
+                surname: $auth.user?.surname || "",
+                email: $auth.user?.email || "",
+                phone: $auth.user?.phone || "",
+                linkedin: $auth.user?.linkedin_url || "",
+                template_name: "british", // Default
+                full_name: ($auth.user?.first_name && $auth.user?.surname) 
+                    ? `${$auth.user.first_name} ${$auth.user.surname}` 
+                    : "",
+                address_street: $auth.user?.street || "",
+                address_postcode: $auth.user?.postcode || "",
+                address_city: $auth.user?.city || "",
+                address_country: $auth.user?.country || "",
+            });
+
+            pdfUrl = result.url;
+            handleDownload();
+        } catch (e: any) {
+            error = e.message || "Failed to generate PDF";
+        } finally {
+            isPdfGenerating = false;
+        }
+    }
+
+    async function handleDownload() {
+        if (!pdfUrl) return;
+
+        const fullUrl = pdfUrl.startsWith("http") 
+            ? pdfUrl 
+            : `${API_URL}${pdfUrl}`;
+
+        try {
+            const headers: Record<string, string> = {};
+            if ($auth.token) {
+                headers['Authorization'] = `Bearer ${$auth.token}`;
+            }
+
+            const response = await fetch(fullUrl, {
+                headers,
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+            }
+
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            
+            const companyName = editableCompany.replace(/[^a-zA-Z0-9]/g, "_");
+            const date = new Date().toISOString().split("T")[0];
+            link.download = `Cover_Letter_${companyName}_${date}.pdf`;
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (e) {
+            console.error("Download failed:", e);
+            window.open(fullUrl, "_blank");
+        }
+    }
 </script>
 
 <div class="min-h-screen bg-[#F8FAFC] pb-20">
@@ -192,6 +276,23 @@
                 {#if saveMessage}
                     <span class="text-green-600 text-sm font-medium animate-fade-in">{saveMessage}</span>
                 {/if}
+                
+                <button 
+                    on:click={handleGeneratePdf}
+                    disabled={isPdfGenerating || isLoading}
+                    class="bg-white border border-[#E2E8F0] text-slate-700 px-4 py-2 rounded-lg font-semibold transition-all shadow-sm hover:shadow-md disabled:opacity-50 flex items-center gap-2"
+                >
+                    {#if isPdfGenerating}
+                        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Generating...
+                    {:else}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Download PDF
+                    {/if}
+                </button>
+
                 <button 
                     on:click={() => handleSave()}
                     disabled={isSaving || isLoading}

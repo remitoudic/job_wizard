@@ -303,7 +303,10 @@ async def generate_pdf(
 
 
 @router.get("/download/{filename}")
-async def download_file(filename: str, current_user: CurrentUser):
+async def download_file(
+    filename: str, 
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
     """
     Download a file from the uploads directory.
     Requires authentication.
@@ -333,7 +336,10 @@ async def download_file(filename: str, current_user: CurrentUser):
 
 
 @router.get("/uploads/{filename}")
-async def get_upload(filename: str, current_user: CurrentUser):
+async def get_upload(
+    filename: str, 
+    current_user: Optional[User] = Depends(get_current_user_optional)
+):
     """
     Authenticated endpoint to serve uploaded files (images, etc).
     Replaces the previous unauthenticated static mount.

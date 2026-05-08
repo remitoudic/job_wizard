@@ -839,12 +839,22 @@
             : `${API_URL}${pdfUrl}`;
 
 		try {
-			// Fetch blob with Authorization header to bypass authentication
+			// Prepare headers
+			const headers: Record<string, string> = {};
+			if ($auth.token) {
+				headers['Authorization'] = `Bearer ${$auth.token}`;
+			}
+
+			// Fetch blob with credentials to include cookies if token is null
 			const response = await fetch(fullUrl, {
-                headers: {
-                    'Authorization': `Bearer ${$auth.token}`
-                }
-            });
+				headers,
+				credentials: 'include'
+			});
+
+			if (!response.ok) {
+				throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+			}
+
 			const blob = await response.blob();
 			const blobUrl = window.URL.createObjectURL(blob);
 
