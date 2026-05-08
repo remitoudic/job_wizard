@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select, func
+from datetime import datetime
 from app.api.deps import CurrentUser, SessionDep
 
 # Import validation schemas
@@ -7,6 +8,7 @@ from app.api.validation.schemas import (
     SaveApplicationRequest,
     SaveApplicationResponse,
     UpdateApplicationStatusRequest,
+    UpdateApplicationRequest,
 )
 
 # Import database models
@@ -149,6 +151,7 @@ async def get_user_applications(
                 "company": job_desc.company,
                 "job_url": job_desc.url,
                 "status": app.status.value,
+                "notes": app.notes,
                 "created_at": app.created_at.isoformat(),
             }
             if include_details:
@@ -195,8 +198,13 @@ async def get_application_details(
         app, job_desc = result
         
         return {
+            "id": app.id,
+            "job_title": job_desc.job_title,
+            "company": job_desc.company,
+            "status": app.status.value,
             "header": app.header,
             "cover_letter_final": app.cover_letter_final,
+            "notes": app.notes,
             "job_description": job_desc.full_description,
             "requirements": job_desc.requirements,
         }
@@ -288,4 +296,81 @@ async def delete_application(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to delete application: {str(e)}"
+        )
+@router.patch("/application/{application_id}")
+async def update_application(
+    application_id: int,
+    request: UpdateApplicationRequest,
+    session: SessionDep,
+    current_user: CurrentUser,
+):
+    """
+    Update application details, notes, or job info.
+    Requires JWT authentication.
+    """
+    try:
+        # Verify application exists and belongs to user
+        statement = (
+            select(Application, DBJobDescription)
+            .join(DBJobDescription, Application.job_description_id == DBJobDescription.id)
+            .where(
+                Application.id == application_id,
+                Application.user_id == current_user.id
+            )
+        )
+        result = session.exec(statement).first()
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Application not found")
+            
+        application, job_description = result
+        
+        # Update Application fields
+        if request.status is not None:
+            try:
+                application.status = ApplicationStatus(request.status)
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid status: {request.status}")
+        
+        if request.notes is not None:
+            application.notes = request.notes
+            
+        if request.header is not None:
+            application.header = request.header
+            
+        if request.cover_letter_body is not None:
+            # Update the body in the cover_letter_final JSON
+            new_final = dict(application.cover_letter_final)
+            new_final["body"] = request.cover_letter_body
+            application.cover_letter_final = new_final
+            
+        application.updated_at = datetime.utcnow()
+        
+        # Update JobDescription fields
+        job_updated = False
+        if request.job_title is not None:
+            job_description.job_title = request.job_title
+            job_updated = True
+            
+        if request.company is not None:
+            job_description.company = request.company
+            job_updated = True
+            
+        if job_updated:
+            job_description.updated_at = datetime.utcnow()
+            session.add(job_description)
+            
+        session.add(application)
+        session.commit()
+        session.refresh(application)
+        
+        return {"success": True, "application_id": application.id}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update application: {str(e)}"
         )

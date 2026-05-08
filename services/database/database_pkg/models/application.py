@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from enum import Enum
 from sqlmodel import Field, SQLModel, JSON, Column
+from sqlalchemy import Text
 
 
 class ApplicationStatus(str, Enum):
@@ -38,5 +39,6 @@ class Application(SQLModel, table=True):
         default=ApplicationStatus.APPLIED,
         description="Current status of the application"
     )
+    notes: Optional[str] = Field(default=None, sa_column=Column(Text), description="User notes for this application")
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp when created")
     updated_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp when last updated")

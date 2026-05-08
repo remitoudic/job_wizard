@@ -65,6 +65,16 @@ class UpdateApplicationStatusRequest(BaseModel):
     status: str
 
 
+class UpdateApplicationRequest(BaseModel):
+    """Request model for updating an existing application."""
+    job_title: Optional[str] = None
+    company: Optional[str] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    header: Optional[Dict[str, Any]] = None
+    cover_letter_body: Optional[str] = None
+
+
 
 
 class SaveApplicationRequest(BaseModel):

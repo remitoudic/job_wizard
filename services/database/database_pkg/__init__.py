@@ -18,4 +18,10 @@ def init_db():
     except Exception:
         pass
 
+    try:
+        with engine.begin() as conn:
+            conn.execute(text('ALTER TABLE "applications" ADD COLUMN notes TEXT;'))
+    except Exception:
+        pass
+
 

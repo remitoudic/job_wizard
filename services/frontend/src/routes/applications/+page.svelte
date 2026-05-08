@@ -376,6 +376,7 @@
                                 <tr
                                     class="hover:bg-slate-50 transition-colors cursor-pointer"
                                     on:click={() => toggleExpand(app.id)}
+                                    on:dblclick={() => goto(`/applications/${app.id}`)}
                                 >
                                     <td
                                         class="p-4 text-slate-600 whitespace-nowrap align-top"
@@ -667,7 +668,8 @@
                                      role="listitem"
                                      draggable="true"
                                      on:dragstart={(e) => handleDragStart(e, app.id)}
-                                     on:dragend={handleDragEnd}>
+                                     on:dragend={handleDragEnd}
+                                     on:dblclick={() => goto(`/applications/${app.id}`)}>
                                     <div class="p-4 cursor-pointer" role="button" tabindex="0" on:click={() => toggleExpand(app.id)} on:keydown={(e) => e.key === 'Enter' && toggleExpand(app.id)}>
                                         <!-- Card Header -->
                                         <div class="flex justify-between items-start mb-2 gap-2">

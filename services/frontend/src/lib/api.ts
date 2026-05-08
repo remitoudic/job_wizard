@@ -392,8 +392,13 @@ export async function fetchUserApplications(skip: number = 0, limit: number = 50
 }
 
 export interface ApplicationDetails {
+    id: number;
+    job_title: string;
+    company: string;
+    status: string;
     header: Record<string, any>;
     cover_letter_final: Record<string, any>;
+    notes?: string;
     job_description: string;
     requirements: string[];
 }
@@ -405,6 +410,25 @@ export async function fetchApplicationDetails(id: number): Promise<ApplicationDe
     });
 
     return handleResponse<ApplicationDetails>(response, 'Failed to fetch application details');
+}
+
+export interface UpdateApplicationRequest {
+    job_title?: string;
+    company?: string;
+    status?: string;
+    notes?: string;
+    header?: Record<string, any>;
+    cover_letter_body?: string;
+}
+
+export async function updateApplication(id: number, data: UpdateApplicationRequest): Promise<any> {
+    const response = await apiFetch(`${API_URL}/api/application/${id}`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(data),
+    });
+
+    return handleResponse<any>(response, 'Failed to update application');
 }
 
 export async function updateApplicationStatus(id: number, status: string): Promise<any> {
