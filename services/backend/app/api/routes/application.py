@@ -364,12 +364,8 @@ async def delete_application(
         if not application:
             raise HTTPException(status_code=404, detail="Application not found")
 
-        # Keep the generated letter reference before nullifying it.
-        # This avoids FK violations when the application still points to the letter row.
+        # Keep the generated letter reference for cleanup after app deletion.
         letter_id = application.generated_letter_id
-        application.generated_letter_id = None
-        session.add(application)
-        session.flush()
 
         # 1. Delete status history records
         history_statement = select(ApplicationStatusHistory).where(
@@ -379,26 +375,35 @@ async def delete_application(
         for record in history_records:
             session.delete(record)
 
-        # 2. Delete related generated letters
-        # Some applications have a direct link, some have letters pointing back to them.
-        # Delete letters pointing back to this application
+        # 2. Collect generated letters pointing back to this application.
+        # We cannot delete them yet because this application may still reference one of them.
         related_letters_stmt = select(DBGeneratedLetter).where(
             DBGeneratedLetter.application_id == application_id
         )
         related_letters = session.exec(related_letters_stmt).all()
+
+        # 3. Delete the application first to release FK constraints.
+        session.delete(application)
+        session.flush()
+
+        # 4. Delete letters that pointed back to the removed application.
         deleted_letter_ids = set()
         for letter in related_letters:
             deleted_letter_ids.add(letter.id)
             session.delete(letter)
 
-        # Delete the specific linked letter if it wasn't already deleted above.
+        # 5. Delete the directly linked generated letter only if no other app references it.
         if letter_id and letter_id not in deleted_letter_ids:
-            specific_letter = session.get(DBGeneratedLetter, letter_id)
-            if specific_letter and specific_letter.user_id == current_user.id:
-                session.delete(specific_letter)
+            refs_stmt = select(func.count(Application.id)).where(
+                Application.generated_letter_id == letter_id,
+                Application.id != application_id,
+            )
+            remaining_refs = session.exec(refs_stmt).one()
+            if remaining_refs == 0:
+                specific_letter = session.get(DBGeneratedLetter, letter_id)
+                if specific_letter and specific_letter.user_id == current_user.id:
+                    session.delete(specific_letter)
 
-        # 3. Finally delete the application
-        session.delete(application)
         session.commit()
         
         return {"success": True, "message": "Application deleted successfully"}
