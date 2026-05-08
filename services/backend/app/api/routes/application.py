@@ -13,10 +13,11 @@ from app.api.validation.schemas import (
 
 # Import database models
 from database_pkg.models import (
-    JobDescription as DBJobDescription,
-    GeneratedLetter,
-    Application,
+    Application, 
+    JobDescription as DBJobDescription, 
+    GeneratedLetter as DBGeneratedLetter,
     ApplicationStatus,
+    ApplicationStatusHistory
 )
 
 router = APIRouter(tags=["application"])
@@ -67,7 +68,7 @@ async def save_application(
             for letter in request.generated_letters
         ]
         
-        generated_letter = GeneratedLetter(
+        generated_letter = DBGeneratedLetter(
             user_id=current_user.id,
             generated_letters=generated_letters_data,
         )
@@ -95,6 +96,16 @@ async def save_application(
         session.add(application)
         session.commit()
         session.refresh(application)
+        
+        # Record initial status history
+        history = ApplicationStatusHistory(
+            application_id=application.id,
+            old_status=None,
+            new_status=ApplicationStatus.APPLIED,
+            notes="Initial application creation"
+        )
+        session.add(history)
+        session.commit()
         
         return SaveApplicationResponse(
             success=True,
@@ -328,7 +339,17 @@ async def update_application(
         # Update Application fields
         if request.status is not None:
             try:
-                application.status = ApplicationStatus(request.status)
+                new_status = ApplicationStatus(request.status)
+                if new_status != application.status:
+                    # Record history before changing status
+                    history = ApplicationStatusHistory(
+                        application_id=application.id,
+                        old_status=application.status,
+                        new_status=new_status,
+                        notes=request.notes if request.notes else "Status manual update"
+                    )
+                    session.add(history)
+                    application.status = new_status
             except ValueError:
                 raise HTTPException(status_code=400, detail=f"Invalid status: {request.status}")
         
@@ -373,4 +394,42 @@ async def update_application(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to update application: {str(e)}"
+        )
+
+@router.get("/application/{application_id}/history")
+async def get_application_history(
+    application_id: int,
+    session: SessionDep,
+    current_user: CurrentUser,
+):
+    """
+    Get the status history of a specific application.
+    Requires JWT authentication.
+    """
+    try:
+        # Verify ownership
+        statement = select(Application).where(
+            Application.id == application_id,
+            Application.user_id == current_user.id
+        )
+        application = session.exec(statement).first()
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+            
+        # Get history
+        history_statement = (
+            select(ApplicationStatusHistory)
+            .where(ApplicationStatusHistory.application_id == application_id)
+            .order_by(ApplicationStatusHistory.created_at.desc())
+        )
+        history = session.exec(history_statement).all()
+        
+        return history
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch history: {str(e)}"
         )
