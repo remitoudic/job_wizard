@@ -5,6 +5,7 @@
         fetchApplicationDetails,
         updateApplicationStatus,
         deleteApplication,
+        fetchUserCompanies,
         type ApplicationListItem,
     } from "$lib/api";
     import { auth } from "../../stores/auth";
@@ -27,6 +28,11 @@
     let listSkip = 0;
     let listLimit = 10;
     let isCreateModalOpen = false;
+    let sortBy: "created_at" | "company" | "status" | "job_title" = "created_at";
+    let sortOrder: "asc" | "desc" = "desc";
+    let companyFilter = "";
+    let availableCompanies: string[] = [];
+    let filterTimeout: any;
 
     onMount(async () => {
         // Check if user is logged in
@@ -34,19 +40,22 @@
             goto("/login");
             return;
         }
-        await loadInitialData();
+        await Promise.all([
+            loadInitialData(),
+            fetchCompanies()
+        ]);
     });
 
     async function loadInitialData() {
         isLoading = true;
         try {
             if (viewMode === 'list') {
-                const response = await fetchUserApplications(0, listLimit, false);
+                const response = await fetchUserApplications(0, listLimit, false, sortBy, sortOrder, companyFilter);
                 applications = response.applications;
                 totalApplications = response.total;
                 listSkip = applications.length;
             } else {
-                const response = await fetchUserApplications(0, 1000, false);
+                const response = await fetchUserApplications(0, 1000, false, sortBy, sortOrder, companyFilter);
                 applications = response.applications;
                 totalApplications = response.total;
             }
@@ -60,7 +69,7 @@
     async function loadMore() {
         isLoadingMore = true;
         try {
-            const response = await fetchUserApplications(listSkip, listLimit, false);
+            const response = await fetchUserApplications(listSkip, listLimit, false, sortBy, sortOrder, companyFilter);
             applications = [...applications, ...response.applications];
             listSkip += response.applications.length;
         } catch (e: any) {
@@ -70,13 +79,38 @@
         }
     }
 
+    function handleSort(column: typeof sortBy) {
+        if (sortBy === column) {
+            sortOrder = sortOrder === "asc" ? "desc" : "asc";
+        } else {
+            sortBy = column;
+            sortOrder = column === "created_at" ? "desc" : "asc";
+        }
+        loadInitialData();
+    }
+
+    function debounceFilter() {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(() => {
+            loadInitialData();
+        }, 300);
+    }
+
+    async function fetchCompanies() {
+        try {
+            availableCompanies = await fetchUserCompanies();
+        } catch (e) {
+            console.error("Failed to fetch companies:", e);
+        }
+    }
+
     let previousViewMode: "list" | "kanban" = viewMode;
     $: {
         if (viewMode !== previousViewMode) {
             previousViewMode = viewMode;
             if (viewMode === 'kanban' && applications.length < totalApplications) {
                 isLoading = true;
-                fetchUserApplications(0, 1000, false).then(res => {
+                fetchUserApplications(0, 1000, false, sortBy, sortOrder, companyFilter).then(res => {
                     applications = res.applications;
                     totalApplications = res.total;
                     isLoading = false;
@@ -368,17 +402,60 @@
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200">
                                 <th
-                                    class="p-4 font-semibold text-slate-600 text-sm whitespace-nowrap"
-                                    >Date</th
+                                    class="p-4 font-semibold text-slate-600 text-sm whitespace-nowrap cursor-pointer hover:bg-slate-100 transition-colors"
+                                    on:click={() => handleSort("created_at")}
                                 >
+                                    <div class="flex items-center gap-1">
+                                        Date
+                                        {#if sortBy === "created_at"}
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform {sortOrder === 'asc' ? 'rotate-180' : ''}" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        {/if}
+                                    </div>
+                                </th>
                                 <th
-                                    class="p-4 font-semibold text-slate-600 text-sm"
-                                    >Company</th
+                                    class="p-4 font-semibold text-slate-600 text-sm cursor-pointer hover:bg-slate-100 transition-colors"
                                 >
+                                    <div class="flex flex-col gap-2">
+                                        <div class="flex items-center gap-1" on:click={() => handleSort("company")}>
+                                            Company
+                                            {#if sortBy === "company"}
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform {sortOrder === 'asc' ? 'rotate-180' : ''}" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                </svg>
+                                            {/if}
+                                        </div>
+                                        <div class="relative" on:click|stopPropagation>
+                                            <input
+                                                type="text"
+                                                placeholder="Filter by company..."
+                                                class="w-full px-3 py-1 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#0369A1] font-normal"
+                                                bind:value={companyFilter}
+                                                on:input={debounceFilter}
+                                                list="companies-list"
+                                            />
+                                            <datalist id="companies-list">
+                                                {#each availableCompanies as company}
+                                                    <option value={company} />
+                                                {/each}
+                                            </datalist>
+                                        </div>
+                                    </div>
+                                </th>
                                 <th
-                                    class="p-4 font-semibold text-slate-600 text-sm"
-                                    >Status</th
+                                    class="p-4 font-semibold text-slate-600 text-sm cursor-pointer hover:bg-slate-100 transition-colors"
+                                    on:click={() => handleSort("status")}
                                 >
+                                    <div class="flex items-center gap-1">
+                                        Status
+                                        {#if sortBy === "status"}
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform {sortOrder === 'asc' ? 'rotate-180' : ''}" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        {/if}
+                                    </div>
+                                </th>
                                 <th
                                     class="p-4 font-semibold text-slate-600 text-sm text-right"
                                     >Actions</th

@@ -379,8 +379,21 @@ export async function saveApplication(
     return handleResponse<SaveApplicationResponse>(response, 'Failed to save application');
 }
 
-export async function fetchUserApplications(skip: number = 0, limit: number = 50, includeDetails: boolean = false): Promise<FetchApplicationsResponse> {
-    const response = await apiFetch(`${API_URL}/api/applications?skip=${skip}&limit=${limit}&include_details=${includeDetails}`, {
+export async function fetchUserApplications(
+    skip: number = 0,
+    limit: number = 50,
+    includeDetails: boolean = false,
+    sortBy: string = 'created_at',
+    sortOrder: string = 'desc',
+    company: string = ''
+): Promise<FetchApplicationsResponse> {
+    let url = `${API_URL}/api/applications?skip=${skip}&limit=${limit}&include_details=${includeDetails}&sort_by=${sortBy}&sort_order=${sortOrder}`;
+    
+    if (company) {
+        url += `&company=${encodeURIComponent(company)}`;
+    }
+
+    const response = await apiFetch(url, {
         method: 'GET',
         headers: getHeaders(),
     });
@@ -409,6 +422,16 @@ export async function fetchApplicationDetails(id: number): Promise<ApplicationDe
 
     return handleResponse<ApplicationDetails>(response, 'Failed to fetch application details');
 }
+
+export async function fetchUserCompanies(): Promise<string[]> {
+    const response = await apiFetch(`${API_URL}/api/applications/companies`, {
+        method: 'GET',
+        headers: getHeaders(),
+    });
+
+    return handleResponse<string[]>(response, 'Failed to fetch companies');
+}
+
 
 export interface UpdateApplicationRequest {
     job_title?: string;

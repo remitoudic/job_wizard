@@ -197,27 +197,48 @@ async def get_user_applications(
     limit: int = 50,
     skip: int = 0,
     include_details: bool = False,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
+    company: str | None = None,
 ):
     """
     Get current user's applications.
     Requires JWT authentication.
     
-    Returns list of applications (lightweight by default) with pagination.
+    Returns list of applications (lightweight by default) with pagination and sorting.
     """
     try:
         # Count total
-        count_stmt = select(func.count(Application.id)).where(Application.user_id == current_user.id)
+        count_stmt = select(func.count(Application.id)).join(DBJobDescription).where(Application.user_id == current_user.id)
+        if company:
+            count_stmt = count_stmt.where(DBJobDescription.company.ilike(f"%{company}%"))
         total = session.exec(count_stmt).one()
+        
+        # Map sort_by to actual columns
+        sort_map = {
+            "created_at": Application.created_at,
+            "company": DBJobDescription.company,
+            "status": Application.status,
+            "job_title": DBJobDescription.job_title,
+        }
+        
+        sort_col = sort_map.get(sort_by, Application.created_at)
+        
+        # Define order function
+        from sqlmodel import desc, asc
+        order_expr = desc(sort_col) if sort_order == "desc" else asc(sort_col)
         
         # Query applications for current user with job description join
         statement = (
             select(Application, DBJobDescription)
-            .join(DBJobDescription, Application.job_description_id == DBJobDescription.id)
+            .join(DBJobDescription)
             .where(Application.user_id == current_user.id)
-            .order_by(Application.created_at.desc())
-            .offset(skip)
-            .limit(limit)
         )
+        
+        if company:
+            statement = statement.where(DBJobDescription.company.ilike(f"%{company}%"))
+            
+        statement = statement.order_by(order_expr).offset(skip).limit(limit)
         
         results = session.exec(statement).all()
         
@@ -248,6 +269,29 @@ async def get_user_applications(
             status_code=500,
             detail=f"Failed to fetch applications: {str(e)}"
         )
+
+
+@router.get("/applications/companies", response_model=list[str])
+async def get_user_companies(
+    session: SessionDep,
+    current_user: CurrentUser,
+):
+    """
+    Get list of unique company names for the current user.
+    Useful for autocomplete filters.
+    """
+    try:
+        statement = (
+            select(DBJobDescription.company)
+            .join(Application)
+            .where(Application.user_id == current_user.id)
+            .distinct()
+            .order_by(DBJobDescription.company)
+        )
+        companies = session.exec(statement).all()
+        return [c for c in companies if c]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/application/{application_id}/details")
