@@ -33,6 +33,7 @@
     let companyFilter = "";
     let availableCompanies: string[] = [];
     let filterTimeout: any;
+    let isFilterVisible = false;
 
     onMount(async () => {
         // Check if user is logged in
@@ -415,10 +416,13 @@
                                     </div>
                                 </th>
                                 <th
-                                    class="p-4 font-semibold text-slate-600 text-sm cursor-pointer hover:bg-slate-100 transition-colors"
+                                    class="p-4 font-semibold text-slate-600 text-sm"
                                 >
-                                    <div class="flex flex-col gap-2">
-                                        <div class="flex items-center gap-1" on:click={() => handleSort("company")}>
+                                    <div class="flex items-center justify-between">
+                                        <div 
+                                            class="flex items-center gap-1 cursor-pointer hover:text-[#0369A1] transition-colors"
+                                            on:click={() => handleSort("company")}
+                                        >
                                             Company
                                             {#if sortBy === "company"}
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform {sortOrder === 'asc' ? 'rotate-180' : ''}" viewBox="0 0 20 20" fill="currentColor">
@@ -426,20 +430,53 @@
                                                 </svg>
                                             {/if}
                                         </div>
-                                        <div class="relative" on:click|stopPropagation>
-                                            <input
-                                                type="text"
-                                                placeholder="Filter by company..."
-                                                class="w-full px-3 py-1 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#0369A1] font-normal"
-                                                bind:value={companyFilter}
-                                                on:input={debounceFilter}
-                                                list="companies-list"
-                                            />
-                                            <datalist id="companies-list">
-                                                {#each availableCompanies as company}
-                                                    <option value={company} />
-                                                {/each}
-                                            </datalist>
+
+                                        <div class="relative">
+                                            <button 
+                                                class="p-1 hover:bg-slate-200 rounded-md transition-colors {companyFilter ? 'text-[#0369A1]' : 'text-slate-400'}"
+                                                on:click|stopPropagation={() => isFilterVisible = !isFilterVisible}
+                                                title="Filter by Company"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                            
+                                            {#if isFilterVisible}
+                                                <!-- Click outside to close -->
+                                                <div 
+                                                    class="fixed inset-0 z-10" 
+                                                    on:click={() => isFilterVisible = false}
+                                                ></div>
+                                                
+                                                <div class="absolute right-0 mt-2 w-64 bg-white border border-[#E2E8F0] rounded-lg shadow-xl p-3 z-20" on:click|stopPropagation>
+                                                    <div class="flex items-center gap-2 mb-2 justify-between">
+                                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filter Companies</span>
+                                                        {#if companyFilter}
+                                                            <button 
+                                                                class="text-[10px] text-[#0369A1] hover:underline font-bold"
+                                                                on:click={() => { companyFilter = ""; loadInitialData(); }}
+                                                            >
+                                                                Clear
+                                                            </button>
+                                                        {/if}
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search..."
+                                                        class="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#0369A1] font-normal"
+                                                        bind:value={companyFilter}
+                                                        on:input={debounceFilter}
+                                                        list="companies-list"
+                                                        autofocus
+                                                    />
+                                                    <datalist id="companies-list">
+                                                        {#each availableCompanies as company}
+                                                            <option value={company} />
+                                                        {/each}
+                                                    </datalist>
+                                                </div>
+                                            {/if}
                                         </div>
                                     </div>
                                 </th>
