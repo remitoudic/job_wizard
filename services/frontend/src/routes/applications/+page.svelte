@@ -31,10 +31,15 @@
     let sortBy: "created_at" | "company" | "status" | "job_title" = "created_at";
     let sortOrder: "asc" | "desc" = "desc";
     let companyFilter = "";
+    let companySearchText = "";
     let availableCompanies: string[] = [];
     let filterTimeout: any;
     let isFilterVisible = false;
     let authChecked = false;
+
+    $: filteredCompanies = companySearchText
+        ? availableCompanies.filter(c => c.toLowerCase().includes(companySearchText.toLowerCase()))
+        : availableCompanies;
 
     onMount(() => {
         // Wait for auth initialization, then load data
@@ -118,6 +123,19 @@
         filterTimeout = setTimeout(() => {
             loadInitialData();
         }, 300);
+    }
+
+    function selectCompany(company: string) {
+        companyFilter = company;
+        companySearchText = company;
+        isFilterVisible = false;
+        loadInitialData();
+    }
+
+    function clearCompanyFilter() {
+        companyFilter = "";
+        companySearchText = "";
+        loadInitialData();
     }
 
     async function fetchCompanies() {
@@ -478,7 +496,7 @@
                                                         {#if companyFilter}
                                                             <button 
                                                                 class="text-[10px] text-[#0369A1] hover:underline font-bold"
-                                                                on:click={() => { companyFilter = ""; loadInitialData(); }}
+                                                                on:click={clearCompanyFilter}
                                                             >
                                                                 Clear
                                                             </button>
@@ -486,18 +504,42 @@
                                                     </div>
                                                     <input
                                                         type="text"
-                                                        placeholder="Search..."
+                                                        placeholder="Type to search companies..."
                                                         class="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#0369A1] font-normal"
-                                                        bind:value={companyFilter}
-                                                        on:input={debounceFilter}
-                                                        list="companies-list"
+                                                        bind:value={companySearchText}
                                                         autofocus
                                                     />
-                                                    <datalist id="companies-list">
-                                                        {#each availableCompanies as company}
-                                                            <option value={company} />
+                                                    {#if companyFilter}
+                                                        <div class="mt-2 flex items-center gap-1.5 px-2 py-1 bg-[#EFF6FF] border border-[#BFDBFE] rounded-md">
+                                                            <span class="text-xs text-[#1E40AF] font-medium truncate flex-1">Filtered: {companyFilter}</span>
+                                                            <button 
+                                                                class="text-[#1E40AF] hover:text-[#1E3A8A] flex-shrink-0"
+                                                                on:click={clearCompanyFilter}
+                                                                title="Remove filter"
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    {/if}
+                                                    <div class="mt-2 max-h-48 overflow-y-auto border border-slate-100 rounded-md divide-y divide-slate-50">
+                                                        {#each filteredCompanies as company}
+                                                            <button
+                                                                class="w-full text-left px-3 py-2 text-xs hover:bg-[#EFF6FF] transition-colors flex items-center justify-between gap-2 {companyFilter === company ? 'bg-[#EFF6FF] text-[#0369A1] font-semibold' : 'text-slate-700'}"
+                                                                on:click={() => selectCompany(company)}
+                                                            >
+                                                                <span class="truncate">{company}</span>
+                                                                {#if companyFilter === company}
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-[#0369A1] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                                    </svg>
+                                                                {/if}
+                                                            </button>
+                                                        {:else}
+                                                            <div class="px-3 py-3 text-xs text-slate-400 text-center italic">No matching companies</div>
                                                         {/each}
-                                                    </datalist>
+                                                    </div>
                                                 </div>
                                             {/if}
                                         </div>
