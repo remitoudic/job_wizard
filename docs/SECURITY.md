@@ -53,6 +53,85 @@ sequenceDiagram
 5.  **Data Authorization**: Every protected route performs a multi-layer ownership check. Even with a valid JWT, the database query explicitly filters results by the authenticated `user_id`.
 6.  **Resource Isolation**: Guessable IDs (like `/applications/95`) are safe because the backend returns a `404 Not Found` if the requested resource does not belong to the currently logged-in user.
 
+## Dual Auth: Bearer Token + HttpOnly Cookie
+
+The system supports **two parallel authentication methods**. The backend (`deps.py → get_current_user`) checks both in order:
+
+1. **Authorization Header** — `Authorization: Bearer <token>` (for API clients, Swagger, etc.)
+2. **HttpOnly Cookie** — `access_token` cookie (for web browser sessions)
+
+### How It Works
+
+```mermaid
+sequenceDiagram
+    participant Browser as Frontend (SvelteKit)
+    participant API as FastAPI Backend
+
+    Note over Browser, API: Login — Cookie is set
+    Browser->>API: POST /api/auth/login (email, password)
+    API-->>Browser: 200 OK + Set-Cookie: access_token=JWT (HttpOnly, SameSite=Lax)
+
+    Note over Browser, API: Session Restore on Page Load
+    Browser->>API: GET /api/users/me (credentials: include → cookie sent)
+    API-->>Browser: 200 OK { user object }
+    Note over Browser: auth store: { user, token: null, isAuthenticated: true }
+
+    Note over Browser, API: Subsequent API Calls
+    Browser->>API: GET /api/applications (credentials: include → cookie sent)
+    API-->>Browser: 200 OK [data]
+```
+
+### Key Detail: `token` is `null` in Cookie-Based Sessions
+
+When a user logs in via the browser, the JWT lives **only inside the HttpOnly cookie** — the frontend never stores it in memory or localStorage. The auth store state after initialization looks like:
+
+```javascript
+{ user: { ... }, token: null, isAuthenticated: true }
+```
+
+> **⚠️ CRITICAL**: Frontend code must **never** check `$auth.token` to determine if a user is logged in. Always use `$auth.isAuthenticated`.
+
+### Frontend Auth Guard Pattern
+
+Protected pages (e.g., `/applications`, `/applications/[id]`) use a **reactive subscription** to the auth store instead of a simple `onMount` check. This is necessary because:
+
+- The root layout (`+layout.svelte`) calls `auth.initialize()` asynchronously in its own `onMount`
+- Child page `onMount` hooks run concurrently — they do **not** wait for the layout's `auth.initialize()` to resolve
+- A synchronous check like `if (!$auth.isAuthenticated) goto('/login')` would always redirect before the cookie-based session is restored
+
+The correct pattern:
+
+```javascript
+let authChecked = false;
+
+onMount(() => {
+    // Subscribe reactively — fires when auth.initialize() resolves
+    const unsubscribe = auth.subscribe(async (state) => {
+        if (authChecked) return;
+
+        if (state.isAuthenticated) {
+            authChecked = true;
+            await loadPageData();
+        }
+    });
+
+    // Fallback: redirect to login if auth never resolves (no valid session)
+    const timeout = setTimeout(() => {
+        if (!authChecked) {
+            authChecked = true;
+            goto("/login");
+        }
+    }, 3000);
+
+    return () => {
+        unsubscribe();
+        clearTimeout(timeout);
+    };
+});
+```
+
+This pattern ensures the page waits for the async cookie verification to complete before deciding whether to load data or redirect.
+
 ## Data Authorization Flow
 
 When a user requests a specific resource (e.g., a Job Application), the system follows this logic:
