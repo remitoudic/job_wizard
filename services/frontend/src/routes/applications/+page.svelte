@@ -523,6 +523,7 @@
                                                             </button>
                                                         </div>
                                                     {/if}
+                                                    {#if companySearchText}
                                                     <div class="mt-2 max-h-48 overflow-y-auto border border-slate-100 rounded-md divide-y divide-slate-50">
                                                         {#each filteredCompanies as company}
                                                             <button
@@ -540,6 +541,7 @@
                                                             <div class="px-3 py-3 text-xs text-slate-400 text-center italic">No matching companies</div>
                                                         {/each}
                                                     </div>
+                                                    {/if}
                                                 </div>
                                             {/if}
                                         </div>
