@@ -34,17 +34,40 @@
     let availableCompanies: string[] = [];
     let filterTimeout: any;
     let isFilterVisible = false;
+    let authChecked = false;
 
-    onMount(async () => {
-        // Check if user is logged in
-        if (!$auth.token) {
-            goto("/login");
-            return;
-        }
-        await Promise.all([
-            loadInitialData(),
-            fetchCompanies()
-        ]);
+    onMount(() => {
+        // Wait for auth initialization, then load data
+        const unsubscribe = auth.subscribe(async (state) => {
+            // Skip if already processed
+            if (authChecked) return;
+
+            // Auth store starts with { user: null, token: null, isAuthenticated: false }
+            // Wait for initialize() to resolve — it sets either isAuthenticated=true or stays false
+            // We detect "initialized" when user is set (authenticated) or when isAuthenticated stays false
+            // after a tick (meaning initialize() completed without finding a session).
+            
+            if (state.isAuthenticated) {
+                authChecked = true;
+                await Promise.all([
+                    loadInitialData(),
+                    fetchCompanies()
+                ]);
+            }
+        });
+
+        // Fallback: if auth hasn't resolved after a reasonable time, redirect
+        const timeout = setTimeout(() => {
+            if (!authChecked) {
+                authChecked = true;
+                goto("/login");
+            }
+        }, 3000);
+
+        return () => {
+            unsubscribe();
+            clearTimeout(timeout);
+        };
     });
 
     async function loadInitialData() {

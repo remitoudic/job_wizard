@@ -34,36 +34,52 @@
 
     let isInitialized = false;
     let autoSaveTimeout: ReturnType<typeof setTimeout>;
+    let authChecked = false;
 
-    onMount(async () => {
-        if (!$auth.token) {
-            goto("/login");
-            return;
-        }
+    onMount(() => {
+        const unsubscribe = auth.subscribe(async (state) => {
+            if (authChecked) return;
 
-        try {
-            const [detailsData, historyData] = await Promise.all([
-                fetchApplicationDetails(applicationId),
-                fetchApplicationHistory(applicationId)
-            ]);
-            
-            details = detailsData;
-            history = historyData;
-            
-            // Initialize editable fields
-            editableTitle = details.job_title || "";
-            editableCompany = details.company || "";
-            editableStatus = details.status || "";
-            editableNotes = details.notes || "";
-            editableLetterBody = details.cover_letter_final?.body || "";
-            
-            // Set initialized after values are set to avoid immediate auto-save
-            setTimeout(() => { isInitialized = true; }, 500);
-        } catch (e: any) {
-            error = e.message || "Failed to load application details";
-        } finally {
-            isLoading = false;
-        }
+            if (state.isAuthenticated) {
+                authChecked = true;
+                try {
+                    const [detailsData, historyData] = await Promise.all([
+                        fetchApplicationDetails(applicationId),
+                        fetchApplicationHistory(applicationId)
+                    ]);
+                    
+                    details = detailsData;
+                    history = historyData;
+                    
+                    // Initialize editable fields
+                    editableTitle = details.job_title || "";
+                    editableCompany = details.company || "";
+                    editableStatus = details.status || "";
+                    editableNotes = details.notes || "";
+                    editableLetterBody = details.cover_letter_final?.body || "";
+                    
+                    // Set initialized after values are set to avoid immediate auto-save
+                    setTimeout(() => { isInitialized = true; }, 500);
+                } catch (e: any) {
+                    error = e.message || "Failed to load application details";
+                } finally {
+                    isLoading = false;
+                }
+            }
+        });
+
+        // Fallback: if auth hasn't resolved after a reasonable time, redirect
+        const timeout = setTimeout(() => {
+            if (!authChecked) {
+                authChecked = true;
+                goto("/login");
+            }
+        }, 3000);
+
+        return () => {
+            unsubscribe();
+            clearTimeout(timeout);
+        };
     });
 
     async function handleSave(showNotification = true) {
