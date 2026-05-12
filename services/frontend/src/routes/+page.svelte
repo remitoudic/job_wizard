@@ -272,27 +272,27 @@
 	let currentVersionIndex = 0;
 	let isLoadingAlternatives = false;
 	let hasAutoSelectedNvidia = false;
-	let hasAutoSelectedQwen = false;
+	let hasAutoSelectedMistral = false;
 
 	// Reactive: Auto-select Nvidia/Qwen if it's in the list
 	$: {
 		if (allCoverLetters.length > 0) {
 			console.log("[AutoSelect] Current sources:", allCoverLetters.map(l => l.source));
 			
-			// 1. Priority: Qwen (always switch to it even if we already selected a generic Nvidia)
-			const qwenIdx = allCoverLetters.findIndex((l) =>
-				l.source.toLowerCase().includes("qwen")
+			// 1. Priority: Mistral (always switch to it even if we already selected a generic Nvidia)
+			const mistralIdx = allCoverLetters.findIndex((l) =>
+				l.source.toLowerCase().includes("mistral") && l.status !== "failed" && !l.text.startsWith("Generation failed")
 			);
-			if (qwenIdx !== -1 && !hasAutoSelectedQwen) {
-				console.log(`[AutoSelect] Found Qwen at index ${qwenIdx}. Switching...`);
-				switchVersion(qwenIdx);
-				hasAutoSelectedQwen = true;
+			if (mistralIdx !== -1 && !hasAutoSelectedMistral) {
+				console.log(`[AutoSelect] Found Mistral at index ${mistralIdx}. Switching...`);
+				switchVersion(mistralIdx);
+				hasAutoSelectedMistral = true;
 				hasAutoSelectedNvidia = true; // Mark Nvidia as satisfied too
 			} 
-			// 2. Secondary: Nvidia (if no Qwen yet)
+			// 2. Secondary: Nvidia (if no Mistral yet)
 			else if (!hasAutoSelectedNvidia) {
 				const nvidiaIdx = allCoverLetters.findIndex((l) =>
-					l.source.toLowerCase().includes("nvidia")
+					l.source.toLowerCase().includes("nvidia") && l.status !== "failed" && !l.text.startsWith("Generation failed")
 				);
 				if (nvidiaIdx !== -1) {
 					console.log(`[AutoSelect] Found Nvidia at index ${nvidiaIdx}. Switching...`);
@@ -424,7 +424,7 @@
         allCoverLetters = [];
         currentVersionIndex = 0;
         hasAutoSelectedNvidia = false;
-        hasAutoSelectedQwen = false;
+        hasAutoSelectedMistral = false;
 
 		try {
 			const { job_id } = await generateCoverLetter({
@@ -549,7 +549,7 @@
                             allCoverLetters = [...allCoverLetters];
                         }
 
-                        if (isUpdateNeeded && !hasAutoSelectedNvidia && !hasAutoSelectedQwen) {
+                        if (isUpdateNeeded && !hasAutoSelectedNvidia && !hasAutoSelectedMistral) {
                             coverLetter = data.text;
                             originalCoverLetter = data.text;
                             source = data.source;
@@ -682,11 +682,13 @@
                 // Check for Nvidia auto-selection during alternative polling
                 if (!hasAutoSelectedNvidia) {
                     const nvidiaIndex = allCoverLetters.findIndex(l => 
-                        l.source.toLowerCase().includes("nvidia") || 
-                        l.source.toLowerCase().includes("qwen")
+                        (l.source.toLowerCase().includes("nvidia") || 
+                         l.source.toLowerCase().includes("mistral")) &&
+                        l.status !== "failed" &&
+                        !l.text.startsWith("Generation failed")
                     );
                     if (nvidiaIndex !== -1) {
-                        console.log(`Auto-selected Nvidia/Qwen from polled alternatives at index ${nvidiaIndex}`);
+                        console.log(`Auto-selected Nvidia/Mistral from polled alternatives at index ${nvidiaIndex}`);
                         switchVersion(nvidiaIndex);
                         hasAutoSelectedNvidia = true;
                     }
@@ -739,12 +741,11 @@
 			company: manualCompany,
 			description: manualDescription,
 			requirements: [],
-			url: jobUrl || "manual",
+			url: jobUrl || `manual-${Date.now()}`,
 		};
 		editableJobTitle = manualTitle;
 		editableCompany = manualCompany;
 		step.set(2);
-		handleGenerateCoverLetter();
 	}
 
 	async function handleGeneratePdf() {
@@ -772,7 +773,7 @@
 			if ($auth.isAuthenticated) {
 				try {
 					await saveApplication({
-						job_url: jobUrl,
+						job_url: jobData.url || jobUrl || `manual-${Date.now()}`,
 						job_title: editableJobTitle || jobData.title,
 						job_company: editableCompany || jobData.company,
 						job_description:
@@ -922,6 +923,7 @@
 
 		// Reset format selection
 		selectedFormat = "british";
+		isManualInput = false;
 		manualTitle = "";
 		manualCompany = "";
 		manualDescription = "";
@@ -1154,96 +1156,7 @@
 			</div>
 		{/if}
 
-		{#if isManualInput && $step === 1}
-			<div
-				class="card mb-8 animate-in fade-in slide-in-from-top-4 duration-300"
-				transition:fade
-			>
-				<div class="mb-6 flex justify-between items-center">
-					<div>
-						<h2 class="text-xl font-bold text-[#0F172A]">
-							Manual Job Entry
-						</h2>
-						<p class="text-[#64748B] text-xs">
-							The site is blocked, but we can still help if you
-							paste the details.
-						</p>
-					</div>
-					<button
-						on:click={() => (isManualInput = false)}
-						class="text-[#64748B] hover:text-[#0F172A] p-1"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							class="h-5 w-5"
-							fill="none"
-							viewBox="0 0 24 24"
-							stroke="currentColor"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M6 18L18 6M6 6l12 12"
-							/>
-						</svg>
-					</button>
-				</div>
 
-				<div class="space-y-5">
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div>
-							<label
-								for="manual-title"
-								class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
-								>Job Title</label
-							>
-							<input
-								id="manual-title"
-								type="text"
-								bind:value={manualTitle}
-								class="input text-sm"
-								placeholder="e.g. Senior Software Engineer"
-							/>
-						</div>
-						<div>
-							<label
-								for="manual-company"
-								class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
-								>Company Name</label
-							>
-							<input
-								id="manual-company"
-								type="text"
-								bind:value={manualCompany}
-								class="input text-sm"
-								placeholder="e.g. Acme Corp"
-							/>
-						</div>
-					</div>
-					<div>
-						<label
-							for="manual-desc"
-							class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
-							>Job Description</label
-						>
-						<textarea
-							id="manual-desc"
-							bind:value={manualDescription}
-							rows="8"
-							class="input text-sm resize-none"
-							placeholder="Paste the full job description here..."
-						></textarea>
-					</div>
-					<button
-						on:click={handleManualSubmit}
-						class="btn btn-primary w-full py-3 font-semibold shadow-lg hover:shadow-xl transition-all"
-					>
-						Submit & Generate Letter
-					</button>
-				</div>
-			</div>
-		{/if}
 
 		<!-- Step 1: Input -->
 		{#if $step === 1}
@@ -1254,107 +1167,107 @@
 					</h2>
 					<div class="flex items-center justify-between">
 						<p class="text-[#334155] text-sm">
-							Paste the link to the job posting below.
+							{#if isManualInput}
+								Enter the job details manually below.
+							{:else}
+								Paste the link to the job posting below.
+							{/if}
 						</p>
-						<button
-							id="manual-entry-shortcut"
-							on:click={() => {
-								isManualInput = true;
-								error = "";
-							}}
-							class="text-[#94A3B8] hover:text-[#0369A1] text-xs flex items-center gap-1 transition-colors duration-200"
-						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="h-3 w-3"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
+						{#if !isManualInput}
+							<button
+								id="manual-entry-shortcut"
+								on:click={() => {
+									isManualInput = true;
+									error = "";
+								}}
+								class="text-[#94A3B8] hover:text-[#0369A1] text-xs flex items-center gap-1 transition-colors duration-200"
 							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-								/>
-							</svg>
-							Enter manually
-						</button>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-3 w-3"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+									/>
+								</svg>
+								Enter manually
+							</button>
+						{:else}
+							<button
+								id="url-entry-shortcut"
+								on:click={() => {
+									isManualInput = false;
+									error = "";
+								}}
+								class="text-[#94A3B8] hover:text-[#0369A1] text-xs flex items-center gap-1 transition-colors duration-200"
+							>
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+								</svg>
+								Use job URL
+							</button>
+						{/if}
 					</div>
 				</div>
 
 				<div class="space-y-8">
-					<div class="relative">
-						<input
-							type="url"
-							bind:value={jobUrl}
-							placeholder="e.g. https://www.linkedin.com/jobs/view/..."
-							class="input pr-12"
-							disabled={isParsing}
-						/>
-						{#if isParsing}
-							<div
-								class="absolute right-4 top-1/2 -translate-y-1/2"
-							>
-								<svg
-									class="animate-spin h-5 w-5 text-[#0369A1]"
-									xmlns="http://www.w3.org/2000/svg"
-									fill="none"
-									viewBox="0 0 24 24"
-								>
-									<circle
-										class="opacity-25"
-										cx="12"
-										cy="12"
-										r="10"
-										stroke="currentColor"
-										stroke-width="4"
-									></circle>
-									<path
-										class="opacity-75"
-										fill="currentColor"
-										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-									></path>
-								</svg>
+					{#if isManualInput}
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div>
+								<label for="manual-title" class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2">Job Title</label>
+								<input id="manual-title" type="text" bind:value={manualTitle} class="input text-sm" placeholder="e.g. Senior Software Engineer" />
 							</div>
-						{/if}
-
-						{#if jobData}
-							<div
-								class="mt-4 p-4 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between"
-							>
-								<div>
-									<div
-										class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1"
-									>
-										Parsed Position
-									</div>
-									<div class="font-semibold text-[#0F172A]">
-										{jobData.title}
-									</div>
-									<div class="text-sm text-[#334155]">
-										{jobData.company}
-									</div>
-								</div>
-								<div class="bg-green-100 p-1.5 rounded-full">
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										class="h-5 w-5 text-green-600"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M5 13l4 4L19 7"
-										/>
+							<div>
+								<label for="manual-company" class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2">Company Name</label>
+								<input id="manual-company" type="text" bind:value={manualCompany} class="input text-sm" placeholder="e.g. Acme Corp" />
+							</div>
+						</div>
+						<div>
+							<label for="manual-desc" class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2">Job Description</label>
+							<textarea id="manual-desc" bind:value={manualDescription} rows="8" class="input text-sm resize-none" placeholder="Paste the full job description here..."></textarea>
+						</div>
+					{:else}
+						<div class="relative">
+							<input
+								type="url"
+								bind:value={jobUrl}
+								placeholder="e.g. https://www.linkedin.com/jobs/view/..."
+								class="input pr-12"
+								disabled={isParsing}
+							/>
+							{#if isParsing}
+								<div class="absolute right-4 top-1/2 -translate-y-1/2">
+									<svg class="animate-spin h-5 w-5 text-[#0369A1]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+										<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+										<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
 									</svg>
 								</div>
-							</div>
-						{/if}
-					</div>
+							{/if}
+
+							{#if jobData && !isManualInput}
+								<div class="mt-4 p-4 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between">
+									<div>
+										<div class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">
+											Parsed Position
+										</div>
+										<div class="font-semibold text-[#0F172A]">{jobData.title}</div>
+										<div class="text-sm text-[#334155]">{jobData.company}</div>
+									</div>
+									<div class="bg-green-100 p-1.5 rounded-full">
+										<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+										</svg>
+									</div>
+								</div>
+							{/if}
+						</div>
+					{/if}
 
 					<div class="pt-2 border-t border-[#E2E8F0]">
 						<details class="group">
@@ -1513,15 +1426,15 @@
 
 					<button
 						on:click={() => {
-							// If we already have jobData for this URL, just go to Step 2
-							// We can check if jobData exists and loosely if the URL matches (if we want to be strict)
-							if (jobData) {
+							if (isManualInput) {
+								handleManualSubmit();
+							} else if (jobData) {
 								step.set(2);
 							} else {
 								handleParseJob(true);
 							}
 						}}
-						disabled={isParsing || !jobUrl}
+						disabled={(!isManualInput && (isParsing || !jobUrl)) || (isManualInput && (!manualTitle || !manualCompany || !manualDescription))}
 						class="btn btn-primary w-full py-4 text-lg"
 					>
 						{isParsing ? "Analyzing Position..." : "Next Step"}

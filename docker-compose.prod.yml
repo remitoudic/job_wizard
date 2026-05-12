@@ -154,6 +154,8 @@ services:
     image: temporalio/auto-setup:latest
     container_name: jobwizard-temporal-prod
     restart: unless-stopped
+    env_file:
+      - .env/.env.production
     environment:
       - DB=postgres12
       - POSTGRES_USER=${POSTGRES_USER}
