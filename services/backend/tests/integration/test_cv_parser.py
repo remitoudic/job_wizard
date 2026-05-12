@@ -1,3 +1,12 @@
+"""
+CV Parsing Integration Tests
+
+This module tests the end-to-end functionality of the CV parsing service.
+It takes a sample PDF resume, processes it through the `cv_parser_service` 
+(which handles OCR and LLM-based extraction), and verifies that structured 
+data like work experience, contact information, and professional summaries 
+are accurately extracted.
+"""
 import asyncio
 import json
 import logging

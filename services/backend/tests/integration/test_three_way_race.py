@@ -1,5 +1,12 @@
 """
-Test the three-way race for cover letter generation
+LLM Generation Race Integration Tests
+
+This module tests the core 'race' logic of the JobWizard application.
+It triggers a parallel generation request where three different models (Local Ollama, 
+and two remote models from the configured provider like Groq or NVIDIA) compete 
+to provide the first successful result. It verifies that the winner is correctly 
+identified, alternatives are processed in the background, and the final output 
+is returned properly to the user.
 """
 import pytest
 import asyncio

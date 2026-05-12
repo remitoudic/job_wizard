@@ -1,4 +1,11 @@
+"""
+Groq Provider Integration Tests
 
+This test verifies that the system is correctly configured to use Groq as the primary 
+LLM provider. It checks the provider settings, base URLs, and model identifiers 
+to ensure that the 'Groq-first' strategy is properly initialized in the application's 
+LLMService.
+"""
 import pytest
 from app.services.cover_letter.llm_service import LLMService
 

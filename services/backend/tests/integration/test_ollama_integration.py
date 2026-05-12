@@ -1,4 +1,11 @@
+"""
+Ollama Local Integration Tests
 
+This module tests the connectivity and functionality of the local Ollama service.
+It ensures that the Ollama host is reachable from the backend container and that 
+the specified local models can successfully generate output, providing a fallback 
+mechanism for when external cloud APIs are unavailable or for local-only processing.
+"""
 import pytest
 from app.services.cover_letter.llm_service import LLMService
 

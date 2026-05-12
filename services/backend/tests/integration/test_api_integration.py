@@ -1,3 +1,12 @@
+"""
+API Integration Tests
+
+This module contains integration tests for the JobWizard REST API endpoints.
+The main focus is verifying the high-level request/response cycle, ensuring that 
+incoming payloads for cover letter generation are correctly validated and that 
+asynchronous tasks (Temporal workflows) are successfully triggered, returning 
+a valid Job ID to the client.
+"""
 from fastapi.testclient import TestClient
 from app.main import app
 

@@ -1,4 +1,13 @@
+"""
+LLM Race Logic Unit Tests
 
+This module provides focused unit tests for the concurrent execution logic of the 
+LLMService. It uses mocks to simulate different model response times and failure 
+scenarios (e.g., one model failing while others succeed, or all models failing). 
+This allows for verifying that the 'first-to-finish' race mechanism is robust 
+and that background alternative processing behaves as expected without needing 
+actual API calls.
+"""
 import pytest
 import asyncio
 from unittest.mock import MagicMock, AsyncMock, patch

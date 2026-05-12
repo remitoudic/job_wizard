@@ -1,3 +1,13 @@
+"""
+Global Pytest Configuration and Fixtures
+
+This module contains shared fixtures used across all backend tests.
+It handles critical test setup and teardown, including:
+- Initializing the test database tables.
+- Managing the asynchronous event loop.
+- Automating the startup/shutdown of the PubSub messaging system.
+- Providing an `AsyncClient` for testing FastAPI endpoints asynchronously.
+"""
 import pytest
 import asyncio
 from typing import AsyncGenerator

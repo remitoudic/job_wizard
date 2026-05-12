@@ -1,3 +1,11 @@
+"""
+Application Management Unit Tests
+
+This module tests the core business logic for managing job applications.
+It includes tests for updating application statuses, modifying job descriptions, 
+and ensuring that users can only modify their own data (unauthorized access 
+prevention).
+"""
 import pytest
 from unittest.mock import MagicMock, patch
 from app.api.routes.application import update_application

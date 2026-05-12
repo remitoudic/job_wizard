@@ -1,4 +1,11 @@
+"""
+OpenRouter Provider Integration Tests
 
+This module validates the integration with OpenRouter's API.
+It ensures that the system can successfully authenticate using the provided 
+API key and that the remote models can be instantiated and used to generate 
+responses, confirming that the OpenRouter fallback/alternative path is functional.
+"""
 import pytest
 import os
 from app.services.platform.agents import create_writing_agent

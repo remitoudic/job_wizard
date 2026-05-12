@@ -1,3 +1,11 @@
+"""
+Authentication and Security Tests
+
+This module provides both unit and integration tests for the authentication system.
+It verifies password hashing, user record creation, and the OAuth2 token-based 
+login flow. It uses an in-memory SQLite database to ensure tests are isolated, 
+fast, and do not affect the production database.
+"""
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
