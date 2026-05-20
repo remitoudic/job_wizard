@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import re
 from app.services.cover_letter.job_description_normalizer import normalize_job_post
 
+
 class BaseParser(ABC):
     """Abstract base class for job parsers"""
 
@@ -29,8 +30,13 @@ class BaseParser(ABC):
         # 1. Remove source suffix (anything after |)
         if "|" in title:
             title = title.split("|")[0].strip()
-            
+
         # 2. Regex to match (m/f/d) etc.
-        cleaned = re.sub(r'\s*\(?\s*[mwfdx]\s*[|/]\s*[mwfdx]\s*[|/]\s*[mwfdx]\s*\)?', '', title, flags=re.IGNORECASE)
-        
+        cleaned = re.sub(
+            r"\s*\(?\s*[mwfdx]\s*[|/]\s*[mwfdx]\s*[|/]\s*[mwfdx]\s*\)?",
+            "",
+            title,
+            flags=re.IGNORECASE,
+        )
+
         return cleaned.strip()

@@ -9,7 +9,7 @@ Two tests, no repeated setup — shared via module-scoped fixtures.
 """
 
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch, MagicMock
 import app.services.cover_letter.activities as activities_module
 
 
@@ -17,6 +17,7 @@ import app.services.cover_letter.activities as activities_module
 # Override session-scoped fixtures that require a running DB / pubsub.
 # These tests are pure-unit: no DB, no network.
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="session", autouse=True)
 def db_init(request):
@@ -29,9 +30,11 @@ async def manage_pubsub():
     """No-op override — singleton tests don't publish events."""
     yield
 
+
 # ---------------------------------------------------------------------------
 # Shared fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def reset_activity_singletons():
@@ -69,6 +72,7 @@ def fake_llm_service():
 # Test 1 — singleton identity
 # ---------------------------------------------------------------------------
 
+
 def test_get_llm_service_returns_same_instance(fake_llm_service):
     """
     Calling get_llm_service() multiple times MUST return the identical object.
@@ -80,21 +84,22 @@ def test_get_llm_service_returns_same_instance(fake_llm_service):
     FakeLLMService, call_count = fake_llm_service
 
     with patch.object(activities_module, "LLMService", FakeLLMService):
-        first  = activities_module.get_llm_service()
+        first = activities_module.get_llm_service()
         second = activities_module.get_llm_service()
-        third  = activities_module.get_llm_service()
+        third = activities_module.get_llm_service()
 
-    assert first is second is third, (
-        "get_llm_service() must return the same object on repeated calls"
-    )
-    assert call_count["n"] == 1, (
-        f"LLMService.__init__ was called {call_count['n']} times — must be called exactly once"
-    )
+    assert (
+        first is second is third
+    ), "get_llm_service() must return the same object on repeated calls"
+    assert (
+        call_count["n"] == 1
+    ), f"LLMService.__init__ was called {call_count['n']} times — must be called exactly once"
 
 
 # ---------------------------------------------------------------------------
 # Test 2 — shared state is preserved across simulated activity calls
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.asyncio
 async def test_shared_state_preserved_across_activity_calls(fake_llm_service):

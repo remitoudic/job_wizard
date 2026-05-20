@@ -9,6 +9,7 @@ from fastapi import UploadFile, File, HTTPException
 
 router = APIRouter()
 
+
 @router.get("/", response_model=List[UserRead])
 def read_users(
     session: SessionDep,
@@ -23,56 +24,47 @@ def read_users(
     users = session.exec(statement).all()
     return users
 
+
 @router.get("/me", response_model=UserRead)
 def read_user_me(current_user: CurrentUser):
     return current_user
 
+
 @router.patch("/me", response_model=UserRead)
-def update_user_me(
-    session: SessionDep, 
-    current_user: CurrentUser, 
-    user_in: UserUpdate
-):
+def update_user_me(session: SessionDep, current_user: CurrentUser, user_in: UserUpdate):
     current_user = user_service.update(session, db_user=current_user, user_in=user_in)
     return current_user
+
 
 @router.post("/me/picture", response_model=UserRead)
 async def upload_profile_picture(
-    session: SessionDep,
-    current_user: CurrentUser,
-    file: UploadFile = File(...)
+    session: SessionDep, current_user: CurrentUser, file: UploadFile = File(...)
 ):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
-    
+
     file_bytes = await file.read()
     if len(file_bytes) > 5 * 1024 * 1024:  # 5MB limit
         raise HTTPException(status_code=400, detail="Image size must be less than 5MB")
-        
+
     url = cloudinary_service.upload_image(file_bytes, current_user.id)
-    
+
     # Update the user record
     user_in = UserUpdate(profile_picture_url=url)
     current_user = user_service.update(session, db_user=current_user, user_in=user_in)
-    
+
     return current_user
 
+
 @router.delete("/me/picture", response_model=UserRead)
-def delete_profile_picture(
-    session: SessionDep,
-    current_user: CurrentUser
-):
+def delete_profile_picture(session: SessionDep, current_user: CurrentUser):
     if current_user.profile_picture_url:
         cloudinary_service.delete_image(current_user.profile_picture_url)
-        
-        # We must use a dict to unset an optional field sometimes, but UserUpdate allows setting to None.
-        # But wait, UserUpdate excludes unset fields by default during model_dump(exclude_unset=True). 
-        # If we set profile_picture_url=None, will it update it to None? Yes, if explicitly set.
-        user_in = UserUpdate(profile_picture_url="")
+
         # Wait! To explicitly unset it in SQLModel/Pydantic when using update helpers, it's safer to pass a dict.
         current_user.profile_picture_url = None
         session.add(current_user)
         session.commit()
         session.refresh(current_user)
-        
+
     return current_user

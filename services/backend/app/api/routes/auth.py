@@ -11,11 +11,12 @@ from app.services.platform.user import user_service
 
 router = APIRouter()
 
+
 @router.post("/login", response_model=Token)
 def login_for_access_token(
-    session: SessionDep, 
+    session: SessionDep,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    response: Response
+    response: Response,
 ) -> Token:
     user = user_service.authenticate(session, form_data.username, form_data.password)
     if not user:
@@ -23,15 +24,15 @@ def login_for_access_token(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect email or password",
         )
-    
+
     # Update last login
     user_service.update_last_login(session, user)
-    
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         subject=user.email, expires_delta=access_token_expires
     )
-    
+
     # Set HttpOnly cookie for web clients
     response.set_cookie(
         key="access_token",
@@ -42,20 +43,21 @@ def login_for_access_token(
         samesite="lax",
         secure=settings.SECURE_COOKIES,
     )
-    
+
     return Token(access_token=access_token, token_type="bearer")
+
 
 @router.post("/logout")
 def logout(response: Response):
     response.delete_cookie(
-        "access_token", 
-        secure=settings.SECURE_COOKIES, 
-        httponly=True, 
-        samesite="lax"
+        "access_token", secure=settings.SECURE_COOKIES, httponly=True, samesite="lax"
     )
     return {"message": "Successfully logged out"}
 
-@router.post("/register", response_model=User) # Should probably return UserRead but User is fine for now
+
+@router.post(
+    "/register", response_model=User
+)  # Should probably return UserRead but User is fine for now
 def register_user(session: SessionDep, user_in: UserCreate) -> User:
     user = user_service.get_by_email(session, email=user_in.email)
     if user:

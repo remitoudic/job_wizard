@@ -1,4 +1,5 @@
 """Models module for database tables."""
+
 from .user import User
 from .job_description import JobDescription
 from .generated_letter import GeneratedLetter

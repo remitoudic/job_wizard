@@ -1,6 +1,7 @@
 """
 CV Parser Service — Uses LlamaParse to extract structured data from PDF CVs.
 """
+
 import logging
 from typing import Optional
 from pydantic import BaseModel
@@ -13,6 +14,7 @@ logger = logging.getLogger("app.services.cv_refresh.cv_parsers.cv_parser_service
 
 
 # ── Pydantic models for structured CV data ──────────────────────────────────
+
 
 class CVContact(BaseModel):
     name: str = ""
@@ -115,8 +117,7 @@ class CVParserService:
         if self._parser is None:
             if not settings.LLAMA_CLOUD_API_KEY:
                 raise RuntimeError(
-                    "LLAMA_CLOUD_API_KEY is not set. "
-                    "Please add it to your .env file."
+                    "LLAMA_CLOUD_API_KEY is not set. Please add it to your .env file."
                 )
             self._parser = LlamaParse(
                 api_key=settings.LLAMA_CLOUD_API_KEY,
@@ -147,16 +148,20 @@ class CVParserService:
             raise ValueError("LlamaParse returned no content for the uploaded PDF.")
 
         cv_markdown = "\n\n".join(doc.text for doc in documents)
-        
+
         # Inject raw text from first page to ensure headers/footers (contact info) are available
         try:
             import edgeparse
+
             first_page_text = edgeparse.convert(file_path, format="markdown")
             # Prepend the raw text to the markdown
-            cv_markdown = f"--- RAW TEXT (Contains Contact Info) ---\n{first_page_text[:1000]}\n\n--- STRUCTURED MARKDOWN ---\n" + cv_markdown
+            cv_markdown = (
+                f"--- RAW TEXT (Contains Contact Info) ---\n{first_page_text[:1000]}\n\n--- STRUCTURED MARKDOWN ---\n"
+                + cv_markdown
+            )
         except Exception as e:
             logger.warning(f"Could not extract raw text fallback: {e}")
-            
+
         logger.info(f"LlamaParse extracted {len(cv_markdown)} characters of markdown")
 
         # Step 2: Structure the markdown using the LLM extraction agent
@@ -164,7 +169,9 @@ class CVParserService:
             cv_data = await self._structure_with_llm(cv_markdown)
             return cv_data
         except Exception as e:
-            logger.error(f"Structuring failed after LlamaParse: {e}\n{traceback.format_exc()}")
+            logger.error(
+                f"Structuring failed after LlamaParse: {e}\n{traceback.format_exc()}"
+            )
             # Return raw markdown as summary fallback
             return CVData(summary=cv_markdown[:500])
 
@@ -199,7 +206,7 @@ class CVParserService:
                 model_settings={"temperature": 0.1, "max_tokens": 4000},
             )
             result = await agent.run(prompt)
-            raw = result.output if hasattr(result, 'output') else str(result.data)
+            raw = result.output if hasattr(result, "output") else str(result.data)
 
             logger.info(f"Groq raw output length: {len(raw)} chars")
             logger.debug(f"Groq raw output (first 500): {raw[:500]}")
@@ -215,16 +222,18 @@ class CVParserService:
                 context="CV Parsing (JSON Decode)",
                 raw_output=raw,
                 error=str(e),
-                model_name=settings.GROQ_MODEL_1
+                model_name=settings.GROQ_MODEL_1,
             )
             return CVData(summary=cv_markdown[:500])
         except ValidationError as e:
-            logger.error(f"Failed to validate LLM output against CVData: {e}\nRaw: {raw[:500]}")
+            logger.error(
+                f"Failed to validate LLM output against CVData: {e}\nRaw: {raw[:500]}"
+            )
             prompt_audit_logger.log_failure(
                 context="CV Parsing (Pydantic Validation)",
                 raw_output=raw,
                 error=str(e),
-                model_name=settings.GROQ_MODEL_1
+                model_name=settings.GROQ_MODEL_1,
             )
             return CVData(summary=cv_markdown[:500])
         except Exception as e:

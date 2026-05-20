@@ -11,7 +11,7 @@ def base_provider_config():
         "base_url": "https://api.groq.com/openai/v1",
         "api_key": "fake-key",
         "model_1": "llama-3.3-70b-versatile",
-        "model_2": "openai/gpt-oss-120b"
+        "model_2": "openai/gpt-oss-120b",
     }
 
 
@@ -22,11 +22,13 @@ def nvidia_config():
         "name": "nvidia",
         "base_url": "https://integrate.api.nvidia.com/v1",
         "api_key": "nvapi-fake-key",
-        "model_1": "meta/llama-4-maverick-17b-128e-instruct"
+        "model_1": "meta/llama-4-maverick-17b-128e-instruct",
     }
 
 
-def _make_mock_agent(output_text="Mock Result", delay=0.05, fail=False, error_msg="Agent failed"):
+def _make_mock_agent(
+    output_text="Mock Result", delay=0.05, fail=False, error_msg="Agent failed"
+):
     """Helper to create a mock agent with configurable behavior."""
     agent = MagicMock()
 
@@ -56,6 +58,7 @@ def _make_semaphore_mock():
 
 # --- Test: NVIDIA provider config ---
 
+
 def test_nvidia_provider_config_with_key():
     """Verify get_nvidia_config returns correct structure when key is set."""
     with patch("app.services.platform.llm_provider_service.settings") as mock_settings:
@@ -63,6 +66,7 @@ def test_nvidia_provider_config_with_key():
         mock_settings.NVIDIA_MODEL_1 = "meta/llama-4-maverick-17b-128e-instruct"
 
         from app.services.platform.llm_provider_service import LLMProviderService
+
         service = LLMProviderService()
 
         config = service.get_nvidia_config()
@@ -79,6 +83,7 @@ def test_nvidia_provider_config_without_key():
         mock_settings.NVIDIA_API_KEY = ""
 
         from app.services.platform.llm_provider_service import LLMProviderService
+
         service = LLMProviderService()
 
         config = service.get_nvidia_config()
@@ -87,17 +92,22 @@ def test_nvidia_provider_config_without_key():
 
 # --- Test: NVIDIA joins the race ---
 
+
 @pytest.mark.asyncio
 async def test_nvidia_joins_race(base_provider_config, nvidia_config):
     """Verify NVIDIA task is created and participates when API key is set."""
-    with patch("app.services.cover_letter.llm_service.create_writing_agent") as mock_create:
+    with patch(
+        "app.services.cover_letter.llm_service.create_writing_agent"
+    ) as mock_create:
         from app.services.cover_letter.llm_service import LLMService
 
         # Track which agents were created
         created_agents = []
 
         def agent_factory(model_name, **kwargs):
-            agent = _make_mock_agent(output_text=f"Result from {model_name}", delay=0.05)
+            agent = _make_mock_agent(
+                output_text=f"Result from {model_name}", delay=0.05
+            )
             created_agents.append(model_name)
             return agent
 
@@ -118,7 +128,7 @@ async def test_nvidia_joins_race(base_provider_config, nvidia_config):
             company="TestCorp",
             requirements=["Python"],
             job_id="test-nvidia-joins",
-            user_name="Test User"
+            user_name="Test User",
         )
 
         # NVIDIA model should have been created via the factory
@@ -130,13 +140,17 @@ async def test_nvidia_joins_race(base_provider_config, nvidia_config):
 @pytest.mark.asyncio
 async def test_nvidia_skipped_without_key(base_provider_config):
     """Verify NVIDIA is not added when API key is missing."""
-    with patch("app.services.cover_letter.llm_service.create_writing_agent") as mock_create:
+    with patch(
+        "app.services.cover_letter.llm_service.create_writing_agent"
+    ) as mock_create:
         from app.services.cover_letter.llm_service import LLMService
 
         created_agents = []
 
         def agent_factory(model_name, **kwargs):
-            agent = _make_mock_agent(output_text=f"Result from {model_name}", delay=0.05)
+            agent = _make_mock_agent(
+                output_text=f"Result from {model_name}", delay=0.05
+            )
             created_agents.append(model_name)
             return agent
 
@@ -156,7 +170,7 @@ async def test_nvidia_skipped_without_key(base_provider_config):
             company="TestCorp",
             requirements=["Python"],
             job_id="test-nvidia-skip",
-            user_name="Test User"
+            user_name="Test User",
         )
 
         # NVIDIA model should NOT be in created agents
@@ -167,7 +181,9 @@ async def test_nvidia_skipped_without_key(base_provider_config):
 @pytest.mark.asyncio
 async def test_nvidia_wins_race(base_provider_config, nvidia_config):
     """Verify NVIDIA can win the race when it responds fastest."""
-    with patch("app.services.cover_letter.llm_service.create_writing_agent") as mock_create:
+    with patch(
+        "app.services.cover_letter.llm_service.create_writing_agent"
+    ) as mock_create:
         from app.services.cover_letter.llm_service import LLMService
 
         call_count = 0
@@ -198,7 +214,7 @@ async def test_nvidia_wins_race(base_provider_config, nvidia_config):
             company="Corp",
             requirements=[],
             job_id="test-nvidia-wins",
-            user_name="Winner"
+            user_name="Winner",
         )
 
         assert "Nvidia" in source
@@ -208,13 +224,17 @@ async def test_nvidia_wins_race(base_provider_config, nvidia_config):
 @pytest.mark.asyncio
 async def test_nvidia_failure_doesnt_break_race(base_provider_config, nvidia_config):
     """Verify other participants still complete if NVIDIA fails."""
-    with patch("app.services.cover_letter.llm_service.create_writing_agent") as mock_create:
+    with patch(
+        "app.services.cover_letter.llm_service.create_writing_agent"
+    ) as mock_create:
         from app.services.cover_letter.llm_service import LLMService
 
         def agent_factory(model_name, **kwargs):
             if model_name == nvidia_config["model_1"]:
                 # NVIDIA fails fast
-                return _make_mock_agent(fail=True, error_msg="NVIDIA 503 server error", delay=0.01)
+                return _make_mock_agent(
+                    fail=True, error_msg="NVIDIA 503 server error", delay=0.01
+                )
             return _make_mock_agent(f"Good result from {model_name}", delay=0.05)
 
         mock_create.side_effect = agent_factory
@@ -233,7 +253,7 @@ async def test_nvidia_failure_doesnt_break_race(base_provider_config, nvidia_con
             company="Corp",
             requirements=[],
             job_id="test-nvidia-fail",
-            user_name="User"
+            user_name="User",
         )
 
         # Race still produces a winner from non-NVIDIA participants

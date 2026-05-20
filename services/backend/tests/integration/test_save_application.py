@@ -1,4 +1,5 @@
 """Integration tests for save-application endpoint."""
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, create_engine, SQLModel
@@ -8,7 +9,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 # Mock the upload directory creation before importing main
-with patch.object(Path, 'mkdir'):
+with patch.object(Path, "mkdir"):
     from app.main import app
 
 from app.core.security import create_access_token
@@ -40,7 +41,7 @@ def test_session_fixture(test_db):
 def test_user_fixture(test_session: Session):
     """Create a test user."""
     from app.core.security import get_password_hash
-    
+
     user = User(
         email="testuser@example.com",
         hashed_password=get_password_hash("testpass123"),
@@ -65,16 +66,19 @@ def auth_headers_fixture(test_user: User):
 @pytest.fixture(name="client")
 def client_fixture(test_session: Session):
     """Create test client with database session override."""
+
     def override_get_session():
         yield test_session
-    
+
     app.dependency_overrides[get_session] = override_get_session
     client = TestClient(app)
     yield client
     app.dependency_overrides.clear()
 
 
-def test_save_application_success(client: TestClient, test_session: Session, auth_headers: dict, test_user: User):
+def test_save_application_success(
+    client: TestClient, test_session: Session, auth_headers: dict, test_user: User
+):
     """Test successful application save."""
     request_data = {
         "job_url": "https://www.linkedin.com/jobs/view/123456789",
@@ -93,44 +97,42 @@ def test_save_application_success(client: TestClient, test_session: Session, aut
                 "model": "claude-3",
                 "letter": "To whom it may concern, I am writing to express...",
                 "timestamp": datetime.utcnow().isoformat(),
-            }
+            },
         ],
         "selected_letter_index": 0,
         "header": {
             "name": "Test User",
             "email": "test@example.com",
             "phone": "+1234567890",
-            "address": "123 Main St, City, Country"
+            "address": "123 Main St, City, Country",
         },
-        "cover_letter_body": "Dear Hiring Manager, I am excited to apply... [Final edited version]"
+        "cover_letter_body": "Dear Hiring Manager, I am excited to apply... [Final edited version]",
     }
-    
+
     response = client.post(
-        "/api/save-application",
-        json=request_data,
-        headers=auth_headers
+        "/api/save-application", json=request_data, headers=auth_headers
     )
-    
+
     assert response.status_code == 200
     data = response.json()
-    
+
     assert data["success"] is True
     assert "application_id" in data
     assert "job_description_id" in data
     assert "generated_letter_id" in data
     assert data["message"] == "Application saved successfully"
-    
+
     # Verify database records
     job_desc = test_session.get(JobDescription, data["job_description_id"])
     assert job_desc is not None
     assert job_desc.url == request_data["job_url"]
     assert job_desc.job_title == request_data["job_title"]
-    
+
     gen_letter = test_session.get(GeneratedLetter, data["generated_letter_id"])
     assert gen_letter is not None
     assert gen_letter.user_id == test_user.id
     assert len(gen_letter.generated_letters) == 2
-    
+
     application = test_session.get(Application, data["application_id"])
     assert application is not None
     assert application.user_id == test_user.id
@@ -144,7 +146,7 @@ def test_save_application_job_description_deduplication(
 ):
     """Test that same job URL reuses existing JobDescription."""
     job_url = "https://www.linkedin.com/jobs/view/987654321"
-    
+
     # Create first application
     request_data = {
         "job_url": job_url,
@@ -162,26 +164,30 @@ def test_save_application_job_description_deduplication(
         ],
         "selected_letter_index": 0,
         "header": {"name": "Test User"},
-        "cover_letter_body": "First application letter..."
+        "cover_letter_body": "First application letter...",
     }
-    
-    response1 = client.post("/api/save-application", json=request_data, headers=auth_headers)
+
+    response1 = client.post(
+        "/api/save-application", json=request_data, headers=auth_headers
+    )
     assert response1.status_code == 200
     data1 = response1.json()
     job_desc_id_1 = data1["job_description_id"]
-    
+
     # Create second application with same URL
     request_data["cover_letter_body"] = "Second application letter..."
     request_data["generated_letters"][0]["letter"] = "Second application letter..."
-    
-    response2 = client.post("/api/save-application", json=request_data, headers=auth_headers)
+
+    response2 = client.post(
+        "/api/save-application", json=request_data, headers=auth_headers
+    )
     assert response2.status_code == 200
     data2 = response2.json()
     job_desc_id_2 = data2["job_description_id"]
-    
+
     # Verify same JobDescription was reused
     assert job_desc_id_1 == job_desc_id_2
-    
+
     # Verify we have two separate applications
     assert data1["application_id"] != data2["application_id"]
 
@@ -198,9 +204,9 @@ def test_save_application_unauthorized(client: TestClient):
         "generated_letters": [],
         "selected_letter_index": 0,
         "header": {},
-        "cover_letter_body": "Test"
+        "cover_letter_body": "Test",
     }
-    
+
     # Request without auth headers
     response = client.post("/api/save-application", json=request_data)
     assert response.status_code == 401
@@ -220,9 +226,11 @@ def test_save_application_with_empty_generated_letters(
         "generated_letters": [],  # Empty list
         "selected_letter_index": 0,
         "header": {"name": "Test User"},
-        "cover_letter_body": "Manually written cover letter"
+        "cover_letter_body": "Manually written cover letter",
     }
-    
+
     # This should fail because we can't select index 0 from empty list
-    response = client.post("/api/save-application", json=request_data, headers=auth_headers)
+    response = client.post(
+        "/api/save-application", json=request_data, headers=auth_headers
+    )
     assert response.status_code == 500  # Internal server error due to IndexError

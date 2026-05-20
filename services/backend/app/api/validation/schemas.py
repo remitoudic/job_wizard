@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 
+
 class JobURLRequest(BaseModel):
     url: str
     # Optional raw Cookie header string for authenticated fetches
@@ -47,6 +48,7 @@ class CoverLetterResponse(BaseModel):
 
 class GeneratedLetterData(BaseModel):
     """Individual generated letter from race mode."""
+
     model: str
     letter: str
     timestamp: str
@@ -67,6 +69,7 @@ class UpdateApplicationStatusRequest(BaseModel):
 
 class UpdateApplicationRequest(BaseModel):
     """Request model for updating an existing application."""
+
     job_title: Optional[str] = None
     company: Optional[str] = None
     status: Optional[str] = None
@@ -77,6 +80,7 @@ class UpdateApplicationRequest(BaseModel):
 
 class CreateApplicationRequest(BaseModel):
     """Request model for manually creating a new application."""
+
     job_title: str
     company: str
     job_url: Optional[str] = ""
@@ -85,10 +89,9 @@ class CreateApplicationRequest(BaseModel):
     cover_letter_body: Optional[str] = ""
 
 
-
-
 class SaveApplicationRequest(BaseModel):
     """Request model for saving complete application workflow."""
+
     # Job Description data
     job_url: str
     job_title: str
@@ -96,18 +99,19 @@ class SaveApplicationRequest(BaseModel):
     job_description: str
     job_requirements: List[str]
     job_source: str = "LinkedIn"
-    
+
     # Generated letters (all versions from race mode)
     generated_letters: List[GeneratedLetterData]
-    
+
     # Final application data
     selected_letter_index: int = 0
     header: Dict[str, Any]  # Contains name, email, phone, address fields, etc.
     cover_letter_body: str  # Final edited cover letter text
-    
+
 
 class SaveApplicationResponse(BaseModel):
     """Response model after saving application."""
+
     success: bool
     application_id: int
     job_description_id: int

@@ -77,21 +77,21 @@ sequenceDiagram
     participant LLM as LLM Service
 
     Worker->>Worker: Run CoverLetterWorkflow
-    
+
     alt Slow Path (Raw Text Context)
         Worker->>PubSub: notify_status("extracting")
         PubSub-->>User: SSE Event
         Worker->>LLM: extract_contact_info()
         LLM-->>Worker: Contact Info Extracted
     end
-    
+
     Worker->>PubSub: notify_status("extracted")
     PubSub-->>User: SSE Event
 
     Worker->>LLM: generate_text_race()
     LLM->>PubSub: notify_status("generating")
     PubSub-->>User: SSE Event
-    
+
     LLM-->>Worker: Generation Result
     LLM->>PubSub: notify_status("completed", result)
     PubSub-->>User: SSE Event (Closes stream)
@@ -113,7 +113,7 @@ sequenceDiagram
     API->>Backup: backup_cover_letter_pdf()
     Backup-->>API: Backup Complete
     API-->>User: Returns { filename, url }
-    
+
     User->>API: GET /download/{filename}
     API-->>User: PDF File Stream
 ```

@@ -21,16 +21,25 @@ async def parse_job_description(request: JobURLRequest):
     Parse job description from a URL
     """
     import logfire
-    
+
     try:
         logfire.info("Job parsing requested", url=str(request.url))
-        job_data = await job_parser.parse_url(str(request.url).strip(), cookies=request.cookie)
-        logfire.info("Job parsing successful", url=str(request.url), title=job_data.get("title"))
+        job_data = await job_parser.parse_url(
+            str(request.url).strip(), cookies=request.cookie
+        )
+        logfire.info(
+            "Job parsing successful", url=str(request.url), title=job_data.get("title")
+        )
         return job_data
     except Exception as e:
         error_msg = str(e)
-        logfire.error("Job parsing failed", url=str(request.url), error=error_msg, error_type=type(e).__name__)
-        
+        logfire.error(
+            "Job parsing failed",
+            url=str(request.url),
+            error=error_msg,
+            error_type=type(e).__name__,
+        )
+
         # Categorize errors for better user feedback
         if "manually paste" in error_msg.lower():
             user_message = error_msg
@@ -48,7 +57,8 @@ async def parse_job_description(request: JobURLRequest):
             user_message = "Could not extract job details from this page. The page structure may not be supported."
         else:
             user_message = f"Failed to parse job URL: {error_msg}"
-        
+
         raise HTTPException(status_code=400, detail=user_message)
+
 
 # End of General Routes

@@ -132,7 +132,7 @@ docker exec -it jobwizard-postgres psql -U jobwizard -d jobwizard -c "LISTEN cov
 
 ### 2. Ollama "Race" Failures
 **Symptoms**: Only one model ever wins, or generation is extremely slow.
-**Check**: 
+**Check**:
 - Is `OLLAMA_HOST` reachable from the backend container?
 - Is the Ollama container hitting CPU limits? (Check `docker stats`).
 

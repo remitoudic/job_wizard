@@ -10,14 +10,17 @@ from database_pkg.models.user import User
 from app.services.platform.user import user_service
 
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-reusable_oauth2_optional = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
+reusable_oauth2_optional = OAuth2PasswordBearer(
+    tokenUrl="/api/auth/login", auto_error=False
+)
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
+
 def get_current_user(
-    session: SessionDep, 
+    session: SessionDep,
     request: Request,
-    token: Annotated[str | None, Depends(reusable_oauth2_optional)] = None
+    token: Annotated[str | None, Depends(reusable_oauth2_optional)] = None,
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -29,7 +32,7 @@ def get_current_user(
     # 2. If not found, try to get from cookie
     if not token:
         token = request.cookies.get("access_token")
-    
+
     if not token:
         raise credentials_exception
 
@@ -41,20 +44,23 @@ def get_current_user(
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    
-    user = user_service.get_by_email(session, email=token_data.username) # Using email as sub
+
+    user = user_service.get_by_email(
+        session, email=token_data.username
+    )  # Using email as sub
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
+
 def get_current_user_optional(
-    session: SessionDep, 
+    session: SessionDep,
     request: Request,
-    token: Annotated[str | None, Depends(reusable_oauth2_optional)] = None
+    token: Annotated[str | None, Depends(reusable_oauth2_optional)] = None,
 ) -> User | None:
     if not token:
         token = request.cookies.get("access_token")
-    
+
     if not token:
         return None
     try:
@@ -65,12 +71,13 @@ def get_current_user_optional(
         token_data = TokenData(username=username)
     except JWTError:
         return None
-    
+
     user = user_service.get_by_email(session, email=token_data.username)
     return user
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
 
 def get_current_superuser(current_user: CurrentUser) -> User:
     if not current_user.is_superuser:

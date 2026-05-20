@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-	import { fade } from "svelte/transition";
-	import { step } from "../stores/wizard";
+	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
+	import { step } from '../stores/wizard';
 	import {
 		parseJobUrl,
 		generateCoverLetter,
@@ -11,37 +11,48 @@
 		getAlternativeCoverLetter,
 		saveApplication,
 		getUserCVs,
-		API_URL,
-	} from "$lib/api";
-	import { auth } from "../stores/auth";
-	import SEO from "$lib/components/SEO.svelte";
-	import ContextPreview from "$lib/components/ContextPreview.svelte";
-	import { generateCoverLetterFilename } from "$lib/pdfUtils";
+		API_URL
+	} from '$lib/api';
+	import { auth } from '../stores/auth';
+	import SEO from '$lib/components/SEO.svelte';
+	import ContextPreview from '$lib/components/ContextPreview.svelte';
+	import { generateCoverLetterFilename } from '$lib/pdfUtils';
 
 	// SvelteKit automatically passes these props - declare them to avoid warnings
 	export let data: any = {};
 
-	let jobUrl = "";
-	let userName = "";
+	let jobUrl = '';
+	let userName = '';
 	let imageFile: File | null = null;
-	let imagePreview = "";
-	let uploadedImageFilename = "";
-	let contextText = "";
-	let contextFilename = "";
-	let customInstructions = "";
+	let imagePreview = '';
+	let uploadedImageFilename = '';
+	let contextText = '';
+	let contextFilename = '';
+	let customInstructions = '';
 
 	// Settings
 	let showSettings = false;
 	// Single unified format selector: drives both template (PDF format) and language (AI writing)
-	let selectedFormat: string = "british";
+	let selectedFormat: string = 'british';
 	$: templateName = selectedFormat; // maps 1-to-1 to backend template_name
-	$: language = selectedFormat === "french" ? "french" : (selectedFormat === "german" ? "german" : (selectedFormat === "spanish" ? "spanish" : "english"));
+	$: language =
+		selectedFormat === 'french'
+			? 'french'
+			: selectedFormat === 'german'
+				? 'german'
+				: selectedFormat === 'spanish'
+					? 'spanish'
+					: 'english';
+
+	function handleLanguageSelect(e: Event) {
+		handleLanguageChange((e.target as HTMLSelectElement).value);
+	}
 
 	function handleLanguageChange(newLang: string) {
-		if (newLang === "french") selectedFormat = "french";
-		else if (newLang === "german") selectedFormat = "german";
-		else if (newLang === "spanish") selectedFormat = "spanish";
-		else selectedFormat = "british";
+		if (newLang === 'french') selectedFormat = 'french';
+		else if (newLang === 'german') selectedFormat = 'german';
+		else if (newLang === 'spanish') selectedFormat = 'spanish';
+		else selectedFormat = 'british';
 	}
 
 	// Auto-detect language from job URL
@@ -52,17 +63,31 @@
 			const urlObj = new URL(urlStr);
 			const hostname = urlObj.hostname.toLowerCase();
 			const search = urlObj.search.toLowerCase();
-			
-			if (hostname.endsWith('.de') || search.includes('language=de') || search.includes('lang=de') || search.includes('hl=de')) {
+
+			if (
+				hostname.endsWith('.de') ||
+				search.includes('language=de') ||
+				search.includes('lang=de') ||
+				search.includes('hl=de')
+			) {
 				selectedFormat = 'german';
-			} else if (hostname.endsWith('.fr') || search.includes('language=fr') || search.includes('lang=fr') || search.includes('hl=fr')) {
+			} else if (
+				hostname.endsWith('.fr') ||
+				search.includes('language=fr') ||
+				search.includes('lang=fr') ||
+				search.includes('hl=fr')
+			) {
 				selectedFormat = 'french';
 			} else {
 				// Fallback to simple string matching
 				const lowerUrl = jobUrl.toLowerCase();
 				if (lowerUrl.includes('.de/') || lowerUrl.endsWith('.de') || lowerUrl.includes('.de?')) {
 					selectedFormat = 'german';
-				} else if (lowerUrl.includes('.fr/') || lowerUrl.endsWith('.fr') || lowerUrl.includes('.fr?')) {
+				} else if (
+					lowerUrl.includes('.fr/') ||
+					lowerUrl.endsWith('.fr') ||
+					lowerUrl.includes('.fr?')
+				) {
 					selectedFormat = 'french';
 				}
 			}
@@ -71,66 +96,70 @@
 			const lowerUrl = jobUrl.toLowerCase();
 			if (lowerUrl.includes('.de/') || lowerUrl.endsWith('.de') || lowerUrl.includes('.de?')) {
 				selectedFormat = 'german';
-			} else if (lowerUrl.includes('.fr/') || lowerUrl.endsWith('.fr') || lowerUrl.includes('.fr?')) {
+			} else if (
+				lowerUrl.includes('.fr/') ||
+				lowerUrl.endsWith('.fr') ||
+				lowerUrl.includes('.fr?')
+			) {
 				selectedFormat = 'french';
 			}
 		}
 	}
 
 	// Contact Info
-	let email = "";
-	let phone = "";
-	let linkedin = "";
-	let website = "";
-	let address = "";
-	let addressStreet = "";
-	let addressPostcode = "";
-	let addressCity = "";
-	let addressCountry = "";
-	let firstName = "";
-	let surname = "";
+	let email = '';
+	let phone = '';
+	let linkedin = '';
+	let website = '';
+	let address = '';
+	let addressStreet = '';
+	let addressPostcode = '';
+	let addressCity = '';
+	let addressCountry = '';
+	let firstName = '';
+	let surname = '';
 
 	let jobData: any = null;
-	let coverLetter = "";
-	let originalCoverLetter = ""; // Store original to allow re-replacing name
-	let pdfUrl = "";
+	let coverLetter = '';
+	let originalCoverLetter = ''; // Store original to allow re-replacing name
+	let pdfUrl = '';
 	let downloaded = false;
 
 	let isParsing = false;
 	let isGenerating = false;
-    let generationProgress: Array<{status: string, message: string, timestamp: number}> = [];
+	let generationProgress: Array<{ status: string; message: string; timestamp: number }> = [];
 	let isPdfGenerating = false;
-	let error = "";
+	let error = '';
 
 	// Manual Input
 	let isManualInput = false;
-	let manualTitle = "";
-	let manualCompany = "";
-	let manualDescription = "";
+	let manualTitle = '';
+	let manualCompany = '';
+	let manualDescription = '';
 
 	// Race Mode
-	let alternativeId = "";
-	let source = "";
+	let alternativeId = '';
+	let source = '';
 
 	// Edit Mode - Body
 	let isEditing = false;
-	let tempCoverLetter = "";
+	let tempCoverLetter = '';
 
 	// Edit Mode - Header
 	let isEditingName = false;
 	let isEditingDate = false;
 	let isEditingSubject = false;
 
-	let editableName = "";
-	let editableDate = "";
-	let editableSubject = "";
-	let editableJobTitle = "";
-	let editableCompany = "";
+	let editableName = '';
+	let editableDate = '';
+	let editableSubject = '';
+	let editableJobTitle = '';
+	let editableCompany = '';
 
 	let isDateManuallyEdited = false;
 	let isSubjectManuallyEdited = false;
 	let hasAutoFilled = false;
-	
+
 	// User CVs for context
 	let userCVs: any[] = [];
 	let activeCV: any = null;
@@ -142,16 +171,16 @@
 			isLoadingCVs = true;
 			const cvs = await getUserCVs();
 			userCVs = cvs;
-			activeCV = cvs.find(cv => cv.is_active) || null;
-			
-			// If we have an active CV, and contextText is currently empty, 
+			activeCV = cvs.find((cv) => cv.is_active) || null;
+
+			// If we have an active CV, and contextText is currently empty,
 			// use the CV data as the context for LLM
 			if (activeCV && !contextText) {
 				// Use the parsed JSON data or raw content
-				contextText = activeCV.cv_data || "";
+				contextText = activeCV.cv_data || '';
 			}
 		} catch (err) {
-			console.error("Failed to fetch user CVs:", err);
+			console.error('Failed to fetch user CVs:', err);
 		} finally {
 			isLoadingCVs = false;
 		}
@@ -164,58 +193,54 @@
 
 	// Sync contextText when activeCV changes (if not manually overridden by a file upload)
 	$: if (activeCV && !contextFilename && !imageFile) {
-		contextText = activeCV.cv_data || "";
+		contextText = activeCV.cv_data || '';
 	}
 
 	// Update defaults when format changes
 	$: if (selectedFormat && (jobData || isManualInput)) {
-		const currentTitle =
-			editableJobTitle || (jobData ? jobData.title : manualTitle);
-		const currentCompany =
-			editableCompany || (jobData ? jobData.company : manualCompany);
+		const currentTitle = editableJobTitle || (jobData ? jobData.title : manualTitle);
+		const currentCompany = editableCompany || (jobData ? jobData.company : manualCompany);
 
-		if (selectedFormat === "german") {
+		if (selectedFormat === 'german') {
 			if (!isDateManuallyEdited) {
 				const now = new Date();
 				const deMonths = [
-					"Januar",
-					"Februar",
-					"März",
-					"April",
-					"Mai",
-					"Juni",
-					"Juli",
-					"August",
-					"September",
-					"Oktober",
-					"November",
-					"Dezember",
+					'Januar',
+					'Februar',
+					'März',
+					'April',
+					'Mai',
+					'Juni',
+					'Juli',
+					'August',
+					'September',
+					'Oktober',
+					'November',
+					'Dezember'
 				];
-				editableDate = `${now.getDate()}. ${
-					deMonths[now.getMonth()]
-				} ${now.getFullYear()}`;
+				editableDate = `${now.getDate()}. ${deMonths[now.getMonth()]} ${now.getFullYear()}`;
 			}
 			if (!isSubjectManuallyEdited) {
 				editableSubject = `Bewerbung als ${currentTitle}`;
 			}
-		} else if (selectedFormat === "french") {
+		} else if (selectedFormat === 'french') {
 			if (!isDateManuallyEdited) {
 				const now = new Date();
 				const frMonths = [
-					"janvier",
-					"février",
-					"mars",
-					"avril",
-					"mai",
-					"juin",
-					"juillet",
-					"août",
-					"septembre",
-					"octobre",
-					"novembre",
-					"décembre",
+					'janvier',
+					'février',
+					'mars',
+					'avril',
+					'mai',
+					'juin',
+					'juillet',
+					'août',
+					'septembre',
+					'octobre',
+					'novembre',
+					'décembre'
 				];
-				const cityPrefix = addressCity ? `À ${addressCity}, le ` : "Le ";
+				const cityPrefix = addressCity ? `À ${addressCity}, le ` : 'Le ';
 				editableDate = `${cityPrefix}${now.getDate()} ${
 					frMonths[now.getMonth()]
 				} ${now.getFullYear()}`;
@@ -223,24 +248,24 @@
 			if (!isSubjectManuallyEdited) {
 				editableSubject = `Objet : Candidature au poste de ${currentTitle}`;
 			}
-		} else if (selectedFormat === "spanish") {
+		} else if (selectedFormat === 'spanish') {
 			if (!isDateManuallyEdited) {
 				const now = new Date();
 				const esMonths = [
-					"enero",
-					"febrero",
-					"marzo",
-					"abril",
-					"mayo",
-					"junio",
-					"julio",
-					"agosto",
-					"septiembre",
-					"octubre",
-					"noviembre",
-					"diciembre",
+					'enero',
+					'febrero',
+					'marzo',
+					'abril',
+					'mayo',
+					'junio',
+					'julio',
+					'agosto',
+					'septiembre',
+					'octubre',
+					'noviembre',
+					'diciembre'
 				];
-				const cityPart = addressCity || "Madrid"; // Fallback to Madrid
+				const cityPart = addressCity || 'Madrid'; // Fallback to Madrid
 				editableDate = `${cityPart}, ${now.getDate()} de ${
 					esMonths[now.getMonth()]
 				} de ${now.getFullYear()}`;
@@ -250,10 +275,10 @@
 			}
 		} else {
 			if (!isDateManuallyEdited) {
-				editableDate = new Date().toLocaleDateString("en-GB", {
-					year: "numeric",
-					month: "long",
-					day: "numeric",
+				editableDate = new Date().toLocaleDateString('en-GB', {
+					year: 'numeric',
+					month: 'long',
+					day: 'numeric'
 				});
 			}
 			if (!isSubjectManuallyEdited) {
@@ -273,26 +298,38 @@
 	let isLoadingAlternatives = false;
 	let hasAutoSelectedNvidia = false;
 	let hasAutoSelectedMistral = false;
+	let hasAutoSelectedQwen = false;
 
 	// Reactive: Auto-select Nvidia/Qwen if it's in the list
 	$: {
 		if (allCoverLetters.length > 0) {
-			console.log("[AutoSelect] Current sources:", allCoverLetters.map(l => l.source));
-			
-			// 1. Priority: Mistral (always switch to it even if we already selected a generic Nvidia)
-			const mistralIdx = allCoverLetters.findIndex((l) =>
-				l.source.toLowerCase().includes("mistral") && l.status !== "failed" && !l.text.startsWith("Generation failed")
+			console.log(
+				'[AutoSelect] Current sources:',
+				allCoverLetters.map((l) => l.source)
 			);
-			if (mistralIdx !== -1 && !hasAutoSelectedMistral) {
-				console.log(`[AutoSelect] Found Mistral at index ${mistralIdx}. Switching...`);
-				switchVersion(mistralIdx);
+
+			// 1. Priority: Mistral or Qwen (always switch to it even if we already selected a generic Nvidia)
+			const bestModelIdx = allCoverLetters.findIndex(
+				(l) =>
+					(l.source.toLowerCase().includes('mistral') || l.source.toLowerCase().includes('qwen')) &&
+					l.status !== 'failed' &&
+					!l.text.startsWith('Generation failed')
+			);
+
+			if (bestModelIdx !== -1 && !hasAutoSelectedMistral && !hasAutoSelectedQwen) {
+				console.log(`[AutoSelect] Found Priority Model at index ${bestModelIdx}. Switching...`);
+				switchVersion(bestModelIdx);
 				hasAutoSelectedMistral = true;
-				hasAutoSelectedNvidia = true; // Mark Nvidia as satisfied too
-			} 
-			// 2. Secondary: Nvidia (if no Mistral yet)
+				hasAutoSelectedQwen = true;
+				hasAutoSelectedNvidia = true;
+			}
+			// 2. Secondary: Generic Nvidia
 			else if (!hasAutoSelectedNvidia) {
-				const nvidiaIdx = allCoverLetters.findIndex((l) =>
-					l.source.toLowerCase().includes("nvidia") && l.status !== "failed" && !l.text.startsWith("Generation failed")
+				const nvidiaIdx = allCoverLetters.findIndex(
+					(l) =>
+						l.source.toLowerCase().includes('nvidia') &&
+						l.status !== 'failed' &&
+						!l.text.startsWith('Generation failed')
 				);
 				if (nvidiaIdx !== -1) {
 					console.log(`[AutoSelect] Found Nvidia at index ${nvidiaIdx}. Switching...`);
@@ -307,9 +344,7 @@
 	function updateNameInCoverLetter() {
 		// Use the raw text of the current version as source
 		const currentVersion = allCoverLetters[currentVersionIndex];
-		const sourceText = currentVersion
-			? currentVersion.rawText
-			: originalCoverLetter || coverLetter;
+		const sourceText = currentVersion ? currentVersion.rawText : originalCoverLetter || coverLetter;
 
 		if (sourceText && (firstName || surname)) {
 			const fullName = `${firstName} ${surname}`.trim();
@@ -322,15 +357,11 @@
 				// Fallback: If no replacement happened, try to find "Sincerely," and replace the line after
 				if (
 					newText === sourceText &&
-					(newText.includes("Sincerely,") ||
-						newText.includes("Best regards,"))
+					(newText.includes('Sincerely,') || newText.includes('Best regards,'))
 				) {
 					// Regex to find Sincerely, followed by newlines and then ANY text to the end or double newline
 					// This assumes the signature is the last thing or separated
-					newText = newText.replace(
-						/(Sincerely,|Best regards,)\s+[\s\S]+?$/i,
-						`$1\n\n${fullName}`,
-					);
+					newText = newText.replace(/(Sincerely,|Best regards,)\s+[\s\S]+?$/i, `$1\n\n${fullName}`);
 				}
 
 				// Always update editableName for the header preview
@@ -353,25 +384,25 @@
 	async function handleParseJob(advance = true) {
 		jobUrl = jobUrl.trim();
 		if (!jobUrl) {
-			error = "Please enter a job URL";
+			error = 'Please enter a job URL';
 			return;
 		}
 
 		isParsing = true;
-		error = "";
+		error = '';
 		isManualInput = false;
 
 		try {
 			jobData = await parseJobUrl(jobUrl);
-			editableJobTitle = jobData?.title || "";
-			editableCompany = jobData?.company || "";
+			editableJobTitle = jobData?.title || '';
+			editableCompany = jobData?.company || '';
 			if (advance) {
 				step.set(2);
 				// Auto-start generation in background
 				handleGenerateCoverLetter();
 			}
 		} catch (e: any) {
-			error = e.message || "Failed to parse job URL";
+			error = e.message || 'Failed to parse job URL';
 		} finally {
 			isParsing = false;
 		}
@@ -382,35 +413,35 @@
 		const file = target.files?.[0];
 
 		if (file) {
-			error = "";
+			error = '';
 
 			// Check if image or PDF
-			if (file.type.startsWith("image/")) {
+			if (file.type.startsWith('image/')) {
 				imageFile = file;
 				imagePreview = URL.createObjectURL(file);
-				contextFilename = ""; // Clear context if switching to image
+				contextFilename = ''; // Clear context if switching to image
 
 				try {
 					const result = await uploadImage(file);
 					uploadedImageFilename = result.filename;
 				} catch (e: any) {
-					error = "Failed to upload image";
+					error = 'Failed to upload image';
 				}
-			} else if (file.type === "application/pdf") {
+			} else if (file.type === 'application/pdf') {
 				// Handle PDF context
 				imageFile = null;
-				imagePreview = "";
-				uploadedImageFilename = "";
+				imagePreview = '';
+				uploadedImageFilename = '';
 
 				try {
 					const result = await uploadContext(file);
 					contextText = result.text;
 					contextFilename = result.filename;
 				} catch (e: any) {
-					error = "Failed to upload and parse PDF context";
+					error = 'Failed to upload and parse PDF context';
 				}
 			} else {
-				error = "Please upload an image or PDF file";
+				error = 'Please upload an image or PDF file';
 			}
 		}
 	}
@@ -419,188 +450,217 @@
 		if (!jobData) return;
 
 		isGenerating = true;
-		error = "";
-        generationProgress = [];
-        allCoverLetters = [];
-        currentVersionIndex = 0;
-        hasAutoSelectedNvidia = false;
-        hasAutoSelectedMistral = false;
+		error = '';
+		generationProgress = [];
+		allCoverLetters = [];
+		currentVersionIndex = 0;
+		hasAutoSelectedNvidia = false;
+		hasAutoSelectedMistral = false;
+		hasAutoSelectedQwen = false;
 
 		try {
 			const { job_id } = await generateCoverLetter({
 				job_description: jobData,
-				user_name: userName || "Applicant",
+				user_name: userName || 'Applicant',
 				context_text: contextText,
 				custom_instructions: customInstructions,
-				language,
+				language
 			});
 
-            if (!job_id) throw new Error("No job ID received from server");
+			if (!job_id) throw new Error('No job ID received from server');
 
-            // Open SSE connection
-            const eventSource = new EventSource(`${API_URL}/api/events/${job_id}`);
-            
-            eventSource.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                
-                // Add to progression list
-                generationProgress = [...generationProgress, { 
-                    status: data.status, 
-                    message: data.message, 
-                    timestamp: Date.now() 
-                }];
+			// Open SSE connection
+			const eventSource = new EventSource(`${API_URL}/api/events/${job_id}`);
 
-                // Handle Step: Extraction Done
-                if (data.status === "extracted" && data.contact_info) {
-                    const info = data.contact_info;
-                    if (info.first_name) firstName = info.first_name;
-                    if (info.surname) surname = info.surname;
-                    if (info.email) email = info.email;
-                    if (info.phone) phone = info.phone;
-                    if (info.linkedin) linkedin = info.linkedin;
-                    if (info.website) website = info.website;
-                    if (info.address) address = info.address;
-                    if (info.address_street) addressStreet = info.address_street;
-                    if (info.address_postcode) addressPostcode = info.address_postcode;
-                    if (info.address_city) addressCity = info.address_city;
-                    if (info.address_country) addressCountry = info.address_country;
-                    
-                    if (info.name && !userName) {
-                        userName = info.name;
-                    }
-                }
+			eventSource.onmessage = (event) => {
+				const data = JSON.parse(event.data);
 
-                // Handle Step: Partial (Primary Ready)
-                if (data.status === "partial") {
-                    const primaryVersion = {
-                        text: data.text,
-                        rawText: data.text,
-                        source: data.source
-                    };
+				// Add to progression list
+				generationProgress = [
+					...generationProgress,
+					{
+						status: data.status,
+						message: data.message,
+						timestamp: Date.now()
+					}
+				];
 
-                    if (allCoverLetters.length === 0) {
-                        allCoverLetters = [primaryVersion];
-                    } else {
-                        allCoverLetters[0] = primaryVersion;
-                        allCoverLetters = [...allCoverLetters];
-                    }
+				// Handle Step: Extraction Done
+				if (data.status === 'extracted' && data.contact_info) {
+					const info = data.contact_info;
+					if (info.first_name) firstName = info.first_name;
+					if (info.surname) surname = info.surname;
+					if (info.email) email = info.email;
+					if (info.phone) phone = info.phone;
+					if (info.linkedin) linkedin = info.linkedin;
+					if (info.website) website = info.website;
+					if (info.address) address = info.address;
+					if (info.address_street) addressStreet = info.address_street;
+					if (info.address_postcode) addressPostcode = info.address_postcode;
+					if (info.address_city) addressCity = info.address_city;
+					if (info.address_country) addressCountry = info.address_country;
 
-                    // Only update the active text if we are still on the primary version
-                    if (currentVersionIndex === 0) {
-                        coverLetter = data.text;
-                        originalCoverLetter = data.text;
-                        source = data.source;
-                        alternativeId = data.alternative_id;
-                        
-                        if (firstName || surname) {
-                            updateNameInCoverLetter();
-                        }
-                    }
+					if (info.name && !userName) {
+						userName = info.name;
+					}
+				}
 
-                    // Move to Step 3 automatically once primary is ready
-                    step.set(3);
-                }
+				// Handle Step: Partial (Primary Ready)
+				if (data.status === 'partial') {
+					const primaryVersion = {
+						text: data.text,
+						rawText: data.text,
+						source: data.source
+					};
 
-                // Handle Step: Alternative Ready
-                if (data.status === "alternative_ready") {
-                    if (data.text && data.source && !allCoverLetters.some(l => l.source === data.source)) {
-                        allCoverLetters = [...allCoverLetters, {
-                            text: data.text,
-                            rawText: data.text,
-                            source: data.source,
-                            status: "completed"
-                        }];
-                    }
-                    
-                    // Always sync from data.alternatives if backend provides it
-                    if (data.alternatives && Array.isArray(data.alternatives)) {
-                        data.alternatives.forEach(alt => {
-                            if (!allCoverLetters.some(l => l.source === alt.source)) {
-                                allCoverLetters = [...allCoverLetters, {
-                                    text: alt.text,
-                                    rawText: alt.text,
-                                    source: alt.source,
-                                    status: alt.status || "completed"
-                                }];
-                            }
-                        });
-                    }
+					if (allCoverLetters.length === 0) {
+						allCoverLetters = [primaryVersion];
+					} else {
+						allCoverLetters[0] = primaryVersion;
+						allCoverLetters = [...allCoverLetters];
+					}
 
-                }
+					// Only update the active text if we are still on the primary version
+					if (currentVersionIndex === 0) {
+						coverLetter = data.text;
+						originalCoverLetter = data.text;
+						source = data.source;
+						alternativeId = data.alternative_id;
 
-                // Handle Step: Completed
-                if (data.status === "completed") {
-                    // Update final result if we don't have it yet (e.g. race was instant)
-                    if (data.text && currentVersionIndex === 0) {
-                        const isUpdateNeeded = !coverLetter || source !== data.source;
-                        
-                        if (allCoverLetters.length === 0) {
-                            allCoverLetters = [{
-                                text: data.text,
-                                rawText: data.text,
-                                source: data.source
-                            }];
-                        } else {
-                            allCoverLetters[0] = {
-                                text: data.text,
-                                rawText: data.text,
-                                source: data.source
-                            };
-                            allCoverLetters = [...allCoverLetters];
-                        }
+						if (firstName || surname) {
+							updateNameInCoverLetter();
+						}
+					}
+				}
 
-                        if (isUpdateNeeded && !hasAutoSelectedNvidia && !hasAutoSelectedMistral) {
-                            coverLetter = data.text;
-                            originalCoverLetter = data.text;
-                            source = data.source;
-                            alternativeId = data.alternative_id;
-                            step.set(3);
-                        }
-                    }
-                    
-                    // If backend provided pre-finished alternatives, add them now
-                    if (data.alternatives && Array.isArray(data.alternatives)) {
-                        data.alternatives.forEach(alt => {
-                            if (!allCoverLetters.some(l => l.source === alt.source)) {
-                                allCoverLetters = [...allCoverLetters, {
-                                    text: alt.text,
-                                    rawText: alt.text,
-                                    source: alt.source,
-                                    status: alt.status || "completed"
-                                }];
-                            }
-                        });
-                    }
+				// If backend provided pre-finished alternatives, add them now
+				if (data.alternatives && Array.isArray(data.alternatives)) {
+					data.alternatives.forEach((alt: any) => {
+						if (!allCoverLetters.some((l) => l.source === alt.source)) {
+							allCoverLetters = [
+								...allCoverLetters,
+								{
+									text: alt.text,
+									rawText: alt.text,
+									source: alt.source,
+									status: alt.status || 'completed'
+								}
+							];
+						}
+					});
+				}
 
-                    isGenerating = false;
-                    eventSource.close();
-                }
+				// Handle Step: Alternative Ready
+				if (data.status === 'alternative_ready') {
+					if (data.text && data.source && !allCoverLetters.some((l) => l.source === data.source)) {
+						allCoverLetters = [
+							...allCoverLetters,
+							{
+								text: data.text,
+								rawText: data.text,
+								source: data.source,
+								status: 'completed'
+							}
+						];
+					}
 
-                // Handle Error
-                if (data.status === "error") {
-                    error = data.message;
-                    isGenerating = false;
-                    eventSource.close();
-                }
-            };
+					// Always sync from data.alternatives if backend provides it
+					if (data.alternatives && Array.isArray(data.alternatives)) {
+						data.alternatives.forEach((alt: any) => {
+							if (!allCoverLetters.some((l) => l.source === alt.source)) {
+								allCoverLetters = [
+									...allCoverLetters,
+									{
+										text: alt.text,
+										rawText: alt.text,
+										source: alt.source,
+										status: alt.status || 'completed'
+									}
+								];
+							}
+						});
+					}
+				}
 
-            eventSource.onerror = (e) => {
-                console.error("SSE Connection Error", e);
-                // We don't necessarily want to show error to user immediately 
-                // as SSE auto-reconnects, but if we are still generating and it fails...
-            };
+				// Handle Step: Completed
+				if (data.status === 'completed') {
+					// Update final result if we don't have it yet (e.g. race was instant)
+					if (data.text && currentVersionIndex === 0) {
+						const isUpdateNeeded = !coverLetter || source !== data.source;
+
+						if (allCoverLetters.length === 0) {
+							allCoverLetters = [
+								{
+									text: data.text,
+									rawText: data.text,
+									source: data.source
+								}
+							];
+						} else {
+							allCoverLetters[0] = {
+								text: data.text,
+								rawText: data.text,
+								source: data.source
+							};
+							allCoverLetters = [...allCoverLetters];
+						}
+
+						if (
+							isUpdateNeeded &&
+							!hasAutoSelectedNvidia &&
+							!hasAutoSelectedMistral &&
+							!hasAutoSelectedQwen
+						) {
+							coverLetter = data.text;
+							originalCoverLetter = data.text;
+							source = data.source;
+							alternativeId = data.alternative_id;
+							step.set(3);
+						}
+					}
+
+					// If backend provided pre-finished alternatives, add them now
+					if (data.alternatives && Array.isArray(data.alternatives)) {
+						data.alternatives.forEach((alt: any) => {
+							if (!allCoverLetters.some((l) => l.source === alt.source)) {
+								allCoverLetters = [
+									...allCoverLetters,
+									{
+										text: alt.text,
+										rawText: alt.text,
+										source: alt.source,
+										status: alt.status || 'completed'
+									}
+								];
+							}
+						});
+					}
+
+					isGenerating = false;
+					eventSource.close();
+				}
+
+				// Handle Error
+				if (data.status === 'error') {
+					error = data.message;
+					isGenerating = false;
+					eventSource.close();
+				}
+			};
+
+			eventSource.onerror = (e) => {
+				console.error('SSE Connection Error', e);
+				// We don't necessarily want to show error to user immediately
+				// as SSE auto-reconnects, but if we are still generating and it fails...
+			};
 
 			// Initialize Editable Header Fields if not already edited
-			if (!editableJobTitle) editableJobTitle = jobData?.title || "";
-			if (!editableCompany) editableCompany = jobData?.company || "";
-			editableName =
-				firstName || surname
-					? `${firstName} ${surname}`.trim()
-					: userName || "";
-
+			if (!editableJobTitle) editableJobTitle = jobData?.title || '';
+			if (!editableCompany) editableCompany = jobData?.company || '';
+			editableName = firstName || surname ? `${firstName} ${surname}`.trim() : userName || '';
 		} catch (e: any) {
-			error = e.message || "Failed to start generation";
-            isGenerating = false;
+			error = e.message || 'Failed to start generation';
+			isGenerating = false;
 		}
 	}
 
@@ -619,12 +679,9 @@
 				let isComplete = true;
 
 				// Handle new format { status, alternatives }
-				if (
-					altResult.alternatives &&
-					Array.isArray(altResult.alternatives)
-				) {
+				if (altResult.alternatives && Array.isArray(altResult.alternatives)) {
 					newAlternatives = altResult.alternatives;
-					isComplete = altResult.status === "completed";
+					isComplete = altResult.status === 'completed';
 				}
 				// Handle legacy array format (just in case)
 				else if (Array.isArray(altResult)) {
@@ -662,7 +719,7 @@
 							text: alt.text,
 							rawText: alt.text, // Assume incoming is raw
 							source: alt.source,
-							status: alt.status || "completed",
+							status: alt.status || 'completed'
 						});
 					}
 				});
@@ -679,20 +736,26 @@
 					updateNameInCoverLetter();
 				}
 
-                // Check for Nvidia auto-selection during alternative polling
-                if (!hasAutoSelectedNvidia) {
-                    const nvidiaIndex = allCoverLetters.findIndex(l => 
-                        (l.source.toLowerCase().includes("nvidia") || 
-                         l.source.toLowerCase().includes("mistral")) &&
-                        l.status !== "failed" &&
-                        !l.text.startsWith("Generation failed")
-                    );
-                    if (nvidiaIndex !== -1) {
-                        console.log(`Auto-selected Nvidia/Mistral from polled alternatives at index ${nvidiaIndex}`);
-                        switchVersion(nvidiaIndex);
-                        hasAutoSelectedNvidia = true;
-                    }
-                }
+				// Check for Nvidia auto-selection during alternative polling
+				if (!hasAutoSelectedNvidia) {
+					const nvidiaIndex = allCoverLetters.findIndex(
+						(l) =>
+							(l.source.toLowerCase().includes('nvidia') ||
+								l.source.toLowerCase().includes('mistral') ||
+								l.source.toLowerCase().includes('qwen')) &&
+							l.status !== 'failed' &&
+							!l.text.startsWith('Generation failed')
+					);
+					if (nvidiaIndex !== -1) {
+						console.log(
+							`Auto-selected priority model from polled alternatives at index ${nvidiaIndex}`
+						);
+						switchVersion(nvidiaIndex);
+						hasAutoSelectedNvidia = true;
+						hasAutoSelectedMistral = true;
+						hasAutoSelectedQwen = true;
+					}
+				}
 
 				if (!isComplete) {
 					// Poll again
@@ -702,7 +765,7 @@
 				}
 			}
 		} catch (e) {
-			console.log("Error loading alternatives or not ready:", e);
+			console.log('Error loading alternatives or not ready:', e);
 			// Retry on error too (maybe 404 not ready yet)
 			setTimeout(() => loadAlternatives(), 3000);
 		}
@@ -732,16 +795,16 @@
 
 	function handleManualSubmit() {
 		if (!manualTitle || !manualCompany || !manualDescription) {
-			error = "Please fill in all manual fields";
+			error = 'Please fill in all manual fields';
 			return;
 		}
-		error = "";
+		error = '';
 		jobData = {
 			title: manualTitle,
 			company: manualCompany,
 			description: manualDescription,
 			requirements: [],
-			url: jobUrl || `manual-${Date.now()}`,
+			url: jobUrl || `manual-${Date.now()}`
 		};
 		editableJobTitle = manualTitle;
 		editableCompany = manualCompany;
@@ -752,7 +815,7 @@
 		if (!coverLetter || !jobData) return;
 
 		isPdfGenerating = true;
-		error = "";
+		error = '';
 
 		try {
 			// preparing header object
@@ -765,7 +828,7 @@
 				address_street: addressStreet,
 				address_postcode: addressPostcode,
 				address_city: addressCity,
-				address_country: addressCountry,
+				address_country: addressCountry
 			};
 
 			// Saving application to database
@@ -776,23 +839,20 @@
 						job_url: jobData.url || jobUrl || `manual-${Date.now()}`,
 						job_title: editableJobTitle || jobData.title,
 						job_company: editableCompany || jobData.company,
-						job_description:
-							jobData.full_description || jobData.description, // Use full description if available
+						job_description: jobData.full_description || jobData.description, // Use full description if available
 						job_requirements: jobData.requirements,
-						job_source: jobData.source || "unknown",
+						job_source: jobData.source || 'unknown',
 						generated_letters: allCoverLetters.map((l) => ({
-							model: l.source.includes("GPT")
-								? "gpt-4o"
-								: "llama-3.2-1b", // precise mapping if possible, else approximation
+							model: l.source.includes('GPT') ? 'gpt-4o' : 'llama-3.2-1b', // precise mapping if possible, else approximation
 							letter: l.text,
-							timestamp: new Date().toISOString(), // API expects this
+							timestamp: new Date().toISOString() // API expects this
 						})),
 						selected_letter_index: currentVersionIndex,
 						header: header,
-						cover_letter_body: coverLetter,
+						cover_letter_body: coverLetter
 					});
 				} catch (err) {
-					console.warn("Failed to save application to history:", err);
+					console.warn('Failed to save application to history:', err);
 					// Continue to PDF generation even if save fails
 				}
 			}
@@ -801,7 +861,7 @@
 				cover_letter: coverLetter,
 				job_title: editableJobTitle || jobData.title,
 				company: editableCompany || jobData.company,
-				user_name: userName || "Applicant",
+				user_name: userName || 'Applicant',
 				first_name: firstName,
 				surname: surname,
 				image_filename: uploadedImageFilename,
@@ -816,7 +876,7 @@
 				address_street: addressStreet,
 				address_postcode: addressPostcode,
 				address_city: addressCity,
-				address_country: addressCountry,
+				address_country: addressCountry
 			});
 
 			pdfUrl = result.url;
@@ -824,7 +884,7 @@
 			// Auto-download
 			handleDownload();
 		} catch (e: any) {
-			error = e.message || "Failed to generate PDF";
+			error = e.message || 'Failed to generate PDF';
 		} finally {
 			isPdfGenerating = false;
 		}
@@ -835,9 +895,7 @@
 
 		// The backend now returns a URL like /api/download/{filename}
 		// or /api/uploads/{filename}. We need to prepend API_URL if not already there.
-		const fullUrl = pdfUrl.startsWith("http") 
-            ? pdfUrl 
-            : `${API_URL}${pdfUrl}`;
+		const fullUrl = pdfUrl.startsWith('http') ? pdfUrl : `${API_URL}${pdfUrl}`;
 
 		try {
 			// Prepare headers
@@ -859,16 +917,14 @@
 			const blob = await response.blob();
 			const blobUrl = window.URL.createObjectURL(blob);
 
-			const link = document.createElement("a");
+			const link = document.createElement('a');
 			link.href = blobUrl;
-			const company = jobData.company
-				? jobData.company.replace(/[^a-zA-Z0-9]/g, "_")
-				: "Company";
+			const company = jobData.company ? jobData.company.replace(/[^a-zA-Z0-9]/g, '_') : 'Company';
 			const name =
 				firstName || surname
-					? `${firstName}_${surname}`.replace(/[^a-zA-Z0-9_]/g, "_")
-					: (userName || "Applicant").replace(/[^a-zA-Z0-9_]/g, "_");
-			const date = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+					? `${firstName}_${surname}`.replace(/[^a-zA-Z0-9_]/g, '_')
+					: (userName || 'Applicant').replace(/[^a-zA-Z0-9_]/g, '_');
+			const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
 			link.download = generateCoverLetterFilename(language, name, company, date);
 			document.body.appendChild(link);
@@ -883,61 +939,61 @@
 				downloaded = true;
 			}, 1000);
 		} catch (e) {
-			console.error("Download failed:", e);
+			console.error('Download failed:', e);
 			// Fallback to direct link if fetch fails
-			window.open(fullUrl, "_blank");
+			window.open(fullUrl, '_blank');
 		}
 	}
 
 	function invalidatePdf() {
 		if (pdfUrl) {
-			pdfUrl = "";
+			pdfUrl = '';
 			downloaded = false;
 		}
 	}
 
 	function reset() {
-		jobUrl = "";
-		userName = "";
+		jobUrl = '';
+		userName = '';
 		imageFile = null;
-		imagePreview = "";
-		uploadedImageFilename = "";
-		contextText = "";
-		contextFilename = "";
-		customInstructions = "";
-		firstName = "";
-		surname = "";
-		email = "";
-		phone = "";
-		linkedin = "";
+		imagePreview = '';
+		uploadedImageFilename = '';
+		contextText = '';
+		contextFilename = '';
+		customInstructions = '';
+		firstName = '';
+		surname = '';
+		email = '';
+		phone = '';
+		linkedin = '';
 		jobData = null;
-		coverLetter = "";
-		pdfUrl = "";
+		coverLetter = '';
+		pdfUrl = '';
 		downloaded = false;
-        hasAutoSelectedNvidia = false;
+		hasAutoSelectedNvidia = false;
 		isParsing = false;
 		isGenerating = false;
 		isPdfGenerating = false;
-		error = "";
+		error = '';
 		step.set(1);
 
 		// Reset format selection
-		selectedFormat = "british";
+		selectedFormat = 'british';
 		isManualInput = false;
-		manualTitle = "";
-		manualCompany = "";
-		manualDescription = "";
+		manualTitle = '';
+		manualCompany = '';
+		manualDescription = '';
 
 		// Reset Edit Modes
 		isEditing = false;
 		isEditingName = false;
 		isEditingDate = false;
 		isEditingSubject = false;
-		editableName = "";
-		editableDate = "";
-		editableSubject = "";
-		editableJobTitle = "";
-		editableCompany = "";
+		editableName = '';
+		editableDate = '';
+		editableSubject = '';
+		editableJobTitle = '';
+		editableCompany = '';
 		isDateManuallyEdited = false;
 		isSubjectManuallyEdited = false;
 	}
@@ -959,7 +1015,7 @@
 
 	function cancelEdit() {
 		isEditing = false;
-		tempCoverLetter = "";
+		tempCoverLetter = '';
 	}
 
 	function toggleSettings() {
@@ -980,8 +1036,7 @@
 		if (user.city) addressCity = user.city;
 		if (user.country) addressCountry = user.country;
 
-		const fullName =
-			`${user.first_name || ""} ${user.surname || ""}`.trim();
+		const fullName = `${user.first_name || ''} ${user.surname || ''}`.trim();
 		if (fullName) {
 			userName = fullName;
 			editableName = fullName;
@@ -992,8 +1047,8 @@
 	// Close settings when clicking outside
 	onMount(() => {
 		const handleClickOutside = (event: MouseEvent) => {
-			const settingsMenu = document.getElementById("settings-menu");
-			const settingsBtn = document.getElementById("settings-btn");
+			const settingsMenu = document.getElementById('settings-menu');
+			const settingsBtn = document.getElementById('settings-btn');
 			if (
 				showSettings &&
 				settingsMenu &&
@@ -1004,8 +1059,8 @@
 				showSettings = false;
 			}
 		};
-		document.addEventListener("click", handleClickOutside);
-		return () => document.removeEventListener("click", handleClickOutside);
+		document.addEventListener('click', handleClickOutside);
+		return () => document.removeEventListener('click', handleClickOutside);
 	});
 </script>
 
@@ -1017,14 +1072,10 @@
 <div class="min-h-screen py-16 px-4">
 	<div class="max-w-3xl mx-auto">
 		<div class="text-center mb-16 px-4">
-			<h1
-				class="text-5xl font-extrabold text-[#0F172A] tracking-tight mb-4"
-			>
-				Vite a Job
-			</h1>
+			<h1 class="text-5xl font-extrabold text-[#0F172A] tracking-tight mb-4">Vite a Job</h1>
 			<p class="text-lg text-[#334155] max-w-lg mx-auto leading-relaxed">
-				Craft professional, personalized cover letters in seconds. Just
-				paste a LinkedIn job URL and let AI do the heavy lifting.
+				Craft professional, personalized cover letters in seconds. Just paste a LinkedIn job URL and
+				let AI do the heavy lifting.
 			</p>
 		</div>
 
@@ -1042,17 +1093,12 @@
 						1
 					</button>
 					<span
-						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >=
-						1
+						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >= 1
 							? 'text-[#0369A1]'
 							: 'text-[#64748B]'}">Details</span
 					>
 				</div>
-				<div
-					class="w-20 h-0.5 {$step >= 2
-						? 'bg-[#0369A1]'
-						: 'bg-[#E2E8F0]'} -mt-6"
-				></div>
+				<div class="w-20 h-0.5 {$step >= 2 ? 'bg-[#0369A1]' : 'bg-[#E2E8F0]'} -mt-6"></div>
 				<div class="flex flex-col items-center flex-1 relative">
 					<button
 						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {$step >=
@@ -1068,17 +1114,12 @@
 						2
 					</button>
 					<span
-						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >=
-						2
+						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >= 2
 							? 'text-[#0369A1]'
 							: 'text-[#64748B]'}">Review</span
 					>
 				</div>
-				<div
-					class="w-20 h-0.5 {$step >= 3
-						? 'bg-[#0369A1]'
-						: 'bg-[#E2E8F0]'} -mt-6"
-				></div>
+				<div class="w-20 h-0.5 {$step >= 3 ? 'bg-[#0369A1]' : 'bg-[#E2E8F0]'} -mt-6"></div>
 				<div class="flex flex-col items-center flex-1 relative">
 					<button
 						class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all {$step >=
@@ -1094,8 +1135,7 @@
 						3
 					</button>
 					<span
-						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >=
-						3
+						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >= 3
 							? 'text-[#0369A1]'
 							: 'text-[#64748B]'}">Result</span
 					>
@@ -1131,7 +1171,7 @@
 						<button
 							on:click={() => {
 								isManualInput = true;
-								error = "";
+								error = '';
 							}}
 							class="text-[#0369A1] font-semibold hover:underline flex items-center gap-1.5 transition-all"
 						>
@@ -1156,15 +1196,11 @@
 			</div>
 		{/if}
 
-
-
 		<!-- Step 1: Input -->
 		{#if $step === 1}
 			<div class="card">
 				<div class="mb-8">
-					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">
-						Get Started
-					</h2>
+					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">Get Started</h2>
 					<div class="flex items-center justify-between">
 						<p class="text-[#334155] text-sm">
 							{#if isManualInput}
@@ -1178,7 +1214,7 @@
 								id="manual-entry-shortcut"
 								on:click={() => {
 									isManualInput = true;
-									error = "";
+									error = '';
 								}}
 								class="text-[#94A3B8] hover:text-[#0369A1] text-xs flex items-center gap-1 transition-colors duration-200"
 							>
@@ -1203,12 +1239,23 @@
 								id="url-entry-shortcut"
 								on:click={() => {
 									isManualInput = false;
-									error = "";
+									error = '';
 								}}
 								class="text-[#94A3B8] hover:text-[#0369A1] text-xs flex items-center gap-1 transition-colors duration-200"
 							>
-								<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-3 w-3"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+									/>
 								</svg>
 								Use job URL
 							</button>
@@ -1220,17 +1267,47 @@
 					{#if isManualInput}
 						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
-								<label for="manual-title" class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2">Job Title</label>
-								<input id="manual-title" type="text" bind:value={manualTitle} class="input text-sm" placeholder="e.g. Senior Software Engineer" />
+								<label
+									for="manual-title"
+									class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
+									>Job Title</label
+								>
+								<input
+									id="manual-title"
+									type="text"
+									bind:value={manualTitle}
+									class="input text-sm"
+									placeholder="e.g. Senior Software Engineer"
+								/>
 							</div>
 							<div>
-								<label for="manual-company" class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2">Company Name</label>
-								<input id="manual-company" type="text" bind:value={manualCompany} class="input text-sm" placeholder="e.g. Acme Corp" />
+								<label
+									for="manual-company"
+									class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
+									>Company Name</label
+								>
+								<input
+									id="manual-company"
+									type="text"
+									bind:value={manualCompany}
+									class="input text-sm"
+									placeholder="e.g. Acme Corp"
+								/>
 							</div>
 						</div>
 						<div>
-							<label for="manual-desc" class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2">Job Description</label>
-							<textarea id="manual-desc" bind:value={manualDescription} rows="8" class="input text-sm resize-none" placeholder="Paste the full job description here..."></textarea>
+							<label
+								for="manual-desc"
+								class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
+								>Job Description</label
+							>
+							<textarea
+								id="manual-desc"
+								bind:value={manualDescription}
+								rows="8"
+								class="input text-sm resize-none"
+								placeholder="Paste the full job description here..."
+							></textarea>
 						</div>
 					{:else}
 						<div class="relative">
@@ -1243,15 +1320,33 @@
 							/>
 							{#if isParsing}
 								<div class="absolute right-4 top-1/2 -translate-y-1/2">
-									<svg class="animate-spin h-5 w-5 text-[#0369A1]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-										<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-										<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+									<svg
+										class="animate-spin h-5 w-5 text-[#0369A1]"
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+									>
+										<circle
+											class="opacity-25"
+											cx="12"
+											cy="12"
+											r="10"
+											stroke="currentColor"
+											stroke-width="4"
+										></circle>
+										<path
+											class="opacity-75"
+											fill="currentColor"
+											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+										></path>
 									</svg>
 								</div>
 							{/if}
 
 							{#if jobData && !isManualInput}
-								<div class="mt-4 p-4 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between">
+								<div
+									class="mt-4 p-4 rounded-md border border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between"
+								>
 									<div>
 										<div class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">
 											Parsed Position
@@ -1260,8 +1355,19 @@
 										<div class="text-sm text-[#334155]">{jobData.company}</div>
 									</div>
 									<div class="bg-green-100 p-1.5 rounded-full">
-										<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-5 w-5 text-green-600"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M5 13l4 4L19 7"
+											/>
 										</svg>
 									</div>
 								</div>
@@ -1293,11 +1399,9 @@
 									/>
 								</svg>
 							</summary>
-							<div
-								class="pb-6 space-y-6 animate-in fade-in slide-in-from-top-2"
-							>
+							<div class="pb-6 space-y-6 animate-in fade-in slide-in-from-top-2">
 								<!-- Source of Truth (LLM Context) -->
-								<ContextPreview 
+								<ContextPreview
 									activeCVName={activeCV ? activeCV.name : null}
 									contextSnippet={contextText}
 									isAuthenticated={$auth.isAuthenticated}
@@ -1310,13 +1414,12 @@
 										>Cover Letter Language</label
 									>
 									<p class="text-xs text-[#64748B] mb-3">
-										Choose the language for the generated
-										cover letter.
+										Choose the language for the generated cover letter.
 									</p>
 									<select
 										id="letter-language"
 										value={language}
-										on:change={(e) => handleLanguageChange(e.target.value)}
+										on:change={handleLanguageSelect}
 										class="w-full px-4 py-3 rounded-lg border border-[#E2E8F0] bg-white text-[#0F172A] focus:border-[#0369A1] focus:ring-2 focus:ring-[#0369A1]/20 outline-none transition-all text-sm mb-6"
 									>
 										<option value="english">English</option>
@@ -1329,12 +1432,10 @@
 								<div>
 									<label
 										for="custom-instructions"
-										class="block text-sm font-semibold text-[#334155] mb-2"
-										>Custom Guidance</label
+										class="block text-sm font-semibold text-[#334155] mb-2">Custom Guidance</label
 									>
 									<p class="text-xs text-[#64748B] mb-3">
-										Add specific instructions for the AI
-										(e.g., "Focus on my leadership
+										Add specific instructions for the AI (e.g., "Focus on my leadership
 										experience").
 									</p>
 									<textarea
@@ -1348,13 +1449,11 @@
 								<div>
 									<label
 										for="file-upload-section"
-										class="block text-sm font-semibold text-[#334155] mb-2"
-										>Upload info</label
+										class="block text-sm font-semibold text-[#334155] mb-2">Upload info</label
 									>
 									<p class="text-xs text-[#64748B] mb-3">
-										Upload information about yourself so
-										that we can personalize your cover
-										letter (for example, your CV).
+										Upload information about yourself so that we can personalize your cover letter
+										(for example, your CV).
 									</p>
 									<div class="flex items-center gap-4">
 										<input
@@ -1367,7 +1466,9 @@
 										/>
 										<label
 											for="file-upload-section"
-											class="btn btn-secondary text-sm cursor-pointer flex items-center gap-2 {activeCV ? 'opacity-50 cursor-not-allowed grayscale' : ''}"
+											class="btn btn-secondary text-sm cursor-pointer flex items-center gap-2 {activeCV
+												? 'opacity-50 cursor-not-allowed grayscale'
+												: ''}"
 										>
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
@@ -1386,9 +1487,7 @@
 											Choose File
 										</label>
 										{#if imageFile || contextFilename}
-											<span
-												class="text-sm font-medium text-green-600 flex items-center gap-1"
-											>
+											<span class="text-sm font-medium text-green-600 flex items-center gap-1">
 												<svg
 													xmlns="http://www.w3.org/2000/svg"
 													class="h-4 w-4"
@@ -1403,15 +1502,13 @@
 														d="M5 13l4 4L19 7"
 													/>
 												</svg>
-												{imageFile ? "Image" : "PDF"} Selected
+												{imageFile ? 'Image' : 'PDF'} Selected
 											</span>
 										{/if}
 									</div>
 
 									{#if imagePreview}
-										<div
-											class="mt-4 inline-block p-1 border border-[#E2E8F0] rounded-lg"
-										>
+										<div class="mt-4 inline-block p-1 border border-[#E2E8F0] rounded-lg">
 											<img
 												src={imagePreview}
 												alt="Preview"
@@ -1434,10 +1531,11 @@
 								handleParseJob(true);
 							}
 						}}
-						disabled={(!isManualInput && (isParsing || !jobUrl)) || (isManualInput && (!manualTitle || !manualCompany || !manualDescription))}
+						disabled={(!isManualInput && (isParsing || !jobUrl)) ||
+							(isManualInput && (!manualTitle || !manualCompany || !manualDescription))}
 						class="btn btn-primary w-full py-4 text-lg"
 					>
-						{isParsing ? "Analyzing Position..." : "Next Step"}
+						{isParsing ? 'Analyzing Position...' : 'Next Step'}
 					</button>
 				</div>
 			</div>
@@ -1447,12 +1545,8 @@
 		{#if $step === 2 && jobData}
 			<div class="card">
 				<div class="mb-8">
-					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">
-						Review Position
-					</h2>
-					<p class="text-[#334155] text-sm">
-						Verify the details before generating your letter.
-					</p>
+					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">Review Position</h2>
+					<p class="text-[#334155] text-sm">Verify the details before generating your letter.</p>
 				</div>
 
 				<div class="space-y-6 mb-10">
@@ -1493,15 +1587,11 @@
 						</div>
 					</div>
 
-					<details
-						class="group border border-[#E2E8F0] rounded-md overflow-hidden transition-all"
-					>
+					<details class="group border border-[#E2E8F0] rounded-md overflow-hidden transition-all">
 						<summary
 							class="flex justify-between items-center p-4 cursor-pointer bg-white hover:bg-[#F8FAFC] transition-colors focus:outline-none"
 						>
-							<span class="text-sm font-semibold text-[#334155]"
-								>Full Job Description</span
-							>
+							<span class="text-sm font-semibold text-[#334155]">Full Job Description</span>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								class="h-5 w-5 transition-transform duration-200 group-open:rotate-180"
@@ -1531,9 +1621,7 @@
 							<summary
 								class="flex justify-between items-center p-4 cursor-pointer hover:bg-[#F8FAFC] transition-colors focus:outline-none list-none"
 							>
-								<span
-									class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]"
-								>
+								<span class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
 									Key Requirements Detected
 								</span>
 								<svg
@@ -1552,13 +1640,9 @@
 								</svg>
 							</summary>
 							<div class="p-6 border-t border-[#E2E8F0]">
-								<div
-									class="grid grid-cols-1 sm:grid-cols-2 gap-3"
-								>
+								<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 									{#each jobData.requirements as req}
-										<div
-											class="flex items-start gap-2 text-sm text-[#334155]"
-										>
+										<div class="flex items-start gap-2 text-sm text-[#334155]">
 											<svg
 												xmlns="http://www.w3.org/2000/svg"
 												class="h-4 w-4 text-[#0369A1] shrink-0 mt-0.5"
@@ -1591,10 +1675,7 @@
 						Back
 					</button>
 					<button
-						on:click={() =>
-							coverLetter
-								? step.set(3)
-								: handleGenerateCoverLetter()}
+						on:click={() => (coverLetter ? step.set(3) : handleGenerateCoverLetter())}
 						disabled={isGenerating}
 						class="btn btn-primary sm:flex-[2] py-4 flex items-center justify-center gap-3"
 					>
@@ -1654,9 +1735,7 @@
 								<span
 									class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"
 								></span>
-								<span
-									class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"
-								></span>
+								<span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
 							</span>
 							AI Engine Progression
 						</h3>
@@ -1689,8 +1768,8 @@
 									</div>
 									<span
 										class={i === generationProgress.length - 1
-											? "font-medium text-[#0F172A]"
-											: "opacity-60"}
+											? 'font-medium text-[#0F172A]'
+											: 'opacity-60'}
 									>
 										{progressItem.message}
 									</span>
@@ -1705,13 +1784,9 @@
 		<!-- Step 3: Result -->
 		{#if $step === 3 && coverLetter}
 			<div class="card relative">
-				<div
-					class="flex justify-between items-end mb-8 border-b border-[#E2E8F0] pb-6"
-				>
+				<div class="flex justify-between items-end mb-8 border-b border-[#E2E8F0] pb-6">
 					<div>
-						<h2 class="text-2xl font-bold text-[#0F172A] mb-1">
-							Your Cover Letter
-						</h2>
+						<h2 class="text-2xl font-bold text-[#0F172A] mb-1">Your Cover Letter</h2>
 						<p class="text-[#334155] text-sm">
 							Review, edit, and download your personalized draft.
 						</p>
@@ -1746,11 +1821,7 @@
 								class="absolute right-0 mt-3 w-72 rounded-lg shadow-xl bg-white ring-1 ring-[#0F172A] ring-opacity-5 z-50 p-6 animate-in fade-in zoom-in-95"
 								transition:fade
 							>
-								<h3
-									class="text-sm font-bold text-[#0F172A] mb-4"
-								>
-									Letter Preferences
-								</h3>
+								<h3 class="text-sm font-bold text-[#0F172A] mb-4">Letter Preferences</h3>
 
 								<div class="space-y-4">
 									<div>
@@ -1758,18 +1829,15 @@
 											class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 											>Language &amp; Format</span
 										>
-										<p
-											class="text-[11px] text-[#94A3B8] mb-3 leading-relaxed"
-										>
-											Sets the AI writing language and PDF
-											formatting standard.
+										<p class="text-[11px] text-[#94A3B8] mb-3 leading-relaxed">
+											Sets the AI writing language and PDF formatting standard.
 										</p>
 										<div class="flex flex-col gap-2">
 											<button
 												id="format-british"
 												type="button"
 												on:click={() => {
-													selectedFormat = "british";
+													selectedFormat = 'british';
 													invalidatePdf();
 												}}
 												class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border text-left transition-all {selectedFormat ===
@@ -1777,23 +1845,14 @@
 													? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]'
 													: 'border-[#E2E8F0] bg-white text-[#334155] hover:bg-[#F8FAFC]'}"
 											>
-												<span
-													class="text-xl leading-none select-none"
-													>🇬🇧</span
-												>
+												<span class="text-xl leading-none select-none">🇬🇧</span>
 												<div class="flex-1 min-w-0">
-													<div
-														class="text-sm font-semibold leading-tight"
-													>
-														British English
-													</div>
-													<div
-														class="text-[11px] text-[#64748B] mt-0.5"
-													>
+													<div class="text-sm font-semibold leading-tight">British English</div>
+													<div class="text-[11px] text-[#64748B] mt-0.5">
 														Standard business format
 													</div>
 												</div>
-												{#if selectedFormat === "british"}
+												{#if selectedFormat === 'british'}
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
 														class="h-4 w-4 text-[#0369A1] shrink-0"
@@ -1812,7 +1871,7 @@
 												id="format-german"
 												type="button"
 												on:click={() => {
-													selectedFormat = "german";
+													selectedFormat = 'german';
 													invalidatePdf();
 												}}
 												class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border text-left transition-all {selectedFormat ===
@@ -1820,24 +1879,14 @@
 													? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]'
 													: 'border-[#E2E8F0] bg-white text-[#334155] hover:bg-[#F8FAFC]'}"
 											>
-												<span
-													class="text-xl leading-none select-none"
-													>🇩🇪</span
-												>
+												<span class="text-xl leading-none select-none">🇩🇪</span>
 												<div class="flex-1 min-w-0">
-													<div
-														class="text-sm font-semibold leading-tight"
-													>
-														Deutsch
-													</div>
-													<div
-														class="text-[11px] text-[#64748B] mt-0.5"
-													>
-														DIN 5008 ·
-														Bewerbungsschreiben
+													<div class="text-sm font-semibold leading-tight">Deutsch</div>
+													<div class="text-[11px] text-[#64748B] mt-0.5">
+														DIN 5008 · Bewerbungsschreiben
 													</div>
 												</div>
-												{#if selectedFormat === "german"}
+												{#if selectedFormat === 'german'}
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
 														class="h-4 w-4 text-[#0369A1] shrink-0"
@@ -1856,7 +1905,7 @@
 												id="format-french"
 												type="button"
 												on:click={() => {
-													selectedFormat = "french";
+													selectedFormat = 'french';
 													invalidatePdf();
 												}}
 												class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg border text-left transition-all {selectedFormat ===
@@ -1864,23 +1913,14 @@
 													? 'border-[#0369A1] bg-[#EFF6FF] text-[#0369A1]'
 													: 'border-[#E2E8F0] bg-white text-[#334155] hover:bg-[#F8FAFC]'}"
 											>
-												<span
-													class="text-xl leading-none select-none"
-													>🇫🇷</span
-												>
+												<span class="text-xl leading-none select-none">🇫🇷</span>
 												<div class="flex-1 min-w-0">
-													<div
-														class="text-sm font-semibold leading-tight"
-													>
-														Français
-													</div>
-													<div
-														class="text-[11px] text-[#64748B] mt-0.5"
-													>
+													<div class="text-sm font-semibold leading-tight">Français</div>
+													<div class="text-[11px] text-[#64748B] mt-0.5">
 														Motivation · Format standard
 													</div>
 												</div>
-												{#if selectedFormat === "french"}
+												{#if selectedFormat === 'french'}
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
 														class="h-4 w-4 text-[#0369A1] shrink-0"
@@ -1906,9 +1946,7 @@
 				<div
 					class="bg-[#F8FAFC] rounded-lg p-8 md:p-12 mb-10 border border-[#E2E8F0] shadow-inner relative overflow-hidden"
 				>
-					<div
-						class="absolute top-0 left-0 w-1 h-full bg-[#0369A1]/20"
-					></div>
+					<div class="absolute top-0 left-0 w-1 h-full bg-[#0369A1]/20"></div>
 					<!-- Live Header Preview -->
 					<div
 						class="mb-8 {['german', 'french'].includes(selectedFormat)
@@ -1916,9 +1954,7 @@
 							: 'font-serif'}"
 					>
 						<!-- Line 1: Name -->
-						<div
-							class="text-base font-bold text-gray-900 mb-0.5 relative group w-fit"
-						>
+						<div class="text-base font-bold text-gray-900 mb-0.5 relative group w-fit">
 							{#if isEditingName}
 								<div class="flex items-center space-x-2">
 									<input
@@ -1946,7 +1982,7 @@
 								</div>
 							{:else}
 								<div class="pr-8">
-									{editableName || "[Your Name]"}
+									{editableName || '[Your Name]'}
 									<button
 										on:click={() => (isEditingName = true)}
 										class="absolute right-0 top-0.5 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1976,42 +2012,29 @@
 							{:else if address}
 								{address}
 							{:else}
-								<span class="text-gray-400 italic text-sm"
-									>[Address not set]</span
-								>
+								<span class="text-gray-400 italic text-sm">[Address not set]</span>
 							{/if}
 						</div>
 
 						<!-- Line 3: Contact Info -->
-						<div
-							class="text-base text-gray-900 mb-6 pb-6 border-b border-gray-100"
-						>
+						<div class="text-base text-gray-900 mb-6 pb-6 border-b border-gray-100">
 							{#if email}<span>{email}</span>{/if}
-							{#if email && phone}<span>
-									|
-								</span>{/if}
+							{#if email && phone}<span> | </span>{/if}
 							{#if phone}<span>{phone}</span>{/if}
 							{#if !email && !phone}
-								<span class="text-gray-400 italic text-sm"
-									>[Contact info not set]</span
-								>
+								<span class="text-gray-400 italic text-sm">[Contact info not set]</span>
 							{/if}
 						</div>
 
-						{#if selectedFormat === "british"}
+						{#if selectedFormat === 'british'}
 							<!-- British Layout: Date then Recipient -->
-							<div
-								class="text-gray-800 mb-6 relative group w-fit ml-auto"
-							>
+							<div class="text-gray-800 mb-6 relative group w-fit ml-auto">
 								{#if isEditingDate}
-									<div
-										class="flex items-center space-x-2 justify-end"
-									>
+									<div class="flex items-center space-x-2 justify-end">
 										<input
 											type="text"
 											bind:value={editableDate}
-											on:input={() =>
-												(isDateManuallyEdited = true)}
+											on:input={() => (isDateManuallyEdited = true)}
 											class="input py-1 px-2 text-right w-48"
 										/>
 										<button
@@ -2019,22 +2042,18 @@
 												isEditingDate = false;
 												invalidatePdf();
 											}}
-											class="p-1 text-green-600 hover:bg-green-50 rounded"
-											>✓</button
+											class="p-1 text-green-600 hover:bg-green-50 rounded">✓</button
 										>
 										<button
-											on:click={() =>
-												(isEditingDate = false)}
-											class="p-1 text-red-500 hover:bg-red-50 rounded"
-											>✕</button
+											on:click={() => (isEditingDate = false)}
+											class="p-1 text-red-500 hover:bg-red-50 rounded">✕</button
 										>
 									</div>
 								{:else}
 									<div class="pl-8">
-										{editableDate || "[Date]"}
+										{editableDate || '[Date]'}
 										<button
-											on:click={() =>
-												(isEditingDate = true)}
+											on:click={() => (isEditingDate = true)}
 											class="absolute -left-2 top-0 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
 											title="Edit Date"
 										>
@@ -2054,48 +2073,31 @@
 							</div>
 
 							<div class="mb-6">
-								<div
-									class="text-base font-bold text-gray-900 mb-0.5"
-								>
-									{editableCompany ||
-										jobData?.company ||
-										"[Company]"}
+								<div class="text-base font-bold text-gray-900 mb-0.5">
+									{editableCompany || jobData?.company || '[Company]'}
 								</div>
 								<div class="text-base text-gray-900 italic">
-									{editableJobTitle ||
-										jobData?.title ||
-										"[Role]"}
+									{editableJobTitle || jobData?.title || '[Role]'}
 								</div>
 							</div>
-						{:else if selectedFormat === "french"}
+						{:else if selectedFormat === 'french'}
 							<!-- French Layout: Recipient Right, then Date Right -->
 							<div class="mb-6 flex flex-col items-end">
-								<div
-									class="text-base font-bold text-gray-900 mb-0.5"
-								>
-									{editableCompany ||
-										jobData?.company ||
-										"[Company]"}
+								<div class="text-base font-bold text-gray-900 mb-0.5">
+									{editableCompany || jobData?.company || '[Company]'}
 								</div>
 								<div class="text-base text-gray-900 italic">
-									{editableJobTitle ||
-										jobData?.title ||
-										"[Role]"}
+									{editableJobTitle || jobData?.title || '[Role]'}
 								</div>
 							</div>
 
-							<div
-								class="text-gray-800 mb-10 relative group w-fit ml-auto"
-							>
+							<div class="text-gray-800 mb-10 relative group w-fit ml-auto">
 								{#if isEditingDate}
-									<div
-										class="flex items-center space-x-2 justify-end"
-									>
+									<div class="flex items-center space-x-2 justify-end">
 										<input
 											type="text"
 											bind:value={editableDate}
-											on:input={() =>
-												(isDateManuallyEdited = true)}
+											on:input={() => (isDateManuallyEdited = true)}
 											class="input py-1 px-2 text-right w-48"
 										/>
 										<button
@@ -2103,22 +2105,18 @@
 												isEditingDate = false;
 												invalidatePdf();
 											}}
-											class="p-1 text-green-600 hover:bg-green-50 rounded"
-											>✓</button
+											class="p-1 text-green-600 hover:bg-green-50 rounded">✓</button
 										>
 										<button
-											on:click={() =>
-												(isEditingDate = false)}
-											class="p-1 text-red-500 hover:bg-red-50 rounded"
-											>✕</button
+											on:click={() => (isEditingDate = false)}
+											class="p-1 text-red-500 hover:bg-red-50 rounded">✕</button
 										>
 									</div>
 								{:else}
 									<div class="pl-8">
-										{editableDate || "[Lieu et Date]"}
+										{editableDate || '[Lieu et Date]'}
 										<button
-											on:click={() =>
-												(isEditingDate = true)}
+											on:click={() => (isEditingDate = true)}
 											class="absolute -left-2 top-0 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
 											title="Edit Date"
 										>
@@ -2139,32 +2137,21 @@
 						{:else}
 							<!-- German DIN 5008 Layout: Recipient then Date -->
 							<div class="mb-6">
-								<div
-									class="text-base font-bold text-gray-900 mb-0.5"
-								>
-									{editableCompany ||
-										jobData?.company ||
-										"[Company]"}
+								<div class="text-base font-bold text-gray-900 mb-0.5">
+									{editableCompany || jobData?.company || '[Company]'}
 								</div>
 								<div class="text-base text-gray-900 italic">
-									{editableJobTitle ||
-										jobData?.title ||
-										"[Role]"}
+									{editableJobTitle || jobData?.title || '[Role]'}
 								</div>
 							</div>
 
-							<div
-								class="text-gray-800 mb-6 relative group w-fit ml-auto"
-							>
+							<div class="text-gray-800 mb-6 relative group w-fit ml-auto">
 								{#if isEditingDate}
-									<div
-										class="flex items-center space-x-2 justify-end"
-									>
+									<div class="flex items-center space-x-2 justify-end">
 										<input
 											type="text"
 											bind:value={editableDate}
-											on:input={() =>
-												(isDateManuallyEdited = true)}
+											on:input={() => (isDateManuallyEdited = true)}
 											class="input py-1 px-2 text-right w-48"
 										/>
 										<button
@@ -2172,22 +2159,18 @@
 												isEditingDate = false;
 												invalidatePdf();
 											}}
-											class="p-1 text-green-600 hover:bg-green-50 rounded"
-											>✓</button
+											class="p-1 text-green-600 hover:bg-green-50 rounded">✓</button
 										>
 										<button
-											on:click={() =>
-												(isEditingDate = false)}
-											class="p-1 text-red-500 hover:bg-red-50 rounded"
-											>✕</button
+											on:click={() => (isEditingDate = false)}
+											class="p-1 text-red-500 hover:bg-red-50 rounded">✕</button
 										>
 									</div>
 								{:else}
 									<div class="pl-8">
-										{editableDate || "[Date]"}
+										{editableDate || '[Date]'}
 										<button
-											on:click={() =>
-												(isEditingDate = true)}
+											on:click={() => (isEditingDate = true)}
 											class="absolute -left-2 top-0 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
 											title="Edit Date"
 										>
@@ -2217,8 +2200,7 @@
 									<input
 										type="text"
 										bind:value={editableSubject}
-										on:input={() =>
-											(isSubjectManuallyEdited = true)}
+										on:input={() => (isSubjectManuallyEdited = true)}
 										class="input py-1 px-2 w-full font-semibold"
 									/>
 									<button
@@ -2231,8 +2213,7 @@
 										✓
 									</button>
 									<button
-										on:click={() =>
-											(isEditingSubject = false)}
+										on:click={() => (isEditingSubject = false)}
 										class="p-1 text-red-500 hover:bg-red-50 rounded"
 									>
 										✕
@@ -2240,10 +2221,9 @@
 								</div>
 							{:else}
 								<div class="pr-8">
-									{editableSubject || "[Subject]"}
+									{editableSubject || '[Subject]'}
 									<button
-										on:click={() =>
-											(isEditingSubject = true)}
+										on:click={() => (isEditingSubject = true)}
 										class="absolute right-0 top-0 p-1 text-gray-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
 										title="Edit Subject"
 									>
@@ -2281,10 +2261,7 @@
 								>
 									Discard
 								</button>
-								<button
-									on:click={saveEdit}
-									class="btn btn-primary text-sm px-8"
-								>
+								<button on:click={saveEdit} class="btn btn-primary text-sm px-8">
 									Save Changes
 								</button>
 							</div>
@@ -2310,7 +2287,7 @@
 										/>
 									</svg>
 								</button>
-								{#each coverLetter.split("\n\n") as paragraph}
+								{#each coverLetter.split('\n\n') as paragraph}
 									<p
 										class="text-[#0F172A] text-lg leading-relaxed mb-6 whitespace-pre-line last:mb-0"
 									>
@@ -2331,9 +2308,7 @@
 							class="flex justify-between items-center p-5 cursor-pointer hover:bg-[#F8FAFC] transition-colors focus:outline-none list-none"
 						>
 							<div class="flex items-center gap-3">
-								<div
-									class="p-2 rounded-md bg-[#F1F5F9] text-[#475569]"
-								>
+								<div class="p-2 rounded-md bg-[#F1F5F9] text-[#475569]">
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										class="h-5 w-5"
@@ -2349,9 +2324,7 @@
 										/>
 									</svg>
 								</div>
-								<h3 class="text-base font-bold text-[#0F172A]">
-									Edit PDF Header Information
-								</h3>
+								<h3 class="text-base font-bold text-[#0F172A]">Edit PDF Header Information</h3>
 							</div>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -2368,12 +2341,8 @@
 								/>
 							</svg>
 						</summary>
-						<div
-							class="p-8 border-t border-[#E2E8F0] space-y-8 bg-white"
-						>
-							<div
-								class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"
-							>
+						<div class="p-8 border-t border-[#E2E8F0] space-y-8 bg-white">
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 								<div>
 									<label
 										for="header-jobtitle"
@@ -2552,12 +2521,9 @@
 					>
 						<div class="flex items-center justify-between mb-6">
 							<div>
-								<h3 class="text-sm font-bold text-[#0F172A]">
-									AI Race Results
-								</h3>
+								<h3 class="text-sm font-bold text-[#0F172A]">AI Race Results</h3>
 								<p class="text-xs text-[#64748B]">
-									Multiple models competed to write this
-									letter. View alternatives below.
+									Multiple models competed to write this letter. View alternatives below.
 								</p>
 							</div>
 							{#if isLoadingAlternatives}
@@ -2593,7 +2559,7 @@
 							{#each allCoverLetters as version, index}
 								<button
 									on:click={() => switchVersion(index)}
-									disabled={version.status === "failed"}
+									disabled={version.status === 'failed'}
 									class="px-5 py-3 rounded-md text-sm font-semibold transition-all border flex items-center gap-2 shadow-sm {currentVersionIndex ===
 									index
 										? 'bg-[#0F172A] text-white border-[#0F172A] scale-105'
@@ -2624,12 +2590,8 @@
 					</div>
 				{:else}
 					<div class="flex justify-between items-center mb-8 px-2">
-						<div
-							class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]"
-						>
-							Generated by <span class="text-[#0369A1]"
-								>{source || "AI Engine"}</span
-							>
+						<div class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
+							Generated by <span class="text-[#0369A1]">{source || 'AI Engine'}</span>
 						</div>
 						{#if isLoadingAlternatives}
 							<div
@@ -2710,14 +2672,9 @@
 									/>
 								</svg>
 							</div>
-							<h3 class="text-xl font-bold text-[#0F172A] mb-2">
-								Ready for Submission
-							</h3>
-							<p
-								class="text-[#334155] text-sm mb-6 max-w-xs mx-auto"
-							>
-								Your personalized cover letter has been
-								generated and is ready for download.
+							<h3 class="text-xl font-bold text-[#0F172A] mb-2">Ready for Submission</h3>
+							<p class="text-[#334155] text-sm mb-6 max-w-xs mx-auto">
+								Your personalized cover letter has been generated and is ready for download.
 							</p>
 
 							<div class="flex flex-col gap-3">
@@ -2752,12 +2709,7 @@
 					{/if}
 
 					{#if !downloaded}
-						<button
-							on:click={reset}
-							class="btn btn-secondary w-full py-4"
-						>
-							Start Over
-						</button>
+						<button on:click={reset} class="btn btn-secondary w-full py-4"> Start Over </button>
 					{/if}
 				</div>
 			</div>

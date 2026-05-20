@@ -1,4 +1,3 @@
-
 import asyncio
 import os
 import json
@@ -10,7 +9,7 @@ from pydantic_ai import Agent
 # Configuration
 API_KEY = os.getenv("GROQ_API_KEY", "")
 # User requested switch to Kimi
-MODEL_NAME = "moonshotai/kimi-k2-instruct-0905" 
+MODEL_NAME = "moonshotai/kimi-k2-instruct-0905"
 BASE_URL = "https://api.groq.com/openai/v1"
 
 # --- Baseline Prompt (Current) ---
@@ -22,7 +21,7 @@ BASELINE_SYSTEM_PROMPT = (
     "2. Opening: State the specific role and company immediately.\n"
     "3. Body: 2-3 concise paragraphs mapping the candidate's skills and experience directly to the job requirements.\n"
     "4. Closing: Professional call to action and sign-off.\n"
-    "5. Finish with \"Sincerely,\" followed by the placeholder \"[Your Name]\" exactly. Do NOT use the candidate's real name.\n\n"
+    '5. Finish with "Sincerely," followed by the placeholder "[Your Name]" exactly. Do NOT use the candidate\'s real name.\n\n'
     "Constraints:\n"
     "- Tone: Professional, confident, and business-appropriate.\n"
     "- Format: PLAIN TEXT ONLY. No Markdown, no bolding, no headers, and no placeholders (e.g., [Company]).\n"
@@ -80,6 +79,7 @@ Job Requirements: AWS, Kubernetes, CI/CD pipelines, Terraform.
 Candidate Skills: 5 years DevOps experience, AWS Certified Pro, extensive Kubernetes management, Terraform expert, built CI/CD for fintech startup.
 """
 
+
 # Hook to fix Groq compatibility issue
 async def strip_service_tier_hook(response: httpx.Response):
     if response.status_code == 200:
@@ -93,18 +93,29 @@ async def strip_service_tier_hook(response: httpx.Response):
         except Exception:
             pass
 
+
 async def run_test(name, prompt):
     print(f"\n🏃 Running {name}...")
-    
+
     http_client = httpx.AsyncClient(event_hooks={"response": [strip_service_tier_hook]})
-    provider = OpenAIProvider(base_url=BASE_URL, api_key=API_KEY, http_client=http_client)
+    provider = OpenAIProvider(
+        base_url=BASE_URL, api_key=API_KEY, http_client=http_client
+    )
     model = OpenAIChatModel(model_name=MODEL_NAME, provider=provider)
     agent = Agent(model, system_prompt=prompt)
-    
+
     try:
         result = await agent.run(USER_INPUT)
-        output = result.data if hasattr(result, 'data') else str(result.data) if hasattr(result, 'data') else str(result.output) if hasattr(result, 'output') else str(result)
-        
+        output = (
+            result.data
+            if hasattr(result, "data")
+            else str(result.data)
+            if hasattr(result, "data")
+            else str(result.output)
+            if hasattr(result, "output")
+            else str(result)
+        )
+
         print(f"\n--- {name} RESULT ---")
         print(output)
         print("-" * 30)
@@ -113,11 +124,13 @@ async def run_test(name, prompt):
         print(f"❌ {name} Failed: {e}")
         return None
 
+
 async def main():
     print(f"🧪 Benchmarking Quality for {MODEL_NAME}")
-    
+
     await run_test("BASELINE", BASELINE_SYSTEM_PROMPT)
     await run_test("IMPROVED (FEW-SHOT)", IMPROVED_SYSTEM_PROMPT)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,6 +1,7 @@
 """
 User CV management routes — upload, list, rename, activate, delete.
 """
+
 import uuid
 import json
 import logging
@@ -45,9 +46,7 @@ async def upload_user_cv(
     """Upload a new CV (PDF). Max 5 per user, 10MB limit."""
     # Check CV count limit
     existing_count = len(
-        session.exec(
-            select(UserCV).where(UserCV.user_id == current_user.id)
-        ).all()
+        session.exec(select(UserCV).where(UserCV.user_id == current_user.id)).all()
     )
     if existing_count >= MAX_CVS_PER_USER:
         raise HTTPException(

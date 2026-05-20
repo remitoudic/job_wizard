@@ -2,6 +2,7 @@ from datetime import timedelta
 from temporalio import workflow
 from typing import Dict, Any
 
+
 @workflow.defn(name="CoverLetterWorkflow")
 class CoverLetterWorkflow:
     @workflow.run
@@ -10,7 +11,7 @@ class CoverLetterWorkflow:
         job_id = request_data.get("job_id") or workflow.info().workflow_id
         # Ensure it's in the dict for downstream activities
         request_data["job_id"] = job_id
-        
+
         # 1. Extraction phase
         if request_data.get("context_text"):
             if request_data.get("contact_info"):
@@ -22,7 +23,7 @@ class CoverLetterWorkflow:
                         "job_id": job_id,
                         "status": "extracted",
                         "message": "Loaded profile from stored CV.",
-                        "contact_info": contact_info
+                        "contact_info": contact_info,
                     },
                     start_to_close_timeout=timedelta(seconds=10),
                 )
@@ -33,24 +34,24 @@ class CoverLetterWorkflow:
                     {
                         "job_id": job_id,
                         "status": "extracting",
-                        "message": "Analyzing your profile context..."
+                        "message": "Analyzing your profile context...",
                     },
                     start_to_close_timeout=timedelta(seconds=10),
                 )
-                
+
                 contact_info = await workflow.execute_activity(
                     "extract_contact_info",
                     request_data["context_text"],
                     start_to_close_timeout=timedelta(minutes=2),
                 )
-                
+
                 await workflow.execute_activity(
                     "notify_status",
                     {
                         "job_id": job_id,
                         "status": "extracted",
                         "message": "Profile analysis complete.",
-                        "contact_info": contact_info
+                        "contact_info": contact_info,
                     },
                     start_to_close_timeout=timedelta(seconds=10),
                 )

@@ -55,7 +55,7 @@ PROVIDER_LATENCIES = {
 async def test_benchmark_generation_race():
     """
     Benchmark: Run the generation race N times and report statistics.
-    
+
     This uses mocked agents with realistic latency distributions to simulate
     the race between Local, Groq (x2), and NVIDIA participants.
     """
@@ -68,17 +68,19 @@ async def test_benchmark_generation_race():
         "base_url": "https://api.groq.com/openai/v1",
         "api_key": "fake-key",
         "model_1": "llama-3.3-70b-versatile",
-        "model_2": "openai/gpt-oss-120b"
+        "model_2": "openai/gpt-oss-120b",
     }
     nvidia_config = {
         "name": "nvidia",
         "base_url": "https://integrate.api.nvidia.com/v1",
         "api_key": "nvapi-fake-key",
-        "model_1": "meta/llama-4-maverick-17b-128e-instruct"
+        "model_1": "meta/llama-4-maverick-17b-128e-instruct",
     }
 
     for run in range(NUM_RUNS):
-        with patch("app.services.cover_letter.llm_service.create_writing_agent") as mock_create:
+        with patch(
+            "app.services.cover_letter.llm_service.create_writing_agent"
+        ) as mock_create:
             from app.services.cover_letter.llm_service import LLMService
 
             def agent_factory(model_name, **kwargs):
@@ -93,7 +95,7 @@ async def test_benchmark_generation_race():
                 return _make_mock_agent(
                     output_text=f"Cover letter from {model_name}",
                     delay=cfg["delay"],
-                    jitter=cfg["jitter"]
+                    jitter=cfg["jitter"],
                 )
 
             mock_create.side_effect = agent_factory
@@ -103,7 +105,7 @@ async def test_benchmark_generation_race():
             service.local_writer = _make_mock_agent(
                 "Local cover letter",
                 delay=local_cfg["delay"],
-                jitter=local_cfg["jitter"]
+                jitter=local_cfg["jitter"],
             )
             service.ollama_semaphore = _make_semaphore_mock()
 
@@ -118,7 +120,7 @@ async def test_benchmark_generation_race():
                 company="BenchmarkCorp",
                 requirements=["Python", "FastAPI", "Docker"],
                 job_id=f"bench-{run}",
-                user_name="Benchmark User"
+                user_name="Benchmark User",
             )
             elapsed = time.perf_counter() - start
 
@@ -151,7 +153,9 @@ async def test_benchmark_generation_race():
     print("-" * 60)
     print("  PER-RUN DETAIL:")
     for r in results:
-        print(f"    Run {r['run']:>2}: {r['elapsed']*1000:>7.1f} ms  →  {r['source']}")
+        print(
+            f"    Run {r['run']:>2}: {r['elapsed'] * 1000:>7.1f} ms  →  {r['source']}"
+        )
     print("=" * 60)
 
     # Assertions

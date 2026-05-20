@@ -4,6 +4,7 @@ from typing import Dict, Any
 import json
 from .base import BaseParser
 
+
 class LinkedInParser(BaseParser):
     """Specialized parser for LinkedIn"""
 
@@ -13,14 +14,14 @@ class LinkedInParser(BaseParser):
             # Check for currentJobId param
             query = parse_qs(parsed.query)
             job_id = query.get("currentJobId")
-            
+
             if job_id and job_id[0]:
                 return f"https://www.linkedin.com/jobs/view/{job_id[0]}/"
-            
+
             # Remove query params if it's already a view url
             if "/jobs/view/" in url:
                 return url.split("?")[0]
-                
+
             return url
         except Exception:
             return url
@@ -31,7 +32,7 @@ class LinkedInParser(BaseParser):
         """
         try:
             from curl_cffi import requests
-            
+
             # Impersonate Chrome to look like a real browser
             response = requests.get(
                 url,
@@ -41,17 +42,19 @@ class LinkedInParser(BaseParser):
                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
                     "Accept-Language": "en-US,en;q=0.5",
                 },
-                timeout=30
+                timeout=30,
             )
             response.raise_for_status()
             return response.text
-            
+
         except ImportError:
             raise Exception("curl_cffi not installed")
         except Exception as e:
             # Check for specific blocked messages or codes if possible
             if "429" in str(e) or "403" in str(e):
-                raise Exception(f"LinkedIn blocked the request ({str(e)}). Try manual mode.")
+                raise Exception(
+                    f"LinkedIn blocked the request ({str(e)}). Try manual mode."
+                )
             raise Exception(f"LinkedIn fetch failed: {str(e)}")
 
     def extract_job_data(self, soup: BeautifulSoup, url: str) -> Dict[str, Any]:
@@ -62,14 +65,16 @@ class LinkedInParser(BaseParser):
                 try:
                     data = json.loads(script.get_text())
                     if isinstance(data, dict) and data.get("@type") == "JobPosting":
-                         return {
+                        return {
                             "title": data.get("title", ""),
-                            "company": data.get("hiringOrganization", {}).get("name", ""),
+                            "company": data.get("hiringOrganization", {}).get(
+                                "name", ""
+                            ),
                             "description": data.get("description", ""),
-                            "requirements": [], # JSON-LD usually has full description but not separate requirements
+                            "requirements": [],  # JSON-LD usually has full description but not separate requirements
                             "url": self.normalize_url(url),
-                            "source": "LinkedIn"
-                         }
+                            "source": "LinkedIn",
+                        }
                 except Exception:
                     continue
         except Exception:
@@ -77,12 +82,14 @@ class LinkedInParser(BaseParser):
 
         # 2. HTML Parsing (Fallback)
         container = self._find_best_container(soup)
-        
+
         # Description
         description = ""
         if container:
-             # Clean artifacts
-            for tag in container.find_all(["button", "div.details-pane__content", "section.ad-banner"]):
+            # Clean artifacts
+            for tag in container.find_all(
+                ["button", "div.details-pane__content", "section.ad-banner"]
+            ):
                 tag.decompose()
             description = container.get_text(separator="\n", strip=True)
 
@@ -90,9 +97,9 @@ class LinkedInParser(BaseParser):
             "title": self._extract_title(soup),
             "company": self._extract_company(soup),
             "description": description,
-            "requirements": [], # Requirements extraction is hard on LinkedIn's unstructured text
+            "requirements": [],  # Requirements extraction is hard on LinkedIn's unstructured text
             "url": self.normalize_url(url),
-            "source": "LinkedIn"
+            "source": "LinkedIn",
         }
 
     def _find_best_container(self, soup: BeautifulSoup) -> BeautifulSoup:
@@ -102,14 +109,14 @@ class LinkedInParser(BaseParser):
             ".job-details-jobs-unified-top-card__content-container",
             ".jobs-description__content",
             "#job-details",
-            ".description__text"
+            ".description__text",
         ]
-        
+
         for selector in selectors:
             candidate = soup.select_one(selector)
             if candidate and len(candidate.get_text(strip=True)) > 100:
                 return candidate
-        
+
         # Fallback to body to avoid crashing, though likely garbage
         return soup.body if soup.body else soup
 
@@ -118,13 +125,13 @@ class LinkedInParser(BaseParser):
             "h1.top-card-layout__title",
             ".job-details-jobs-unified-top-card__job-title",
             "h1.job-title",
-            ".jobs-unified-top-card__job-title"
+            ".jobs-unified-top-card__job-title",
         ]
         for selector in selectors:
             elem = soup.select_one(selector)
             if elem:
                 return elem.get_text(strip=True)
-        
+
         # Fallback to title tag
         if soup.title:
             return soup.title.get_text(strip=True).split("|")[0].strip()
@@ -135,12 +142,12 @@ class LinkedInParser(BaseParser):
             ".topcard__org-name-link",
             ".job-details-jobs-unified-top-card__company-name",
             ".jobs-unified-top-card__company-name",
-            "a.topcard__org-name-link"
+            "a.topcard__org-name-link",
         ]
-        
+
         for selector in selectors:
             element = soup.select_one(selector)
             if element and element.get_text(strip=True):
                 return element.get_text(strip=True)
-                
+
         return "Unknown Company"

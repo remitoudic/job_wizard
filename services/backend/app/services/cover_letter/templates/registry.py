@@ -1,6 +1,7 @@
 from typing import Dict, Type
 from .base import BaseTemplate
 
+
 class TemplateRegistry:
     _instance = None
     _templates: Dict[str, Type[BaseTemplate]] = {}
@@ -20,6 +21,8 @@ class TemplateRegistry:
         """Get a template instance by name. Defaults to 'generic' if not found."""
         template_cls = cls._templates.get(name.lower(), cls._templates.get("british"))
         if not template_cls:
-             # Fallback if generic isn't registered yet (bootstrapping issue usually avoided by imports)
-             raise ValueError(f"Template '{name}' not found and no generic fallback available.")
+            # Fallback if generic isn't registered yet (bootstrapping issue usually avoided by imports)
+            raise ValueError(
+                f"Template '{name}' not found and no generic fallback available."
+            )
         return template_cls()

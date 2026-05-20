@@ -22,7 +22,7 @@ sequenceDiagram
     DB-->>Service: User Record (Hashed Password)
     Service->>Security: verify_password(plain, hashed)
     Security-->>Service: Boolean Result
-    
+
     alt is authenticated
         Service-->>API: User Object
         API->>Security: create_access_token(user_id)
@@ -139,8 +139,8 @@ When a user requests a specific resource (e.g., a Job Application), the system f
 1.  **Extract Identity**: The JWT token is decoded to find the `current_user`.
 2.  **Strict Filtering**: The SQL query includes a mandatory ownership clause:
     ```sql
-    SELECT * FROM application 
-    WHERE id = :application_id 
+    SELECT * FROM application
+    WHERE id = :application_id
     AND user_id = :current_user_id;
     ```
 3.  **Privacy by Obscurity**: If the `user_id` does not match, the system responds with a `404 Not Found` rather than a `403 Forbidden` to avoid confirming the existence of the resource to unauthorized parties.

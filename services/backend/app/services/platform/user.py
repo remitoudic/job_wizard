@@ -4,14 +4,15 @@ from sqlmodel import Session, select
 from database_pkg.models.user import User, UserCreate, UserUpdate
 from app.core.security import get_password_hash, verify_password
 
+
 class UserService:
     def get_by_email(self, session: Session, email: str) -> Optional[User]:
         statement = select(User).where(User.email == email)
         return session.exec(statement).first()
-    
 
-
-    def authenticate(self, session: Session, email: str, password: str) -> Optional[User]:
+    def authenticate(
+        self, session: Session, email: str, password: str
+    ) -> Optional[User]:
         user = self.get_by_email(session, email)
         if not user:
             return None
@@ -28,8 +29,8 @@ class UserService:
 
     def create(self, session: Session, user_create: UserCreate) -> User:
         db_obj = User.model_validate(
-            user_create, 
-            update={"hashed_password": get_password_hash(user_create.password)}
+            user_create,
+            update={"hashed_password": get_password_hash(user_create.password)},
         )
         session.add(db_obj)
         session.commit()
@@ -42,11 +43,12 @@ class UserService:
             hashed_password = get_password_hash(user_data["password"])
             del user_data["password"]
             user_data["hashed_password"] = hashed_password
-        
+
         db_user.sqlmodel_update(user_data)
         session.add(db_user)
         session.commit()
         session.refresh(db_user)
         return db_user
+
 
 user_service = UserService()

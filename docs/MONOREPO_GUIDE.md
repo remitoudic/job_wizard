@@ -6,7 +6,7 @@ Welcome to the **Job Wizard** monorepo! This guide explains how we structure our
 
 ## 🏗 What is a Monorepo?
 
-A **Monorepo** (Monolithic Repository) is a strategy where we keep multiple related projects or services in a single repository. 
+A **Monorepo** (Monolithic Repository) is a strategy where we keep multiple related projects or services in a single repository.
 
 In this project, we have:
 - **`services/backend`**: Our FastAPI web server.

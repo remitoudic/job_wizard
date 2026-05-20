@@ -3,9 +3,10 @@ from typing import Dict, Optional
 import json
 from .base import BaseParser
 
+
 class ArbeitnowParser(BaseParser):
     """Parser for Arbeitnow job pages"""
-    
+
     def normalize_url(self, url: str) -> str:
         """
         Normalize Arbeitnow URL.
@@ -19,7 +20,7 @@ class ArbeitnowParser(BaseParser):
         """
         try:
             from curl_cffi import requests
-            
+
             # Impersonate Chrome
             response = requests.get(
                 url,
@@ -29,11 +30,11 @@ class ArbeitnowParser(BaseParser):
                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
                     "Accept-Language": "en-US,en;q=0.5",
                 },
-                timeout=30
+                timeout=30,
             )
             response.raise_for_status()
             return response.text
-            
+
         except ImportError:
             raise Exception("curl_cffi not installed")
         except Exception as e:
@@ -47,16 +48,16 @@ class ArbeitnowParser(BaseParser):
                 text = script.get_text()
                 if not text.strip():
                     continue
-                    
+
                 data = json.loads(text)
-                
+
                 # JSON-LD can be a list or a single object
                 if isinstance(data, list):
                     for item in data:
                         if item.get("@type") == "JobPosting":
                             return item
                 elif isinstance(data, dict):
-                     if data.get("@type") == "JobPosting":
+                    if data.get("@type") == "JobPosting":
                         return data
             except (json.JSONDecodeError, AttributeError):
                 continue
@@ -64,21 +65,21 @@ class ArbeitnowParser(BaseParser):
 
     def extract_job_data(self, soup: BeautifulSoup, url: str) -> Dict:
         """Extract job data from Arbeitnow HTML"""
-        
+
         # 1. Try JSON-LD (Primary Strategy)
         json_ld_data = self._extract_json_ld(soup)
-        
+
         if json_ld_data:
             title = json_ld_data.get("title")
-            
+
             company_data = json_ld_data.get("hiringOrganization", {})
             if isinstance(company_data, dict):
-                 company = company_data.get("name")
+                company = company_data.get("name")
             else:
                 company = str(company_data)
-                
+
             description = json_ld_data.get("description", "")
-            
+
             # Clean up the description if it contains HTML
             if description:
                 # Reuse BeautifulSoup to clean HTML in description
@@ -91,27 +92,27 @@ class ArbeitnowParser(BaseParser):
                 "description": description,
                 "requirements": [],
                 "url": self.normalize_url(url),
-                "source": "Arbeitnow"
+                "source": "Arbeitnow",
             }
 
         # 2. Fallback: CSS Selectors (Simple backup)
         title = soup.select_one("h1")
         title_text = title.get_text(strip=True) if title else "Unknown Job"
-        
+
         company = soup.select_one('[itemprop="hiringOrganization"]')
         company_text = company.get_text(strip=True) if company else "Unknown Company"
-        
+
         # Arbeitnow uses itemprop="description" typically
         description = soup.select_one('[itemprop="description"]')
         if not description:
-             description = soup.select_one(".job-description")
-             
+            description = soup.select_one(".job-description")
+
         desc_text = ""
         if description:
-             # Clean line breaks
-             for br in description.find_all("br"):
-                 br.replace_with("\n")
-             desc_text = description.get_text(separator="\n\n", strip=True)
+            # Clean line breaks
+            for br in description.find_all("br"):
+                br.replace_with("\n")
+            desc_text = description.get_text(separator="\n\n", strip=True)
 
         return {
             "title": title_text,
@@ -119,5 +120,5 @@ class ArbeitnowParser(BaseParser):
             "description": desc_text,
             "requirements": [],
             "url": self.normalize_url(url),
-            "source": "Arbeitnow"
+            "source": "Arbeitnow",
         }

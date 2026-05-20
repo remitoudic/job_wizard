@@ -11,8 +11,18 @@ from .registry import TemplateRegistry
 
 # French month names
 _FR_MONTHS = [
-    "janvier", "février", "mars", "avril", "mai", "juin",
-    "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+    "janvier",
+    "février",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "août",
+    "septembre",
+    "octobre",
+    "novembre",
+    "décembre",
 ]
 
 
@@ -53,53 +63,54 @@ class FrenchTemplate(BaseTemplate):
     def _setup_custom_styles(self):
         """Override styles with Helvetica (sans-serif)."""
         from reportlab.lib.styles import getSampleStyleSheet
+
         self.styles = getSampleStyleSheet()
 
         self.title_style = ParagraphStyle(
-            'FrenchTitle',
-            parent=self.styles['Normal'],
-            fontName='Helvetica-Bold',
+            "FrenchTitle",
+            parent=self.styles["Normal"],
+            fontName="Helvetica-Bold",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             spaceAfter=2,
             alignment=TA_LEFT,
         )
         self.header_style = ParagraphStyle(
-            'FrenchHeader',
-            parent=self.styles['Normal'],
-            fontName='Helvetica',
+            "FrenchHeader",
+            parent=self.styles["Normal"],
+            fontName="Helvetica",
             fontSize=10,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=12,
             spaceAfter=1,
             alignment=TA_LEFT,
         )
         self.recipient_style = ParagraphStyle(
-            'FrenchRecipient',
-            parent=self.styles['Normal'],
-            fontName='Helvetica',
+            "FrenchRecipient",
+            parent=self.styles["Normal"],
+            fontName="Helvetica",
             fontSize=11,
-            textColor=HexColor('#000000'),
+            textColor=HexColor("#000000"),
             leading=14,
             alignment=TA_LEFT,
-            leftIndent=3.0 * inch, # Offset to the right
+            leftIndent=3.0 * inch,  # Offset to the right
         )
         self.body_style = ParagraphStyle(
-            'FrenchBody',
-            parent=self.styles['Normal'],
-            fontName='Helvetica',
+            "FrenchBody",
+            parent=self.styles["Normal"],
+            fontName="Helvetica",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=15,
             alignment=TA_LEFT,
             spaceAfter=12,
         )
         self.subject_style = ParagraphStyle(
-            'FrenchSubject',
-            parent=self.styles['Normal'],
-            fontName='Helvetica-Bold',
+            "FrenchSubject",
+            parent=self.styles["Normal"],
+            fontName="Helvetica-Bold",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=14,
             spaceAfter=4,
             alignment=TA_LEFT,
@@ -149,8 +160,10 @@ class FrenchTemplate(BaseTemplate):
             story.append(Paragraph(address, self.header_style))
 
         # Contact line
-        if phone: story.append(Paragraph(phone, self.header_style))
-        if email: story.append(Paragraph(email, self.header_style))
+        if phone:
+            story.append(Paragraph(phone, self.header_style))
+        if email:
+            story.append(Paragraph(email, self.header_style))
 
         story.append(Spacer(1, 0.4 * inch))
 
@@ -161,7 +174,7 @@ class FrenchTemplate(BaseTemplate):
             if company:
                 story.append(Paragraph(f"<b>{company}</b>", self.recipient_style))
             if employer_address:
-                for line in employer_address.split('\n'):
+                for line in employer_address.split("\n"):
                     if line.strip():
                         story.append(Paragraph(line.strip(), self.recipient_style))
             story.append(Spacer(1, 0.4 * inch))
@@ -178,9 +191,9 @@ class FrenchTemplate(BaseTemplate):
             # Add city if available
             city_prefix = f"À {address_city}, le " if address_city else "Le "
             full_date_string = f"{city_prefix}{french_date}"
-            
+
             date_style = ParagraphStyle(
-                'FrenchDate',
+                "FrenchDate",
                 parent=self.body_style,
                 alignment=TA_RIGHT,
             )

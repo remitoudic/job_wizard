@@ -11,8 +11,18 @@ from .registry import TemplateRegistry
 
 # Spanish month names
 _ES_MONTHS = [
-    "enero", "febrero", "marzo", "abril", "mayo", "junio",
-    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
 ]
 
 
@@ -53,43 +63,44 @@ class SpanishTemplate(BaseTemplate):
     def _setup_custom_styles(self):
         """Override styles with Helvetica (sans-serif)."""
         from reportlab.lib.styles import getSampleStyleSheet
+
         self.styles = getSampleStyleSheet()
 
         self.title_style = ParagraphStyle(
-            'SpanishTitle',
-            parent=self.styles['Normal'],
-            fontName='Helvetica-Bold',
+            "SpanishTitle",
+            parent=self.styles["Normal"],
+            fontName="Helvetica-Bold",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             spaceAfter=2,
             alignment=TA_LEFT,
         )
         self.header_style = ParagraphStyle(
-            'SpanishHeader',
-            parent=self.styles['Normal'],
-            fontName='Helvetica',
+            "SpanishHeader",
+            parent=self.styles["Normal"],
+            fontName="Helvetica",
             fontSize=10,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=12,
             spaceAfter=1,
             alignment=TA_LEFT,
         )
         self.body_style = ParagraphStyle(
-            'SpanishBody',
-            parent=self.styles['Normal'],
-            fontName='Helvetica',
+            "SpanishBody",
+            parent=self.styles["Normal"],
+            fontName="Helvetica",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=15,
             alignment=TA_LEFT,
             spaceAfter=12,
         )
         self.subject_style = ParagraphStyle(
-            'SpanishSubject',
-            parent=self.styles['Normal'],
-            fontName='Helvetica-Bold',
+            "SpanishSubject",
+            parent=self.styles["Normal"],
+            fontName="Helvetica-Bold",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=14,
             spaceAfter=4,
             alignment=TA_LEFT,
@@ -139,8 +150,10 @@ class SpanishTemplate(BaseTemplate):
             story.append(Paragraph(address, self.header_style))
 
         # Contact line
-        if phone: story.append(Paragraph(phone, self.header_style))
-        if email: story.append(Paragraph(email, self.header_style))
+        if phone:
+            story.append(Paragraph(phone, self.header_style))
+        if email:
+            story.append(Paragraph(email, self.header_style))
 
         story.append(Spacer(1, 0.4 * inch))
 
@@ -151,7 +164,7 @@ class SpanishTemplate(BaseTemplate):
             if company:
                 story.append(Paragraph(f"<b>{company}</b>", self.header_style))
             if employer_address:
-                for line in employer_address.split('\n'):
+                for line in employer_address.split("\n"):
                     if line.strip():
                         story.append(Paragraph(line.strip(), self.header_style))
             story.append(Spacer(1, 0.4 * inch))
@@ -167,10 +180,12 @@ class SpanishTemplate(BaseTemplate):
             spanish_date = _format_spanish_date(raw_date)
             # Add city prefix as requested: "Madrid, 12 de abril de 2026"
             # If city is missing, we just use the date.
-            full_date_string = f"{address_city}, {spanish_date}" if address_city else spanish_date
-            
+            full_date_string = (
+                f"{address_city}, {spanish_date}" if address_city else spanish_date
+            )
+
             date_style = ParagraphStyle(
-                'SpanishDate',
+                "SpanishDate",
                 parent=self.body_style,
                 alignment=TA_RIGHT,
             )

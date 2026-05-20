@@ -1,11 +1,11 @@
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
-from typing import Optional
 from app.core.config import settings
 
 # Initialize Cloudinary configuration
 cloudinary.config(cloudinary_url=settings.CLOUDINARY_URL)
+
 
 class CloudinaryService:
     def upload_image(self, file_content: bytes, user_id: int) -> str:
@@ -16,7 +16,7 @@ class CloudinaryService:
             file_content,
             folder="profile_pictures",
             public_id=f"user_{user_id}",
-            overwrite=True
+            overwrite=True,
         )
         return response.get("secure_url")
 
@@ -63,5 +63,5 @@ class CloudinaryService:
         except Exception as e:
             print(f"Failed to delete raw file from Cloudinary: {e}")
 
-cloudinary_service = CloudinaryService()
 
+cloudinary_service = CloudinaryService()

@@ -5,6 +5,7 @@ import uuid
 from httpx import AsyncClient
 from app.core.pubsub import pubsub_manager
 
+
 @pytest.mark.asyncio
 async def test_sse_replay_after_completion(async_client: AsyncClient):
     """
@@ -13,9 +14,9 @@ async def test_sse_replay_after_completion(async_client: AsyncClient):
     """
     job_id = f"test-replay-{uuid.uuid4()}"
     completion_event = {
-        "job_id": job_id, 
-        "status": "completed", 
-        "message": "Instant replay test"
+        "job_id": job_id,
+        "status": "completed",
+        "message": "Instant replay test",
     }
 
     # 1. Notify BEFORE client connects
@@ -26,18 +27,20 @@ async def test_sse_replay_after_completion(async_client: AsyncClient):
     received_events = []
     try:
         # We expect this to be nearly instant because it's a replay
-        async with async_client.stream("GET", f"/api/events/{job_id}", timeout=5.0) as response:
+        async with async_client.stream(
+            "GET", f"/api/events/{job_id}", timeout=5.0
+        ) as response:
             assert response.status_code == 200
-            
+
             async for line in response.aiter_lines():
                 if line.startswith("data: "):
                     payload_str = line[6:].strip()
                     if not payload_str:
                         continue
-                    
+
                     data = json.loads(payload_str)
                     received_events.append(data)
-                    
+
                     # The stream should terminate on 'completed'
                     if data["status"] in ("completed", "error"):
                         break
@@ -50,6 +53,7 @@ async def test_sse_replay_after_completion(async_client: AsyncClient):
     assert received_events[0]["status"] == "completed"
     assert received_events[0]["message"] == "Instant replay test"
 
+
 @pytest.mark.asyncio
 async def test_sse_sync_then_live(async_client: AsyncClient):
     """
@@ -57,20 +61,26 @@ async def test_sse_sync_then_live(async_client: AsyncClient):
     The client should receive the current state and then wait for live events.
     """
     job_id = f"test-sync-{uuid.uuid4()}"
-    
+
     # 1. Partial progress BEFORE connection
-    await pubsub_manager.notify({"job_id": job_id, "status": "extracting", "message": "First event"})
+    await pubsub_manager.notify(
+        {"job_id": job_id, "status": "extracting", "message": "First event"}
+    )
 
     # 2. Mock a notifier that sends the rest later
     async def mock_notifier():
         await asyncio.sleep(0.5)
-        await pubsub_manager.notify({"job_id": job_id, "status": "completed", "message": "Second event"})
+        await pubsub_manager.notify(
+            {"job_id": job_id, "status": "completed", "message": "Second event"}
+        )
 
     notifier_task = asyncio.create_task(mock_notifier())
 
     received_events = []
     try:
-        async with async_client.stream("GET", f"/api/events/{job_id}", timeout=10.0) as response:
+        async with async_client.stream(
+            "GET", f"/api/events/{job_id}", timeout=10.0
+        ) as response:
             async for line in response.aiter_lines():
                 if line.startswith("data: "):
                     data = json.loads(line[6:])

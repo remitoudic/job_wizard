@@ -8,6 +8,7 @@ import httpx
 import json
 from typing import Optional
 
+
 # Hook to fix Groq compatibility issue (unexpected service_tier field)
 async def strip_service_tier_hook(response: httpx.Response):
     if response.status_code == 200:
@@ -21,18 +22,19 @@ async def strip_service_tier_hook(response: httpx.Response):
         except Exception:
             pass
 
+
 def create_custom_openai_provider(base_url: str, api_key: str) -> OpenAIProvider:
     client = httpx.AsyncClient(
-        event_hooks={"response": [strip_service_tier_hook]},
-        timeout=120.0
+        event_hooks={"response": [strip_service_tier_hook]}, timeout=120.0
     )
     return OpenAIProvider(base_url=base_url, api_key=api_key, http_client=client)
 
 
 # Configure Logfire
-logfire.configure(token=os.getenv("LOGFIRE_TOKEN"), send_to_logfire='if-token-present')
+logfire.configure(token=os.getenv("LOGFIRE_TOKEN"), send_to_logfire="if-token-present")
 
 # --- Models ---
+
 
 class ContactInfo(BaseModel):
     name: Optional[str] = Field("", description="Full name of the candidate")
@@ -42,11 +44,14 @@ class ContactInfo(BaseModel):
     phone: Optional[str] = Field("", description="Phone number")
     linkedin: Optional[str] = Field("", description="LinkedIn profile URL")
     website: Optional[str] = Field("", description="Personal website or portfolio URL")
-    address: Optional[str] = Field("", description="Physical address or location (City, State)")
+    address: Optional[str] = Field(
+        "", description="Physical address or location (City, State)"
+    )
     address_street: Optional[str] = Field("", description="Street address")
     address_postcode: Optional[str] = Field("", description="Postcode/Zip code")
     address_city: Optional[str] = Field("", description="City")
     address_country: Optional[str] = Field("", description="Country")
+
 
 class JobDetails(BaseModel):
     job_description: str
@@ -57,9 +62,13 @@ class JobDetails(BaseModel):
     user_skills: str
     context_text: Optional[str] = None
 
+
 class CoverLetterResult(BaseModel):
     content: str = Field(..., description="The generated cover letter text")
-    model_name: str = Field("unknown", description="Name of the model that generated this")
+    model_name: str = Field(
+        "unknown", description="Name of the model that generated this"
+    )
+
 
 # --- Prompts ---
 
@@ -96,18 +105,21 @@ Sincerely,
 
 # --- Agents ---
 
-def create_extraction_agent(model_name: str = "llama3.2:1b", base_url: str = "http://ollama:11434/v1") -> Agent:
+
+def create_extraction_agent(
+    model_name: str = "llama3.2:1b", base_url: str = "http://ollama:11434/v1"
+) -> Agent:
     """
     Creates an agent for extracting contact info.
     Uses OpenAIModel for both Local (Ollama) and Remote (OpenRouter) as Ollama supports OpenAI API.
     """
-    
+
     if "ollama" in base_url or "localhost" in base_url:
         # Local Ollama via OpenAI API
         # Ensure base_url ends with /v1
         if not base_url.endswith("/v1"):
             base_url = f"{base_url}/v1"
-            
+
         # provider = OpenAIProvider(base_url=base_url, api_key="ollama") # Dummy key required
         provider = create_custom_openai_provider(base_url=base_url, api_key="ollama")
         model = OpenAIChatModel(model_name=model_name, provider=provider)
@@ -119,7 +131,7 @@ def create_extraction_agent(model_name: str = "llama3.2:1b", base_url: str = "ht
         # )
         provider = create_custom_openai_provider(
             base_url="https://openrouter.ai/api/v1",
-            api_key=os.getenv("OPENROUTER_API_KEY")
+            api_key=os.getenv("OPENROUTER_API_KEY"),
         )
         model = OpenAIChatModel(model_name=model_name, provider=provider)
 
@@ -129,12 +141,15 @@ def create_extraction_agent(model_name: str = "llama3.2:1b", base_url: str = "ht
         system_prompt=(
             "You are an expert HR data parser. Extract contact information from the provided resume text. "
             "Return JSON matching the schema. If a field is missing, return an empty string."
-        )
+        ),
     )
     # logfire.instrument_pydantic(ContactInfo)
     return agent
 
-def create_writing_agent(model_name: str, is_remote: bool = False, provider_config: Optional[dict] = None) -> Agent:
+
+def create_writing_agent(
+    model_name: str, is_remote: bool = False, provider_config: Optional[dict] = None
+) -> Agent:
     """
     Creates an agent for writing cover letters with optimized parameters for speed.
     Allows dynamic provider configuration for failover.
@@ -144,7 +159,7 @@ def create_writing_agent(model_name: str, is_remote: bool = False, provider_conf
         host = os.getenv("OLLAMA_HOST", "http://ollama:11434")
         if not host.endswith("/v1"):
             host = f"{host}/v1"
-            
+
         # provider = OpenAIProvider(base_url=host, api_key="ollama")
         provider = create_custom_openai_provider(base_url=host, api_key="ollama")
         model = OpenAIChatModel(model_name=model_name, provider=provider)
@@ -155,8 +170,7 @@ def create_writing_agent(model_name: str, is_remote: bool = False, provider_conf
         #     api_key=provider_config["api_key"]
         # )
         provider = create_custom_openai_provider(
-            base_url=provider_config["base_url"],
-            api_key=provider_config["api_key"]
+            base_url=provider_config["base_url"], api_key=provider_config["api_key"]
         )
         model = OpenAIChatModel(model_name=model_name, provider=provider)
     else:
@@ -167,10 +181,10 @@ def create_writing_agent(model_name: str, is_remote: bool = False, provider_conf
         # )
         provider = create_custom_openai_provider(
             base_url="https://openrouter.ai/api/v1",
-            api_key=os.getenv("OPENROUTER_API_KEY")
+            api_key=os.getenv("OPENROUTER_API_KEY"),
         )
         model = OpenAIChatModel(model_name=model_name, provider=provider)
-    
+
     # Define default system prompt (Complex/Few-Shot)
     system_prompt = (
         "You are an expert Career Coach and Professional Writer. Your task is to write a persuasive, "
@@ -204,7 +218,7 @@ def create_writing_agent(model_name: str, is_remote: bool = False, provider_conf
         system_prompt = SIMPLE_SYSTEM_PROMPT
         # Reduce max tokens for local model to speed up generation (shorter letter)
         model_settings["max_tokens"] = 300
-        
+
     # NVIDIA NIM models (like qwen) may reject max_completion_tokens
     if is_remote and provider_config and provider_config.get("name") == "nvidia":
         model_settings.pop("max_tokens", None)
@@ -213,6 +227,6 @@ def create_writing_agent(model_name: str, is_remote: bool = False, provider_conf
         model,
         output_type=str,
         system_prompt=system_prompt,
-        model_settings=model_settings
+        model_settings=model_settings,
     )
     return agent

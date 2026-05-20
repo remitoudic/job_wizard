@@ -11,8 +11,18 @@ from .registry import TemplateRegistry
 
 # German month names for DIN 5008 date formatting
 _DE_MONTHS = [
-    "Januar", "Februar", "März", "April", "Mai", "Juni",
-    "Juli", "August", "September", "Oktober", "November", "Dezember"
+    "Januar",
+    "Februar",
+    "März",
+    "April",
+    "Mai",
+    "Juni",
+    "Juli",
+    "August",
+    "September",
+    "Oktober",
+    "November",
+    "Dezember",
 ]
 
 
@@ -53,43 +63,44 @@ class GermanTemplate(BaseTemplate):
     def _setup_custom_styles(self):
         """Override styles with Helvetica (sans-serif) for German standard."""
         from reportlab.lib.styles import getSampleStyleSheet
+
         self.styles = getSampleStyleSheet()
 
         self.title_style = ParagraphStyle(
-            'GermanTitle',
-            parent=self.styles['Normal'],
-            fontName='Helvetica-Bold',
+            "GermanTitle",
+            parent=self.styles["Normal"],
+            fontName="Helvetica-Bold",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             spaceAfter=2,
             alignment=TA_LEFT,
         )
         self.header_style = ParagraphStyle(
-            'GermanHeader',
-            parent=self.styles['Normal'],
-            fontName='Helvetica',
+            "GermanHeader",
+            parent=self.styles["Normal"],
+            fontName="Helvetica",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=14,
             spaceAfter=1,
             alignment=TA_LEFT,
         )
         self.body_style = ParagraphStyle(
-            'GermanBody',
-            parent=self.styles['Normal'],
-            fontName='Helvetica',
+            "GermanBody",
+            parent=self.styles["Normal"],
+            fontName="Helvetica",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=16,
             alignment=TA_LEFT,
             spaceAfter=12,
         )
         self.subtitle_style = ParagraphStyle(
-            'GermanSubtitle',
-            parent=self.styles['Normal'],
-            fontName='Helvetica-Bold',
+            "GermanSubtitle",
+            parent=self.styles["Normal"],
+            fontName="Helvetica-Bold",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=14,
             spaceAfter=4,
             alignment=TA_LEFT,
@@ -143,8 +154,10 @@ class GermanTemplate(BaseTemplate):
 
         # Contact line: phone | email | linkedin
         contact_parts = []
-        if phone: contact_parts.append(phone)
-        if email: contact_parts.append(email)
+        if phone:
+            contact_parts.append(phone)
+        if email:
+            contact_parts.append(email)
 
         if contact_parts:
             story.append(Paragraph(" | ".join(contact_parts), self.header_style))
@@ -158,7 +171,7 @@ class GermanTemplate(BaseTemplate):
             if company:
                 story.append(Paragraph(company, self.header_style))
             if employer_address:
-                for line in employer_address.split('\n'):
+                for line in employer_address.split("\n"):
                     if line.strip():
                         story.append(Paragraph(line.strip(), self.header_style))
             story.append(Spacer(1, 0.3 * inch))
@@ -173,7 +186,7 @@ class GermanTemplate(BaseTemplate):
         if raw_date:
             german_date = _format_german_date(raw_date)
             date_style = ParagraphStyle(
-                'GermanDate',
+                "GermanDate",
                 parent=self.body_style,
                 alignment=TA_RIGHT,
             )

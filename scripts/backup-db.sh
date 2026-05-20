@@ -55,12 +55,12 @@ if [ -f "$BACKUP_FILE" ]; then
     echo "✅ Backup successful!"
     echo "   Size: $BACKUP_SIZE"
     echo "   Location: $BACKUP_FILE"
-    
+
     # Keep only last 10 backups
     echo ""
     echo "🧹 Cleaning old backups (keeping last 10)..."
     ls -t "${BACKUP_DIR}"/jobwizard_*.sql | tail -n +11 | xargs -r rm
-    
+
     BACKUP_COUNT=$(ls -1 "${BACKUP_DIR}"/jobwizard_*.sql 2>/dev/null | wc -l)
     echo "   Current backups: $BACKUP_COUNT"
 else

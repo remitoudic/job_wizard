@@ -1,14 +1,15 @@
 """
 OpenRouter Provider Integration Tests
 
-This module validates the integration with OpenRouter's API.
-It ensures that the system can successfully authenticate using the provided 
-API key and that the remote models can be instantiated and used to generate 
-responses, confirming that the OpenRouter fallback/alternative path is functional.
+This test verifies the connectivity and configuration of the OpenRouter provider
+within the LLMService. It checks that model identifiers and API settings are correctly
+mapped when OpenRouter is selected as the primary provider.
 """
+
 import pytest
 import os
 from app.services.platform.agents import create_writing_agent
+
 
 @pytest.mark.asyncio
 async def test_openrouter_connection():
@@ -22,30 +23,30 @@ async def test_openrouter_connection():
 
     # Use a cheap/free model for testing
     model_name = os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-lite-001")
-    
+
     print(f"\nTesting with model: {model_name}")
 
     # Create the agent
     agent = create_writing_agent(model_name=model_name, is_remote=True)
-    
+
     # Verify the model name is correctly set on the agent
-    # Accessing the model name might differ based on pydantic-ai version, 
+    # Accessing the model name might differ based on pydantic-ai version,
     # but based on common patterns:
     assert agent.model.model_name == model_name
-    
+
     # Run a simple prompt
     prompt = "Hello! Please reply with 'OpenRouter is working' and nothing else."
-    
+
     try:
         result = await agent.run(prompt)
         output_text = result.output
-        
+
         print(f"Response: {output_text}")
-        
+
         # Verify we got a string back
         assert isinstance(output_text, str)
         assert len(output_text) > 0
-        
+
         # Basic content check (allowing for some variation)
         assert "working" in output_text.lower() or "openrouter" in output_text.lower()
 

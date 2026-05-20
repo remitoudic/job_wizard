@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import re
 from .base import BaseParser
 
+
 class GenericParser(BaseParser):
     """Fallback parser for any website"""
 
@@ -17,7 +18,7 @@ class GenericParser(BaseParser):
     def extract_job_data(self, soup: BeautifulSoup, url: str) -> Dict[str, Any]:
         raw_description = self._extract_description(soup)
         normalized = self._normalize_description(raw_description)
-        
+
         return {
             "title": self._extract_title(soup),
             "company": self._extract_company(soup),
@@ -35,7 +36,7 @@ class GenericParser(BaseParser):
             ".job-view-content",
             "[class*='description']",
         ]
-        
+
         for selector in selectors:
             candidates = soup.select(selector)
             for candidate in candidates:
@@ -46,13 +47,13 @@ class GenericParser(BaseParser):
             element = soup.find(tag)
             if element and len(element.get_text(strip=True)) > 200:
                 return element
-                
+
         body = soup.find("body")
         return body if body else soup
 
     def _extract_title(self, soup: BeautifulSoup) -> str:
         title = "Job Position"
-        
+
         # Structured Data
         sd = self._extract_structured_data(soup)
         if sd.get("title"):
@@ -64,7 +65,13 @@ class GenericParser(BaseParser):
                 title = og.get("content").strip()
             else:
                 # Common selectors
-                selectors = ["h1", ".job-title", ".jobTitle", "[class*='job-title']", "[class*='title']"]
+                selectors = [
+                    "h1",
+                    ".job-title",
+                    ".jobTitle",
+                    "[class*='job-title']",
+                    "[class*='title']",
+                ]
                 for selector in selectors:
                     element = soup.select_one(selector)
                     if element and element.get_text(strip=True):
@@ -89,17 +96,24 @@ class GenericParser(BaseParser):
                 return org.strip()
 
         # OG
-        og = soup.find("meta", property="og:site_name") or soup.find("meta", property="og:publisher")
+        og = soup.find("meta", property="og:site_name") or soup.find(
+            "meta", property="og:publisher"
+        )
         if og and og.get("content"):
             return og.get("content").strip()
 
-        selectors = [".company-name", ".companyName", "[class*='company']", "[data-company]"]
-        
+        selectors = [
+            ".company-name",
+            ".companyName",
+            "[class*='company']",
+            "[data-company]",
+        ]
+
         for selector in selectors:
             element = soup.select_one(selector)
             if element and element.get_text(strip=True):
                 return element.get_text(strip=True)
-                
+
         # Title fallback
         title_tag = soup.find("title")
         if title_tag:
@@ -115,28 +129,34 @@ class GenericParser(BaseParser):
         if sd.get("description"):
             desc = sd.get("description")
             if isinstance(desc, str) and desc.strip():
-                return re.sub(r'\n\s*\n', '\n\n', desc.strip())
+                return re.sub(r"\n\s*\n", "\n\n", desc.strip())
 
         container = self._find_best_container(soup)
-        
+
         # Cleanup
         for tag in container.find_all(["script", "style", "nav", "footer", "header"]):
             tag.decompose()
 
         text = container.get_text(separator="\n", strip=True)
-        text = re.sub(r'\n\s*\n', '\n\n', text)
-        
+        text = re.sub(r"\n\s*\n", "\n\n", text)
+
         if len(text) > 100:
-             return text
+            return text
 
         # Fallback to meta
-        og = soup.find("meta", property="og:description") or soup.find("meta", attrs={"name": "description"})
+        og = soup.find("meta", property="og:description") or soup.find(
+            "meta", attrs={"name": "description"}
+        )
         if og and og.get("content"):
             return og.get("content").strip()
-            
+
         # Last resort
         paragraphs = soup.find_all("p")
-        valid_paragraphs = [p.get_text(strip=True) for p in paragraphs if len(p.get_text(strip=True)) > 20]
+        valid_paragraphs = [
+            p.get_text(strip=True)
+            for p in paragraphs
+            if len(p.get_text(strip=True)) > 20
+        ]
         text = "\n\n".join(valid_paragraphs)
         return text if text else "No description available"
 
@@ -144,25 +164,32 @@ class GenericParser(BaseParser):
         requirements = []
         container = self._find_best_container(soup)
         lists = container.find_all(["ul", "ol"])
-        
+
         for lst in lists:
             items = lst.find_all("li")
             for item in items:
                 text = item.get_text(strip=True)
-                if text and 10 < len(text) < 300: 
-                    if not any(x in text.lower() for x in ["copyright", "privacy policy", "terms", "cookies"]):
-                         requirements.append(text)
-        
+                if text and 10 < len(text) < 300:
+                    if not any(
+                        x in text.lower()
+                        for x in ["copyright", "privacy policy", "terms", "cookies"]
+                    ):
+                        requirements.append(text)
+
         if not requirements:
             description = self._extract_description(soup)
             lines = description.split("\n")
             for line in lines:
                 line = line.strip()
-                if line and (line.startswith("•") or line.startswith("-") or re.match(r'^\d+\.', line)):
+                if line and (
+                    line.startswith("•")
+                    or line.startswith("-")
+                    or re.match(r"^\d+\.", line)
+                ):
                     cleaned = line.lstrip("•-0123456789. ")
                     if len(cleaned) > 10:
                         requirements.append(cleaned)
-        
+
         return requirements[:15]
 
     def _extract_source(self, soup: BeautifulSoup) -> str | None:
@@ -177,7 +204,7 @@ class GenericParser(BaseParser):
         og = soup.find("meta", property="og:site_name")
         if og and og.get("content"):
             return og.get("content").strip()
-            
+
         return None
 
     def _extract_structured_data(self, soup: BeautifulSoup) -> Dict:
@@ -186,18 +213,27 @@ class GenericParser(BaseParser):
         for s in scripts:
             try:
                 import json
+
                 payload = json.loads(s.string or "{}")
                 if isinstance(payload, list):
                     for item in payload:
-                        if isinstance(item, dict) and item.get("@type") in ("JobPosting", "JobPostingSpecification"):
+                        if isinstance(item, dict) and item.get("@type") in (
+                            "JobPosting",
+                            "JobPostingSpecification",
+                        ):
                             payload = item
                             break
                 if isinstance(payload, dict):
                     t = payload.get("@type") or payload.get("type")
                     if t and ("JobPosting" in t or t == "JobPosting"):
-                        if payload.get("title"): data["title"] = payload.get("title")
-                        if payload.get("description"): data["description"] = payload.get("description")
-                        if payload.get("hiringOrganization"): data["hiringOrganization"] = payload.get("hiringOrganization")
+                        if payload.get("title"):
+                            data["title"] = payload.get("title")
+                        if payload.get("description"):
+                            data["description"] = payload.get("description")
+                        if payload.get("hiringOrganization"):
+                            data["hiringOrganization"] = payload.get(
+                                "hiringOrganization"
+                            )
                         return data
             except Exception:
                 continue

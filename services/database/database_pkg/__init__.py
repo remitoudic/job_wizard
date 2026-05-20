@@ -1,9 +1,12 @@
 from sqlmodel import SQLModel, create_engine, text
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://jobwizard:jobwizard007@postgres:5432/jobwizard")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql://jobwizard:jobwizard007@postgres:5432/jobwizard"
+)
 
 engine = create_engine(DATABASE_URL)
+
 
 def init_db():
     # Import all models so SQLModel registers them before create_all
@@ -15,7 +18,9 @@ def init_db():
     SQLModel.metadata.create_all(engine)
     try:
         with engine.begin() as conn:
-            conn.execute(text('ALTER TABLE "user" ADD COLUMN profile_picture_url VARCHAR;'))
+            conn.execute(
+                text('ALTER TABLE "user" ADD COLUMN profile_picture_url VARCHAR;')
+            )
     except Exception:
         pass
 
@@ -24,5 +29,3 @@ def init_db():
             conn.execute(text('ALTER TABLE "applications" ADD COLUMN notes TEXT;'))
     except Exception:
         pass
-
-

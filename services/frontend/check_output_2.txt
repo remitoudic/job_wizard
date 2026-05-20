@@ -5,14 +5,14 @@ Loading svelte-check in workspace: /Users/Remi/Documents/job_wizard/frontend
 Getting Svelte diagnostics...
 
 /Users/Remi/Documents/job_wizard/frontend/src/routes/favicon.png/+server.ts:2:26
-Error: Cannot find module 'node:fs/promises' or its corresponding type declarations. 
+Error: Cannot find module 'node:fs/promises' or its corresponding type declarations.
 import type { RequestHandler } from '@sveltejs/kit';
 import { readFile } from 'node:fs/promises';
 
 
 
 /Users/Remi/Documents/job_wizard/frontend/src/routes/favicon.svg/+server.ts:2:26
-Error: Cannot find module 'node:fs/promises' or its corresponding type declarations. 
+Error: Cannot find module 'node:fs/promises' or its corresponding type declarations.
 import type { RequestHandler } from '@sveltejs/kit';
 import { readFile } from 'node:fs/promises';
 

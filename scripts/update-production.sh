@@ -31,7 +31,7 @@ if [ "$PUBLIC_IP" != "$EXPECTED_IP" ]; then
     echo "⚠️  WARNING: This script is meant for production server ($EXPECTED_IP)"
     echo "   Current IP: $PUBLIC_IP"
     echo ""
-    
+
     if [ "$FORCE_YES" = true ]; then
         echo "   Bypassing check due to -y flag."
     else
@@ -85,7 +85,7 @@ fi
 NEW_COMMIT=$(git rev-parse HEAD)
 if [ "$CURRENT_COMMIT" = "$NEW_COMMIT" ]; then
     echo "ℹ️  Already up to date. No changes to deploy."
-    
+
     if [ "$FORCE_REBUILD" = true ]; then
         echo "⚠️  Forcing rebuild due to --force flag..."
     else
@@ -184,17 +184,17 @@ else
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
     echo "⏮️  Rolling back to previous version..."
-    
+
     # Rollback code
     git reset --hard "$CURRENT_COMMIT"
-    
+
     # Restart services
     if command -v docker-compose > /dev/null 2>&1; then
         docker-compose --env-file .env/.env -f "$COMPOSE_FILE" up -d --build
     else
         docker compose --env-file .env/.env -f "$COMPOSE_FILE" up -d --build
     fi
-    
+
     echo ""
     echo "✅ Rolled back to commit: ${CURRENT_COMMIT:0:8}"
     echo ""

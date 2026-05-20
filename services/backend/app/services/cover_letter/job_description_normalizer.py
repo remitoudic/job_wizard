@@ -41,12 +41,15 @@ TECH_PATTERN = re.compile(
     re.I,
 )
 
-MONEY_PATTERN = re.compile(r"\$?\d+(?:\.\d+)?\s?(?:USD|EUR|GBP)?(?:\s?per\s?hour)?", re.I)
+MONEY_PATTERN = re.compile(
+    r"\$?\d+(?:\.\d+)?\s?(?:USD|EUR|GBP)?(?:\s?per\s?hour)?", re.I
+)
 
 
 # ----------------------------
 # Normalization
 # ----------------------------
+
 
 def normalize(text: str) -> str:
     text = re.sub(r"\n+", "\n", text)
@@ -59,9 +62,9 @@ def is_noise(line: str) -> bool:
 
 
 def detect_section(line: str) -> str | None:
-    l = line.lower()
+    line_lower = line.lower()
     for section, hints in SECTION_HINTS.items():
-        if any(h in l for h in hints):
+        if any(h in line_lower for h in hints):
             return section
     return None
 
@@ -69,6 +72,7 @@ def detect_section(line: str) -> str | None:
 # ----------------------------
 # Sectioning
 # ----------------------------
+
 
 def split_sections(text: str) -> Dict[str, List[str]]:
     sections = {"Overview": []}
@@ -94,6 +98,7 @@ def split_sections(text: str) -> Dict[str, List[str]]:
 # Bullet normalization
 # ----------------------------
 
+
 def to_bullets(lines: List[str]) -> List[str]:
     bullets = []
     for line in lines:
@@ -105,6 +110,7 @@ def to_bullets(lines: List[str]) -> List[str]:
 # ----------------------------
 # Metadata extraction
 # ----------------------------
+
 
 def extract_metadata(text: str) -> Dict[str, str]:
     money = MONEY_PATTERN.findall(text)
@@ -124,6 +130,7 @@ def extract_metadata(text: str) -> Dict[str, str]:
 # ----------------------------
 # Markdown rendering
 # ----------------------------
+
 
 def render_markdown(sections: Dict[str, List[str]], meta: Dict[str, str]) -> str:
     md = []
@@ -148,12 +155,11 @@ def render_markdown(sections: Dict[str, List[str]], meta: Dict[str, str]) -> str
 # JSON rendering
 # ----------------------------
 
+
 def render_json(sections: Dict[str, List[str]], meta: Dict[str, str]) -> Dict:
     return {
         "sections": {
-            title: to_bullets(lines)
-            for title, lines in sections.items()
-            if lines
+            title: to_bullets(lines) for title, lines in sections.items() if lines
         },
         "metadata": meta,
     }
@@ -162,6 +168,7 @@ def render_json(sections: Dict[str, List[str]], meta: Dict[str, str]) -> Dict:
 # ----------------------------
 # Public API
 # ----------------------------
+
 
 def normalize_job_post(raw: str) -> Dict[str, str]:
     clean = normalize(raw)

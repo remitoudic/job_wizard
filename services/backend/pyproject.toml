@@ -29,7 +29,7 @@ dependencies = [
     "bcrypt==3.2.2",
     "python-jose[cryptography]>=3.3.0",
     "python-multipart>=0.0.9",
-    "job-wizard-db @ file:///root/job_wizard/services/database",
+    "job-wizard-db @ file:///Users/Remi/Documents/job_wizard/services/database",
     "curl_cffi>=0.6.0",
     "weasyprint>=62.0",
     "llama-parse>=0.5.0",
@@ -46,6 +46,7 @@ dev = [
     "pytest-cov>=4.1.0",
     "httpx>=0.26.0",
     "respx>=0.21.0",
+    "ruff>=0.4.4",
 ]
 
 [build-system]
@@ -64,3 +65,12 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
+filterwarnings = [
+    # Third-party library warnings we can't fix
+    "ignore::DeprecationWarning:passlib.*",
+    "ignore::DeprecationWarning:llama_parse.*",
+    "ignore::DeprecationWarning:llama_cloud_services.*",
+    "ignore::DeprecationWarning:pydantic.*",
+    # Suppress llama-parse deprecation from our app code importing it
+    "ignore:The.*llama-parse.*package is deprecated",
+]

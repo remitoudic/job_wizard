@@ -2,13 +2,19 @@ import pytest
 from bs4 import BeautifulSoup
 from app.services.cover_letter.job_parsers.wwr import WWRParser
 
+
 @pytest.fixture
 def parser():
     return WWRParser()
 
+
 def test_normalize_url(parser):
     url = "https://weworkremotely.com/remote-jobs/company-job-title?source=rss"
-    assert parser.normalize_url(url) == "https://weworkremotely.com/remote-jobs/company-job-title"
+    assert (
+        parser.normalize_url(url)
+        == "https://weworkremotely.com/remote-jobs/company-job-title"
+    )
+
 
 def test_extract_job_data_success(parser):
     html = """
@@ -36,12 +42,13 @@ def test_extract_job_data_success(parser):
     """
     soup = BeautifulSoup(html, "html.parser")
     data = parser.extract_job_data(soup, "https://weworkremotely.com/job")
-    
+
     assert data["title"] == "Senior Python Developer"
     assert data["company"] == "Acme Remote Corp"
     assert "We are looking for a developer." in data["description"]
-    assert "Apply" not in data["description"] # Button should be removed
+    assert "Apply" not in data["description"]  # Button should be removed
     assert data["source"] == "WeWorkRemotely"
+
 
 def test_extract_job_data_fallback(parser):
     html = """
@@ -56,7 +63,7 @@ def test_extract_job_data_fallback(parser):
     """
     soup = BeautifulSoup(html, "html.parser")
     data = parser.extract_job_data(soup, "https://weworkremotely.com/job")
-    
+
     assert data["title"] == "Fallback Title"
     assert data["company"] == "Unknown Company"
     assert data["description"] == "Description text"

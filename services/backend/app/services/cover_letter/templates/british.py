@@ -8,6 +8,7 @@ from reportlab.lib.styles import ParagraphStyle
 from .base import BaseTemplate
 from .registry import TemplateRegistry
 
+
 class BritishTemplate(BaseTemplate):
     """
     British Standard template.
@@ -46,13 +47,13 @@ class BritishTemplate(BaseTemplate):
     ):
         # 1. User Photo (Optional - Top Right)
         if image_path:
-             self._add_user_photo(story, image_path)
+            self._add_user_photo(story, image_path)
 
         # 2. Sender Header (Standard 3-line format)
         display_name = full_name if full_name else user_name
         if not full_name and (first_name or surname):
             display_name = f"{first_name} {surname}".strip()
-        
+
         # Line 1: Name
         if display_name:
             story.append(Paragraph(display_name, self.title_style))
@@ -66,26 +67,32 @@ class BritishTemplate(BaseTemplate):
                 addr_line += f", {address_country}"
         elif address:
             addr_line = address
-        
+
         if addr_line:
             story.append(Paragraph(addr_line, self.header_style))
 
         # Line 3: Email | Phone | LinkedIn
         contact_parts = []
-        if email: contact_parts.append(email)
-        if phone: contact_parts.append(phone)
-        
+        if email:
+            contact_parts.append(email)
+        if phone:
+            contact_parts.append(phone)
+
         if contact_parts:
             story.append(Paragraph(" | ".join(contact_parts), self.header_style))
-            
+
         story.append(Spacer(1, 0.2 * inch))
-        
+
         # 3. Date (Right Side)
         # Fallback to current date if custom_date is None, but skip if it's an empty string
-        current_date = datetime.now().strftime("%d %B %Y") if custom_date is None else custom_date
-        
+        current_date = (
+            datetime.now().strftime("%d %B %Y") if custom_date is None else custom_date
+        )
+
         if current_date:
-            date_style = ParagraphStyle('DateStyle', parent=self.body_style, alignment=TA_RIGHT)
+            date_style = ParagraphStyle(
+                "DateStyle", parent=self.body_style, alignment=TA_RIGHT
+            )
             story.append(Paragraph(current_date, date_style))
             story.append(Spacer(1, 0.3 * inch))
 
@@ -98,21 +105,31 @@ class BritishTemplate(BaseTemplate):
             if company:
                 story.append(Paragraph(company, recipient_style))
             if employer_address:
-                for line in employer_address.split('\n'):
+                for line in employer_address.split("\n"):
                     if line.strip():
                         story.append(Paragraph(line.strip(), recipient_style))
             story.append(Spacer(1, 0.3 * inch))
 
         # 5. Subject Line
-        subject_text = f"Re: Application for {job_title}" if custom_subject is None else custom_subject
-        
+        subject_text = (
+            f"Re: Application for {job_title}"
+            if custom_subject is None
+            else custom_subject
+        )
+
         if subject_text:
-            subject_style = ParagraphStyle('SubjectStyle', parent=self.body_style, fontName='Times-Bold', spaceBefore=10)
+            subject_style = ParagraphStyle(
+                "SubjectStyle",
+                parent=self.body_style,
+                fontName="Times-Bold",
+                spaceBefore=10,
+            )
             story.append(Paragraph(subject_text, subject_style))
             story.append(Spacer(1, 0.3 * inch))
 
         # 6. Body
         self._add_paragraphs(story, cover_letter)
+
 
 # Register the template
 TemplateRegistry.register("british", BritishTemplate)

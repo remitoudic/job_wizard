@@ -1,4 +1,5 @@
 """Integration tests for update-application-status endpoint."""
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, create_engine, SQLModel
@@ -7,12 +8,19 @@ from unittest.mock import patch
 from pathlib import Path
 
 # Mock the upload directory creation before importing main
-with patch.object(Path, 'mkdir'):
+with patch.object(Path, "mkdir"):
     from app.main import app
 
 from app.core.security import create_access_token
-from database_pkg.models import User, JobDescription, GeneratedLetter, Application, ApplicationStatus
+from database_pkg.models import (
+    User,
+    JobDescription,
+    GeneratedLetter,
+    Application,
+    ApplicationStatus,
+)
 from app.core.db import get_session
+
 
 # Test database setup fixtures
 @pytest.fixture(name="test_db")
@@ -38,7 +46,7 @@ def test_session_fixture(test_db):
 def test_user_fixture(test_session: Session):
     """Create a test user."""
     from app.core.security import get_password_hash
-    
+
     user = User(
         email="testuser@example.com",
         hashed_password=get_password_hash("testpass123"),
@@ -63,9 +71,10 @@ def auth_headers_fixture(test_user: User):
 @pytest.fixture(name="client")
 def client_fixture(test_session: Session):
     """Create test client with database session override."""
+
     def override_get_session():
         yield test_session
-    
+
     app.dependency_overrides[get_session] = override_get_session
     client = TestClient(app)
     yield client
@@ -82,18 +91,18 @@ def test_application_fixture(test_session: Session, test_user: User):
         requirements=["Python"],
         job_title="Test Job",
         company="Test Company",
-        source="Manual"
+        source="Manual",
     )
     test_session.add(job_desc)
-    
+
     # Create Generated Letter
     gen_letter = GeneratedLetter(
         user_id=test_user.id,
-        generated_letters=[{"model": "test", "letter": "text", "timestamp": "now"}]
+        generated_letters=[{"model": "test", "letter": "text", "timestamp": "now"}],
     )
     test_session.add(gen_letter)
     test_session.commit()
-    
+
     # Create Application
     application = Application(
         user_id=test_user.id,
@@ -101,7 +110,7 @@ def test_application_fixture(test_session: Session, test_user: User):
         generated_letter_id=gen_letter.id,
         header={"name": "Test"},
         cover_letter_final={"body": "Final"},
-        status=ApplicationStatus.APPLIED
+        status=ApplicationStatus.APPLIED,
     )
     test_session.add(application)
     test_session.commit()
@@ -109,33 +118,40 @@ def test_application_fixture(test_session: Session, test_user: User):
     return application
 
 
-def test_update_status_success(client: TestClient, auth_headers: dict, test_application: Application, test_session: Session):
+def test_update_status_success(
+    client: TestClient,
+    auth_headers: dict,
+    test_application: Application,
+    test_session: Session,
+):
     """Test successful status update."""
     new_status = "interview"
     response = client.patch(
         f"/api/application/{test_application.id}/status",
         json={"status": new_status},
-        headers=auth_headers
+        headers=auth_headers,
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
     assert data["status"] == new_status
-    
+
     # Verify DB
     test_session.refresh(test_application)
     assert test_application.status == ApplicationStatus.INTERVIEW
 
 
-def test_update_status_invalid_enum(client: TestClient, auth_headers: dict, test_application: Application):
+def test_update_status_invalid_enum(
+    client: TestClient, auth_headers: dict, test_application: Application
+):
     """Test updating with an invalid status string."""
     response = client.patch(
         f"/api/application/{test_application.id}/status",
         json={"status": "invalid_status_value"},
-        headers=auth_headers
+        headers=auth_headers,
     )
-    
+
     assert response.status_code == 400
     assert "Invalid status" in response.json()["detail"]
 
@@ -145,8 +161,8 @@ def test_update_status_not_found(client: TestClient, auth_headers: dict):
     response = client.patch(
         "/api/application/999999/status",
         json={"status": "interview"},
-        headers=auth_headers
+        headers=auth_headers,
     )
-    
+
     assert response.status_code == 404
     assert "Application not found" in response.json()["detail"]

@@ -15,17 +15,17 @@ class PDFService:
         if not text:
             return text
         replacements = {
-            '\u2013': '-',   # en dash
-            '\u2014': '-',   # em dash
-            '\u2011': '-',   # non-breaking hyphen
-            '\u2018': "'",   # left single quote
-            '\u2019': "'",   # right single quote
-            '\u201c': '"',   # left double quote
-            '\u201d': '"',   # right double quote
-            '\u2022': '-',   # bullet
-            '\u2026': '...', # ellipsis
-            '\u202f': ' ',   # narrow no-break space
-            '\u00a0': ' ',   # no-break space
+            "\u2013": "-",  # en dash
+            "\u2014": "-",  # em dash
+            "\u2011": "-",  # non-breaking hyphen
+            "\u2018": "'",  # left single quote
+            "\u2019": "'",  # right single quote
+            "\u201c": '"',  # left double quote
+            "\u201d": '"',  # right double quote
+            "\u2022": "-",  # bullet
+            "\u2026": "...",  # ellipsis
+            "\u202f": " ",  # narrow no-break space
+            "\u00a0": " ",  # no-break space
         }
         for k, v in replacements.items():
             text = text.replace(k, v)
@@ -62,6 +62,7 @@ class PDFService:
         """
         # Get template strategy first — margins depend on it
         from app.services.cover_letter.templates import TemplateRegistry
+
         template = TemplateRegistry.get(template_name)
 
         # Build document with template-specific margins
@@ -72,11 +73,9 @@ class PDFService:
             **margins,
         )
 
-
         # Prepare story container
         story = []
 
-        
         # Delegate generation to strategy
         template.generate(
             doc=doc,
@@ -102,7 +101,7 @@ class PDFService:
             employer_address=self._sanitize_text(employer_address),
             recipient_name=self._sanitize_text(recipient_name),
         )
-        
+
         # Build PDF
         try:
             logfire.info("Generating PDF", template=template_name, output=output_path)

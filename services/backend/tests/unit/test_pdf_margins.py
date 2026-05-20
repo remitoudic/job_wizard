@@ -7,12 +7,11 @@ import sys
 import os
 
 # Set PYTHONPATH
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from reportlab.lib.units import cm, inch
+from reportlab.lib.units import cm
 
 try:
-    from app.services.cover_letter.templates.registry import TemplateRegistry
     from app.services.cover_letter.templates.british import BritishTemplate
     from app.services.cover_letter.templates.french import FrenchTemplate
     from app.services.cover_letter.templates.german import GermanTemplate
@@ -27,22 +26,22 @@ try:
         try:
             instance = template_class()
             margins = instance.get_margins()
-            
+
             # Constraints: Top margin should be <= 2.2 cm (to allow some DIN tolerance but fix the 'too much space' issue)
             # Default BaseTemplate uses 0.75 inch (~1.9 cm)
-            top_margin = margins.get('topMargin', 0)
-            
+            top_margin = margins.get("topMargin", 0)
+
             # Print value in cm for readability
             top_cm = top_margin / cm
             print(f"  - Top Margin: {top_cm:.2f} cm")
-            
+
             if top_cm <= 2.2:
                 print(f"  ✓ {template_name} top margin OK")
                 passed += 1
             else:
                 print(f"  ✗ {template_name} top margin TOO LARGE: {top_cm:.2f} cm")
                 failed += 1
-                
+
         except Exception as e:
             print(f"  ✗ Failed to instantiate or check {template_name}: {e}")
             failed += 1
@@ -53,7 +52,7 @@ try:
     check_margins("Spanish", SpanishTemplate)
     check_margins("British", BritishTemplate)
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"RESULTS: {passed} passed, {failed} failed")
     if failed > 0:
         print("MARGIN VERIFICATION FAILED!")
@@ -64,5 +63,6 @@ try:
 except Exception as e:
     print(f"FAILED: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)

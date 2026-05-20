@@ -1,6 +1,7 @@
 """
 CV Refresh API routes — upload, parse, list templates, generate PDF.
 """
+
 import uuid
 import logging
 from pathlib import Path
@@ -24,8 +25,10 @@ UPLOAD_DIR = Path("/app/uploads")
 
 # ── Request / Response models ────────────────────────────────────────────────
 
+
 class CVGenerateRequest(BaseModel):
     """Request body for CV generation."""
+
     cv_data: CVData
     template_name: str = "modern"
 
@@ -37,6 +40,7 @@ class CVTemplateResponse(BaseModel):
 
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
+
 
 @router.post("/cv/upload")
 async def upload_cv(file: UploadFile = File(...)):
@@ -138,4 +142,3 @@ async def generate_cv(request: CVGenerateRequest):
             status_code=500,
             detail=f"Failed to generate CV: {str(e)}",
         )
-

@@ -1,9 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 import os
-from pathlib import Path
 import logfire
 
 
@@ -12,10 +10,21 @@ if os.getenv("LOGFIRE_TOKEN") == "":
     del os.environ["LOGFIRE_TOKEN"]
 
 # Configure Logfire
-from app.api.routes import job_description, auth, users, application, cover_letter, cv_refresh, user_cv, debug
+from app.api.routes import (
+    job_description,
+    auth,
+    users,
+    application,
+    cover_letter,
+    cv_refresh,
+    user_cv,
+    debug,
+)
+from app.core.config import settings
 from database_pkg import init_db
 from app.core.pubsub import pubsub_manager
 from contextlib import asynccontextmanager
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,6 +35,7 @@ async def lifespan(app: FastAPI):
     yield
     # Stop the PubSub listener on shutdown
     await pubsub_manager.stop()
+
 
 # Create FastAPI app
 app = FastAPI(
@@ -39,7 +49,9 @@ app = FastAPI(
 logfire.instrument_fastapi(app, capture_headers=True)
 
 # Configure CORS
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
+cors_origins = os.getenv(
+    "CORS_ORIGINS", "http://localhost:3000,http://localhost:5173"
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,12 +63,10 @@ app.add_middleware(
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 # Create uploads directory if it doesn't exist
-UPLOAD_DIR = Path("/app/uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
+settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # Create logs directory for prompt auditing
-LOGS_DIR = Path("/app/logs/prompt_audit")
-LOGS_DIR.mkdir(parents=True, exist_ok=True)
+settings.LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Mount static files for uploads - DISABLED for security (Unauthenticated File Access)
 # app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")

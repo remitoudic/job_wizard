@@ -22,23 +22,27 @@ Use `bunx vitest` to run tests. Bun replaces standard Node execution to run test
 
 **1. Run all tests in watch mode (Default)**
 Running vitest without any arguments continuously watches for changes and re-runs tests on the fly:
+
 ```bash
 bunx vitest
 ```
 
 **2. Run a specific test file**
 Give it the path to the test file to isolate test execution:
+
 ```bash
 bunx vitest run src/routes/page.test.ts
 ```
 
 **3. Run a test case by name**
 Useful when tracking down a specific bug:
+
 ```bash
 bunx vitest run -t "should have a correctly linked upload info file input"
 ```
 
 **4. Run tests once without watching (for CI/CD)**
+
 ```bash
 bunx vitest run
 ```
@@ -48,15 +52,16 @@ bunx vitest run
 Tests are placed alongside their components and end in `.test.ts`. They use `@testing-library/svelte` to query and interact with the UI, ensuring components match accessibility and HTML correctness standards.
 
 Example structure:
-```typescript
-import { render, screen, fireEvent } from '@testing-library/svelte';
-import { describe, it, expect } from 'vitest';
-import MyComponent from './MyComponent.svelte';
 
-describe('MyComponent', () => {
-    it('should behave correctly', async () => {
-        render(MyComponent);
-        // ... assertions and events ...
-    });
+```typescript
+import { render, screen, fireEvent } from "@testing-library/svelte";
+import { describe, it, expect } from "vitest";
+import MyComponent from "./MyComponent.svelte";
+
+describe("MyComponent", () => {
+  it("should behave correctly", async () => {
+    render(MyComponent);
+    // ... assertions and events ...
+  });
 });
 ```

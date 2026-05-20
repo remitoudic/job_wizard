@@ -16,51 +16,49 @@ import unicodedata
 # render as black boxes (tofu). This map normalises them to safe equivalents.
 _UNICODE_REPLACEMENTS = {
     # Hyphens and dashes
-    '\u2010': '-',   # HYPHEN
-    '\u2011': '-',   # NON-BREAKING HYPHEN
-    '\u2012': '-',   # FIGURE DASH
-    '\u2013': '-',   # EN DASH
-    '\u2014': '-',   # EM DASH  (use '--' if you prefer)
-    '\u2015': '-',   # HORIZONTAL BAR
-    '\u00AD': '',    # SOFT HYPHEN (invisible, remove)
-    '\uFE63': '-',   # SMALL HYPHEN-MINUS
-    '\uFF0D': '-',   # FULLWIDTH HYPHEN-MINUS
+    "\u2010": "-",  # HYPHEN
+    "\u2011": "-",  # NON-BREAKING HYPHEN
+    "\u2012": "-",  # FIGURE DASH
+    "\u2013": "-",  # EN DASH
+    "\u2014": "-",  # EM DASH  (use '--' if you prefer)
+    "\u2015": "-",  # HORIZONTAL BAR
+    "\u00ad": "",  # SOFT HYPHEN (invisible, remove)
+    "\ufe63": "-",  # SMALL HYPHEN-MINUS
+    "\uff0d": "-",  # FULLWIDTH HYPHEN-MINUS
     # Quotation marks
-    '\u2018': "'",   # LEFT SINGLE QUOTATION MARK
-    '\u2019': "'",   # RIGHT SINGLE QUOTATION MARK
-    '\u201A': "'",   # SINGLE LOW-9 QUOTATION MARK
-    '\u201B': "'",   # SINGLE HIGH-REVERSED-9 QUOTATION MARK
-    '\u201C': '"',   # LEFT DOUBLE QUOTATION MARK
-    '\u201D': '"',   # RIGHT DOUBLE QUOTATION MARK
-    '\u201E': '"',   # DOUBLE LOW-9 QUOTATION MARK
-    '\u201F': '"',   # DOUBLE HIGH-REVERSED-9 QUOTATION MARK
-    '\u00AB': '"',   # LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
-    '\u00BB': '"',   # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+    "\u2018": "'",  # LEFT SINGLE QUOTATION MARK
+    "\u2019": "'",  # RIGHT SINGLE QUOTATION MARK
+    "\u201a": "'",  # SINGLE LOW-9 QUOTATION MARK
+    "\u201b": "'",  # SINGLE HIGH-REVERSED-9 QUOTATION MARK
+    "\u201c": '"',  # LEFT DOUBLE QUOTATION MARK
+    "\u201d": '"',  # RIGHT DOUBLE QUOTATION MARK
+    "\u201e": '"',  # DOUBLE LOW-9 QUOTATION MARK
+    "\u201f": '"',  # DOUBLE HIGH-REVERSED-9 QUOTATION MARK
+    "\u00ab": '"',  # LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+    "\u00bb": '"',  # RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
     # Spaces / invisible characters
-    '\u200B': '',    # ZERO WIDTH SPACE
-    '\u200C': '',    # ZERO WIDTH NON-JOINER
-    '\u200D': '',    # ZERO WIDTH JOINER
-    '\uFEFF': '',    # BYTE ORDER MARK / ZERO WIDTH NO-BREAK SPACE
-    '\u00A0': ' ',   # NON-BREAKING SPACE → regular space
-    '\u2002': ' ',   # EN SPACE
-    '\u2003': ' ',   # EM SPACE
-    '\u2009': ' ',   # THIN SPACE
-    '\u202F': ' ',   # NARROW NO-BREAK SPACE
+    "\u200b": "",  # ZERO WIDTH SPACE
+    "\u200c": "",  # ZERO WIDTH NON-JOINER
+    "\u200d": "",  # ZERO WIDTH JOINER
+    "\ufeff": "",  # BYTE ORDER MARK / ZERO WIDTH NO-BREAK SPACE
+    "\u00a0": " ",  # NON-BREAKING SPACE → regular space
+    "\u2002": " ",  # EN SPACE
+    "\u2003": " ",  # EM SPACE
+    "\u2009": " ",  # THIN SPACE
+    "\u202f": " ",  # NARROW NO-BREAK SPACE
     # Dots / ellipsis
-    '\u2026': '...',  # HORIZONTAL ELLIPSIS
-    '\u2022': '-',    # BULLET
-    '\u2023': '>',    # TRIANGULAR BULLET
-    '\u2043': '-',    # HYPHEN BULLET
+    "\u2026": "...",  # HORIZONTAL ELLIPSIS
+    "\u2022": "-",  # BULLET
+    "\u2023": ">",  # TRIANGULAR BULLET
+    "\u2043": "-",  # HYPHEN BULLET
     # Misc
-    '\u2032': "'",    # PRIME
-    '\u2033': '"',    # DOUBLE PRIME
-    '\u2044': '/',    # FRACTION SLASH
+    "\u2032": "'",  # PRIME
+    "\u2033": '"',  # DOUBLE PRIME
+    "\u2044": "/",  # FRACTION SLASH
 }
 
 # Pre-compiled regex for all keys
-_UNICODE_PATTERN = re.compile(
-    '|'.join(re.escape(k) for k in _UNICODE_REPLACEMENTS)
-)
+_UNICODE_PATTERN = re.compile("|".join(re.escape(k) for k in _UNICODE_REPLACEMENTS))
 
 
 class BaseTemplate(ABC):
@@ -84,9 +82,7 @@ class BaseTemplate(ABC):
             return text
 
         # Fast-path: apply known replacements via single regex pass
-        result = _UNICODE_PATTERN.sub(
-            lambda m: _UNICODE_REPLACEMENTS[m.group()], text
-        )
+        result = _UNICODE_PATTERN.sub(lambda m: _UNICODE_REPLACEMENTS[m.group()], text)
 
         # Fallback: handle any remaining non-Latin-1 characters.
         # Process character-by-character: keep Latin-1 chars as-is,
@@ -95,19 +91,19 @@ class BaseTemplate(ABC):
         cleaned = []
         for ch in result:
             try:
-                ch.encode('latin-1')
+                ch.encode("latin-1")
                 cleaned.append(ch)
             except UnicodeEncodeError:
                 # Try NFKD decomposition (handles ligatures like ﬁ → fi)
-                decomposed = unicodedata.normalize('NFKD', ch)
+                decomposed = unicodedata.normalize("NFKD", ch)
                 for sub_ch in decomposed:
                     try:
-                        sub_ch.encode('latin-1')
+                        sub_ch.encode("latin-1")
                         cleaned.append(sub_ch)
                     except UnicodeEncodeError:
                         pass  # Drop truly unsupported characters
 
-        return ''.join(cleaned)
+        return "".join(cleaned)
 
     def get_margins(self) -> Dict[str, float]:
         """Return page margins. Override in subclasses for non-standard formats."""
@@ -123,40 +119,40 @@ class BaseTemplate(ABC):
         """Define custom paragraph styles."""
         # Clean defaults to avoid pollution
         self.title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=self.styles['Normal'],
-            fontName='Times-Bold',
+            "CustomTitle",
+            parent=self.styles["Normal"],
+            fontName="Times-Bold",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             spaceAfter=2,
             alignment=TA_LEFT,
         )
         self.header_style = ParagraphStyle(
-            'CustomHeader',
-            parent=self.styles['Normal'],
-            fontName='Times-Roman',
+            "CustomHeader",
+            parent=self.styles["Normal"],
+            fontName="Times-Roman",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=14,
             spaceAfter=2,
             alignment=TA_LEFT,
         )
         self.body_style = ParagraphStyle(
-            'CustomBody',
-            parent=self.styles['Normal'],
-            fontName='Times-Roman',
+            "CustomBody",
+            parent=self.styles["Normal"],
+            fontName="Times-Roman",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=16,
             alignment=TA_LEFT,
             spaceAfter=12,
         )
         self.subtitle_style = ParagraphStyle(
-            'CustomSubtitle',
-            parent=self.styles['Normal'],
-            fontName='Times-Bold',
+            "CustomSubtitle",
+            parent=self.styles["Normal"],
+            fontName="Times-Bold",
             fontSize=11,
-            textColor=HexColor('#1a1a1a'),
+            textColor=HexColor("#1a1a1a"),
             leading=14,
             spaceAfter=4,
             alignment=TA_LEFT,
@@ -170,16 +166,16 @@ class BaseTemplate(ABC):
                 max_size = 1.5 * inch
                 img_width, img_height = img.size
                 aspect = img_height / img_width
-                
+
                 if aspect > 1:
                     height = max_size
                     width = max_size / aspect
                 else:
                     width = max_size
                     height = max_size * aspect
-                
+
                 photo = Image(image_path, width=width, height=height)
-                photo.hAlign = 'CENTER' # Default to center, templates can override
+                photo.hAlign = "CENTER"  # Default to center, templates can override
                 story.append(photo)
                 story.append(Spacer(1, 0.3 * inch))
             except Exception as e:
@@ -190,11 +186,11 @@ class BaseTemplate(ABC):
         # Sanitize text to remove unsupported Unicode characters
         text = self.sanitize_text(text)
         # Split by double newlines for actual paragraph spacing
-        paragraphs = text.split('\n\n')
+        paragraphs = text.split("\n\n")
         for para in paragraphs:
             if para.strip():
                 # Replace single newlines with br tags to preserve line breaks within paragraphs
-                para_text = para.strip().replace('\n', '<br/>')
+                para_text = para.strip().replace("\n", "<br/>")
                 story.append(Paragraph(para_text, self.body_style))
                 story.append(Spacer(1, 0.15 * inch))
 

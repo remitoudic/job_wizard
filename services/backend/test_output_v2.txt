@@ -1,0 +1,94 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.0, pytest-8.4.1, pluggy-1.6.0 -- /Users/Remi/.pyenv/versions/3.12.0/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /Users/Remi/Documents/job_wizard/services/backend
+configfile: pyproject.toml
+plugins: anyio-4.9.0, cov-6.2.1, logfire-4.19.0, asyncio-1.0.0, respx-0.23.1
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/integration/test_three_way_race.py::test_three_way_race
+✅ Three agents initialized:
+   1. Local: gemma4:e4b
+   2. Remote 1 (groq): llama-3.3-70b-versatile
+   3. Remote 2 (groq): openai/gpt-oss-120b
+04:29:13.674 Generate Cover Letter start
+04:29:13.674 Starting generation race
+04:29:13.677 PubSub Notify: generating
+04:29:13.717 Agent Generation: Ollama (gemma4:e4b)
+04:29:13.722 Agent Generation: Groq (llama-3.3-70b-versatile)
+04:29:13.722 Agent Generation: Groq (openai/gpt-oss-120b)
+04:29:13.723 Agent Generation: Nvidia (meta/llama-4-maverick-17b-128e-instruct)
+04:29:13.723 Agent Generation: Nvidia (qwen/qwen2.5-coder-32b-instruct)
+04:29:13.836 Model failed
+04:29:13.837 Model-specific error (no provider failover)
+04:29:14.174 Model failed
+04:29:15.047 Race won
+04:29:15.048 PubSub Notify: partial
+
+🏁 Race completed!
+   Winner: Groq (openai/gpt-oss-120b)
+   Cover letter length: 1809 characters
+
+⏳ Waiting for alternatives to complete...
+04:29:15.310 Alternative completed
+04:29:15.310 PubSub Notify: alternative_ready
+04:29:19.551 Alternative completed
+04:29:19.551 PubSub Notify: alternative_ready
+04:29:19.578 PubSub Notify: completed
+   Alternatives completed: 4
+   - Ollama (gemma4:e4b)
+   - Nvidia (qwen/qwen2.5-coder-32b-instruct)
+   - Groq (llama-3.3-70b-versatile)
+   - Nvidia (meta/llama-4-maverick-17b-128e-instruct)
+
+✅ Three-way race test passed!
+PASSED
+
+=============================== warnings summary ===============================
+../../../../.pyenv/versions/3.12.0/lib/python3.12/site-packages/passlib/utils/__init__.py:854
+  /Users/Remi/.pyenv/versions/3.12.0/lib/python3.12/site-packages/passlib/utils/__init__.py:854: DeprecationWarning: 'crypt' is deprecated and slated for removal in Python 3.13
+    from crypt import crypt as _crypt
+
+../../../../.pyenv/versions/3.12.0/lib/python3.12/site-packages/llama_parse/__init__.py:2
+  /Users/Remi/.pyenv/versions/3.12.0/lib/python3.12/site-packages/llama_parse/__init__.py:2: DeprecationWarning: This package (llama-cloud-services) is deprecated and will be maintained until May 1, 2026. Please migrate to the new package: pip install llama-cloud>=1.0 (https://github.com/run-llama/llama-cloud-py). The new package provides the same functionality with improved performance and support.
+    from llama_cloud_services.parse import (  # type: ignore[attr-defined]
+
+app/services/cv_refresh/cv_parsers/cv_parser_service.py:8
+  /Users/Remi/Documents/job_wizard/services/backend/app/services/cv_refresh/cv_parsers/cv_parser_service.py:8: DeprecationWarning: The 'llama-parse' package is deprecated and will no longer receive updates. Please migrate to the new unified SDK. See https://developers.llamaindex.ai/python/cloud/llamaparse/getting_started/ and https://github.com/run-llama/llama-cloud-py/blob/main/README.md for migration instructions.
+    from llama_parse import LlamaParse
+
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+  /Users/Remi/Documents/job_wizard/services/backend/app/core/pubsub.py:139: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    job_status.updated_at = datetime.utcnow()
+
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+  /Users/Remi/Documents/job_wizard/services/backend/app/services/cover_letter/llm_service.py:309: DeprecationWarning: `request_tokens` is deprecated, use `input_tokens` instead
+    agent_span.set_attribute("request_tokens", usage.request_tokens)
+
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+  /Users/Remi/Documents/job_wizard/services/backend/app/services/cover_letter/llm_service.py:310: DeprecationWarning: `response_tokens` is deprecated, use `output_tokens` instead
+    agent_span.set_attribute("response_tokens", usage.response_tokens)
+
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+  /Users/Remi/Documents/job_wizard/services/backend/app/services/cover_letter/llm_service.py:330: DeprecationWarning: `request_tokens` is deprecated, use `input_tokens` instead
+    "request_tokens": usage.request_tokens,
+
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+tests/integration/test_three_way_race.py::test_three_way_race
+  /Users/Remi/Documents/job_wizard/services/backend/app/services/cover_letter/llm_service.py:331: DeprecationWarning: `response_tokens` is deprecated, use `output_tokens` instead
+    "response_tokens": usage.response_tokens,
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 1 passed, 20 warnings in 11.49s ========================

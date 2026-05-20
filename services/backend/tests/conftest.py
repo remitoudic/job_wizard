@@ -8,6 +8,7 @@ It handles critical test setup and teardown, including:
 - Automating the startup/shutdown of the PubSub messaging system.
 - Providing an `AsyncClient` for testing FastAPI endpoints asynchronously.
 """
+
 import pytest
 import asyncio
 from typing import AsyncGenerator
@@ -17,10 +18,12 @@ from app.core.pubsub import pubsub_manager
 
 from database_pkg import init_db
 
+
 @pytest.fixture(scope="session", autouse=True)
 def db_init():
     """Ensure the database tables are created before any tests run."""
     init_db()
+
 
 @pytest.fixture(scope="session", autouse=True)
 def event_loop():
@@ -29,6 +32,7 @@ def event_loop():
     yield loop
     loop.close()
 
+
 @pytest.fixture(autouse=True)
 async def manage_pubsub():
     """Ensure the PubSubManager is started and stopped for each test."""
@@ -36,11 +40,11 @@ async def manage_pubsub():
     yield
     await pubsub_manager.stop()
 
+
 @pytest.fixture
 async def async_client() -> AsyncGenerator[AsyncClient, None]:
     """Provide an async test client for FastAPI."""
     async with AsyncClient(
-        transport=ASGITransport(app=app), 
-        base_url="http://testserver"
+        transport=ASGITransport(app=app), base_url="http://testserver"
     ) as client:
         yield client

@@ -2,10 +2,11 @@
 Authentication and Security Tests
 
 This module provides both unit and integration tests for the authentication system.
-It verifies password hashing, user record creation, and the OAuth2 token-based 
-login flow. It uses an in-memory SQLite database to ensure tests are isolated, 
+It verifies password hashing, user record creation, and the OAuth2 token-based
+login flow. It uses an in-memory SQLite database to ensure tests are isolated,
 fast, and do not affect the production database.
 """
+
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
@@ -14,6 +15,7 @@ from app.main import app
 from app.api.deps import get_session
 from app.core.security import get_password_hash
 from database_pkg.models.user import User
+
 
 # Setup in-memory database for testing
 @pytest.fixture(name="session")
@@ -25,6 +27,7 @@ def session_fixture():
     with Session(engine) as session:
         yield session
 
+
 @pytest.fixture(name="client")
 def client_fixture(session: Session):
     def get_session_override():
@@ -35,62 +38,64 @@ def client_fixture(session: Session):
     yield client
     app.dependency_overrides.clear()
 
+
 def test_user_authentication_unit(session: Session):
     from app.services.platform.user import user_service
-    
+
     email = "test@example.com"
     password = "password123"
-    
+
     user = User(
         email=email,
         hashed_password=get_password_hash(password),
         first_name="Test",
-        surname="User"
+        surname="User",
     )
     session.add(user)
     session.commit()
-    
+
     # Test valid credentials
     authenticated_user = user_service.authenticate(session, email, password)
     assert authenticated_user is not None
     assert authenticated_user.email == email
-    
+
     # Test invalid password
     failed_auth = user_service.authenticate(session, email, "wrongpassword")
     assert failed_auth is None
-    
+
     # Test non-existent user
     unknown_user = user_service.authenticate(session, "unknown@example.com", password)
     assert unknown_user is None
 
+
 def test_login_integration(client: TestClient, session: Session):
     email = "integration@example.com"
     password = "integrationpass"
-    
+
     user = User(
         email=email,
         hashed_password=get_password_hash(password),
         first_name="Integration",
-        surname="User"
+        surname="User",
     )
     session.add(user)
     session.commit()
-    
+
     # Test successful login
     response = client.post(
         "/api/auth/login",
         data={"username": email, "password": password},
-        headers={"content-type": "application/x-www-form-urlencoded"}
+        headers={"content-type": "application/x-www-form-urlencoded"},
     )
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"
-    
+
     # Test invalid login
     response = client.post(
         "/api/auth/login",
         data={"username": email, "password": "wrongpassword"},
-        headers={"content-type": "application/x-www-form-urlencoded"}
+        headers={"content-type": "application/x-www-form-urlencoded"},
     )
     assert response.status_code == 400

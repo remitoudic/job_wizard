@@ -20,7 +20,7 @@ detect_public_ip() {
   done
   # fallback: local interface
   ip=$(hostname -I 2>/dev/null | awk '{print $1}') || true
-  echo "${ip:-}" 
+  echo "${ip:-}"
 }
 
 PUBLIC_IP=$(detect_public_ip)
@@ -58,4 +58,4 @@ else
   docker compose up --build
 fi
 
-# echo "Containers started. Access frontend on http://localhost:5173 or the configured host." 
+# echo "Containers started. Access frontend on http://localhost:5173 or the configured host."

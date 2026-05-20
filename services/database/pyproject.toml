@@ -16,7 +16,14 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["database_pkg"]
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    # Suppress pydantic internal utcnow deprecation (used by sqlmodel)
+    "ignore::DeprecationWarning:pydantic.*",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "ruff>=0.4.4",
 ]

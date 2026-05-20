@@ -1,6 +1,7 @@
 """
 CV Generator Service — Renders CVData into a PDF using Jinja2 templates + WeasyPrint.
 """
+
 import logging
 import re
 from pathlib import Path
@@ -141,8 +142,7 @@ class CVGeneratorService:
         if not (TEMPLATES_DIR / template_file).exists():
             available = [t.name for t in self.list_templates()]
             raise ValueError(
-                f"Template '{template_name}' not found. "
-                f"Available: {available}"
+                f"Template '{template_name}' not found. Available: {available}"
             )
 
         template = self.env.get_template(template_file)
@@ -255,8 +255,8 @@ class CVGeneratorService:
         .page-break-marker::before {{
             content: '';
             position: absolute;
-            left: -{ page_padding_cm }cm;
-            right: -{ page_padding_cm }cm;
+            left: -{page_padding_cm}cm;
+            right: -{page_padding_cm}cm;
             top: 50%;
             height: 0;
             border-top: 1.5px dashed #94a3b8; /* slate-400 */
@@ -414,8 +414,7 @@ class CVGeneratorService:
         if not (TEMPLATES_DIR / template_file).exists():
             available = [t.name for t in self.list_templates()]
             raise ValueError(
-                f"Template '{template_name}' not found. "
-                f"Available: {available}"
+                f"Template '{template_name}' not found. Available: {available}"
             )
 
         template = self.env.get_template(template_file)
@@ -434,6 +433,7 @@ class CVGeneratorService:
         stylesheets = []
         if css_file.exists():
             from weasyprint import CSS
+
             stylesheets.append(CSS(filename=str(css_file)))
 
         # Generate PDF

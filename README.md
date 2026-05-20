@@ -1,6 +1,6 @@
 # Vite a Job! 🚀
 
-**The ultimate AI-powered career assistant.**  
+**The ultimate AI-powered career assistant.**
 Transform your job application process from hours of manual writing to seconds of AI-orchestrated precision. Job Wizard generates high-fidelity, personalized cover letters and revitalizes old CVs into professional, modern PDFs.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -107,18 +107,18 @@ sequenceDiagram
     BE->>T: Start Workflow (job_id)
     BE-->>FE: Return { job_id }
     FE->>BE: Subscribe SSE /events/{job_id}
-    
+
     T->>LLM: Extraction Race (Local vs Remote)
     LLM-->>T: Extraction Results
     T->>PS: Broadcast "Extracted"
     PS-->>FE: Update UI (Extraction Done)
-    
+
     T->>LLM: Generation Race (Ollama vs Groq vs Nvidia)
     Note over LLM: Provider Failover & Throttling
     LLM-->>T: Winner Found
     T->>PS: Broadcast "Completed" + Content
     PS-->>FE: Update UI (Show Cover Letter)
-    
+
     User->>FE: Download PDF
     FE->>BE: POST /api/pdf
     BE-->>User: Localized PDF Stream
@@ -162,7 +162,7 @@ cd job_wizard
 docker exec jobwizard-ollama ollama pull llama3.2:1b
 ```
 
-**Access the application at**: [http://localhost:5173](http://localhost:5173)  
+**Access the application at**: [http://localhost:5173](http://localhost:5173)
 **Monitor Workflows at**: [http://localhost:8080](http://localhost:8080) (Temporal UI)
 
 ---

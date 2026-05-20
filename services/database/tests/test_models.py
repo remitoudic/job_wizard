@@ -1,15 +1,17 @@
 """Unit tests for database models."""
+
+from datetime import datetime, timezone
+
 import pytest
-from datetime import datetime
-from sqlmodel import Session, SQLModel, create_engine
 from sqlalchemy.pool import StaticPool
+from sqlmodel import Session, SQLModel, create_engine
 
 from database_pkg.models import (
-    User,
-    JobDescription,
-    GeneratedLetter,
     Application,
     ApplicationStatus,
+    GeneratedLetter,
+    JobDescription,
+    User,
 )
 
 
@@ -98,12 +100,12 @@ class TestGeneratedLetter:
             {
                 "model": "gpt-4",
                 "letter": "Dear Hiring Manager...",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
             {
                 "model": "claude-3",
                 "letter": "To whom it may concern...",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         ]
 
@@ -137,9 +139,7 @@ class TestGeneratedLetter:
 class TestApplication:
     """Tests for Application model."""
 
-    def test_create_application(
-        self, session: Session, test_user: User
-    ):
+    def test_create_application(self, session: Session, test_user: User):
         """Test creating a complete application."""
         # Create job description
         job_desc = JobDescription(
@@ -161,7 +161,7 @@ class TestApplication:
                 {
                     "model": "gpt-4",
                     "letter": "Cover letter text",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             ],
         )
@@ -178,7 +178,7 @@ class TestApplication:
         }
         cover_letter_final = {
             "model": "gpt-4",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "body": "Final cover letter text",
         }
 
@@ -290,12 +290,12 @@ class TestModelRelationships:
                 {
                     "model": "gpt-4",
                     "letter": "First draft...",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 },
                 {
                     "model": "claude-3",
                     "letter": "Second draft...",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 },
             ],
         )
@@ -314,7 +314,7 @@ class TestModelRelationships:
             },
             cover_letter_final={
                 "model": "gpt-4",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "body": "Final selected letter",
             },
             status=ApplicationStatus.APPLIED,
@@ -327,7 +327,7 @@ class TestModelRelationships:
         assert application.user_id == test_user.id
         assert application.job_description_id == job_desc.id
         assert application.generated_letter_id == gen_letter.id
-        
+
         # Verify we can query back
         retrieved_app = session.get(Application, application.id)
         assert retrieved_app is not None
