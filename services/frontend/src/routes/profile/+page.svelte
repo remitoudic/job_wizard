@@ -906,12 +906,10 @@
 					/>
 				</div>
 				<div>
-					<label for="preferred_language" class="block text-sm font-medium text-gray-700 mb-1">{$_('profile.preferred_language', { default: 'Preferred Language' })}</label>
-					<select
-						id="preferred_language"
-						bind:value={user.preferred_language}
-						class="input w-full"
+					<label for="preferred_language" class="block text-sm font-medium text-gray-700 mb-1"
+						>{$_('profile.preferred_language', { default: 'Preferred Language' })}</label
 					>
+					<select id="preferred_language" bind:value={user.preferred_language} class="input w-full">
 						<option value="en">English</option>
 						<option value="fr">Français</option>
 						<option value="de">Deutsch</option>

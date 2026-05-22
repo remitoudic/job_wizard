@@ -1,18 +1,18 @@
 {
-  "nav": {
-    "dashboard": "Dashboard",
-    "profile": "Profile"
-  },
-  "lang": {
-    "title": "Language",
-    "en": "English",
-    "fr": "French",
-    "de": "German"
-  },
-  "profile": {
-    "preferred_language": "Preferred Language",
-    "save": "Save changes",
-    "success": "Profile updated successfully",
-    "error": "Failed to update profile"
-  }
+	"nav": {
+		"dashboard": "Dashboard",
+		"profile": "Profile"
+	},
+	"lang": {
+		"title": "Language",
+		"en": "English",
+		"fr": "French",
+		"de": "German"
+	},
+	"profile": {
+		"preferred_language": "Preferred Language",
+		"save": "Save changes",
+		"success": "Profile updated successfully",
+		"error": "Failed to update profile"
+	}
 }

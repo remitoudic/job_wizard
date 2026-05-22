@@ -52,9 +52,24 @@
 
 	<!-- Language Switcher -->
 	<div class="flex flex-col gap-2 items-center">
-		<button class="text-[10px] font-bold px-1 py-0.5 rounded transition-colors {$locale === 'en' ? 'bg-[#0369A1] text-white' : 'text-[#64748B] hover:text-[#0369A1]'}" on:click={() => locale.set('en')}>EN</button>
-		<button class="text-[10px] font-bold px-1 py-0.5 rounded transition-colors {$locale === 'fr' ? 'bg-[#0369A1] text-white' : 'text-[#64748B] hover:text-[#0369A1]'}" on:click={() => locale.set('fr')}>FR</button>
-		<button class="text-[10px] font-bold px-1 py-0.5 rounded transition-colors {$locale === 'de' ? 'bg-[#0369A1] text-white' : 'text-[#64748B] hover:text-[#0369A1]'}" on:click={() => locale.set('de')}>DE</button>
+		<button
+			class="text-[10px] font-bold px-1 py-0.5 rounded transition-colors {$locale === 'en'
+				? 'bg-[#0369A1] text-white'
+				: 'text-[#64748B] hover:text-[#0369A1]'}"
+			on:click={() => locale.set('en')}>EN</button
+		>
+		<button
+			class="text-[10px] font-bold px-1 py-0.5 rounded transition-colors {$locale === 'fr'
+				? 'bg-[#0369A1] text-white'
+				: 'text-[#64748B] hover:text-[#0369A1]'}"
+			on:click={() => locale.set('fr')}>FR</button
+		>
+		<button
+			class="text-[10px] font-bold px-1 py-0.5 rounded transition-colors {$locale === 'de'
+				? 'bg-[#0369A1] text-white'
+				: 'text-[#64748B] hover:text-[#0369A1]'}"
+			on:click={() => locale.set('de')}>DE</button
+		>
 	</div>
 
 	<!-- Divider -->

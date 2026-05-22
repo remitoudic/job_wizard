@@ -80,9 +80,24 @@
 						<!-- Language Switcher for guests -->
 						{#if !$auth.isAuthenticated}
 							<div class="flex items-center gap-2 mr-4">
-								<button class="text-xs font-semibold px-2 py-1 rounded {$locale === 'en' ? 'bg-[#0F172A] text-white' : 'text-[#64748B] hover:text-[#0F172A]'}" on:click={() => locale.set('en')}>EN</button>
-								<button class="text-xs font-semibold px-2 py-1 rounded {$locale === 'fr' ? 'bg-[#0F172A] text-white' : 'text-[#64748B] hover:text-[#0F172A]'}" on:click={() => locale.set('fr')}>FR</button>
-								<button class="text-xs font-semibold px-2 py-1 rounded {$locale === 'de' ? 'bg-[#0F172A] text-white' : 'text-[#64748B] hover:text-[#0F172A]'}" on:click={() => locale.set('de')}>DE</button>
+								<button
+									class="text-xs font-semibold px-2 py-1 rounded {$locale === 'en'
+										? 'bg-[#0F172A] text-white'
+										: 'text-[#64748B] hover:text-[#0F172A]'}"
+									on:click={() => locale.set('en')}>EN</button
+								>
+								<button
+									class="text-xs font-semibold px-2 py-1 rounded {$locale === 'fr'
+										? 'bg-[#0F172A] text-white'
+										: 'text-[#64748B] hover:text-[#0F172A]'}"
+									on:click={() => locale.set('fr')}>FR</button
+								>
+								<button
+									class="text-xs font-semibold px-2 py-1 rounded {$locale === 'de'
+										? 'bg-[#0F172A] text-white'
+										: 'text-[#64748B] hover:text-[#0F172A]'}"
+									on:click={() => locale.set('de')}>DE</button
+								>
 							</div>
 
 							<div class="flex items-center gap-4">
