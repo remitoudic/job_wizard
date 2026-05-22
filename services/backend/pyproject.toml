@@ -38,6 +38,7 @@ dependencies = [
     "edgeparse>=0.2.3",
     "temporalio>=1.5.0",
     "crewai>=0.22.2",
+    "setuptools<70.0.0",
 ]
 
 [tool.uv.sources]

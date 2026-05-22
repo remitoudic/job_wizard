@@ -184,14 +184,14 @@ class CVParserService:
 
         try:
             from pydantic_ai import Agent
-            from pydantic_ai.models.openai import OpenAIChatModel
+            from pydantic_ai.models.openai import OpenAIModel
             from app.services.platform.agents import create_custom_openai_provider
 
             provider = create_custom_openai_provider(
                 base_url="https://api.groq.com/openai/v1",
                 api_key=settings.GROQ_API_KEY,
             )
-            model = OpenAIChatModel(
+            model = OpenAIModel(
                 model_name=settings.GROQ_MODEL_1,
                 provider=provider,
             )

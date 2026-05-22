@@ -89,8 +89,6 @@ def get_llm_for_agent(temperature: float) -> ChatOpenAI:
         api_key=config["api_key"],
         base_url=config["base_url"],
         temperature=temperature,
-        http_client=client,
-        http_async_client=async_client,
     )
 
 # ==============================================================================

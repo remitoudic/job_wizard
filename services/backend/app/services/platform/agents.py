@@ -2,7 +2,7 @@ import os
 import logfire
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
-from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
 import httpx
 import json
@@ -122,7 +122,7 @@ def create_extraction_agent(
 
         # provider = OpenAIProvider(base_url=base_url, api_key="ollama") # Dummy key required
         provider = create_custom_openai_provider(base_url=base_url, api_key="ollama")
-        model = OpenAIChatModel(model_name=model_name, provider=provider)
+        model = OpenAIModel(model_name=model_name, provider=provider)
     else:
         # Remote OpenRouter
         # provider = OpenAIProvider(
@@ -133,7 +133,7 @@ def create_extraction_agent(
             base_url="https://openrouter.ai/api/v1",
             api_key=os.getenv("OPENROUTER_API_KEY"),
         )
-        model = OpenAIChatModel(model_name=model_name, provider=provider)
+        model = OpenAIModel(model_name=model_name, provider=provider)
 
     agent = Agent(
         model,
@@ -162,7 +162,7 @@ def create_writing_agent(
 
         # provider = OpenAIProvider(base_url=host, api_key="ollama")
         provider = create_custom_openai_provider(base_url=host, api_key="ollama")
-        model = OpenAIChatModel(model_name=model_name, provider=provider)
+        model = OpenAIModel(model_name=model_name, provider=provider)
     elif provider_config:
         # Dynamic Remote Provider (Groq or OpenRouter)
         # provider = OpenAIProvider(
@@ -172,7 +172,7 @@ def create_writing_agent(
         provider = create_custom_openai_provider(
             base_url=provider_config["base_url"], api_key=provider_config["api_key"]
         )
-        model = OpenAIChatModel(model_name=model_name, provider=provider)
+        model = OpenAIModel(model_name=model_name, provider=provider)
     else:
         # Fallback to default OpenRouter (legacy behavior)
         # provider = OpenAIProvider(
@@ -183,7 +183,7 @@ def create_writing_agent(
             base_url="https://openrouter.ai/api/v1",
             api_key=os.getenv("OPENROUTER_API_KEY"),
         )
-        model = OpenAIChatModel(model_name=model_name, provider=provider)
+        model = OpenAIModel(model_name=model_name, provider=provider)
 
     # Define default system prompt (Complex/Few-Shot)
     system_prompt = (
