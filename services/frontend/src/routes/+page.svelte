@@ -475,12 +475,23 @@
 			eventSource.onmessage = (event) => {
 				const data = JSON.parse(event.data);
 
+				let msg = data.message;
+				if (!msg) {
+					if (data.status === 'alternative_ready') {
+						msg = `Alternative draft completed by ${data.source}`;
+					} else if (data.status === 'error') {
+						msg = `An error occurred.`;
+					} else {
+						msg = `Processing: ${data.status}`;
+					}
+				}
+
 				// Add to progression list
 				generationProgress = [
 					...generationProgress,
 					{
 						status: data.status,
-						message: data.message,
+						message: msg,
 						timestamp: Date.now()
 					}
 				];
