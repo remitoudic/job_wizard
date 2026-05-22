@@ -1,0 +1,18 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "profile": "Profil"
+  },
+  "lang": {
+    "title": "Sprache",
+    "en": "Englisch",
+    "fr": "Französisch",
+    "de": "Deutsch"
+  },
+  "profile": {
+    "preferred_language": "Bevorzugte Sprache",
+    "save": "Änderungen speichern",
+    "success": "Profil erfolgreich aktualisiert",
+    "error": "Fehler beim Aktualisieren des Profils"
+  }
+}

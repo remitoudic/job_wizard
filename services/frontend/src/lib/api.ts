@@ -119,6 +119,7 @@ export interface User {
 	portfolio_url?: string;
 	website_url?: string;
 	profile_picture_url?: string;
+	preferred_language?: string;
 
 	street?: string;
 	city?: string;

@@ -41,7 +41,8 @@
 	},
 	"dependencies": {
 		"@fontsource/inter": "^5.0.16",
-		"cropperjs": "1.6.1"
+		"cropperjs": "1.6.1",
+		"svelte-i18n": "^4.0.1"
 	},
 	"type": "module"
 }

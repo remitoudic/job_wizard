@@ -6,6 +6,8 @@
 	import { page } from '$app/stores';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import SEO from '$lib/components/SEO.svelte';
+	import '$lib/i18n';
+	import { isLoading, locale, _ } from 'svelte-i18n';
 
 	export let data: any = {};
 	export let params: Record<string, string> = {};
@@ -14,6 +16,12 @@
 		auth.initialize();
 	});
 
+	$: {
+		if ($auth.user?.preferred_language) {
+			locale.set($auth.user.preferred_language);
+		}
+	}
+
 	function handleLogout() {
 		auth.logout();
 		goto('/login');
@@ -21,91 +29,100 @@
 </script>
 
 <!-- Sidebar for authenticated users -->
-{#if $auth.isAuthenticated}
-	<Sidebar />
-{/if}
+{#if !$isLoading}
+	{#if $auth.isAuthenticated}
+		<Sidebar />
+	{/if}
 
-<SEO />
+	<SEO />
 
-<div
-	class="min-h-screen bg-[#F8FAFC] flex flex-col font-body {$auth.isAuthenticated
-		? 'md:ml-16'
-		: ''}"
->
-	<!-- Navbar -->
-	<nav class="bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] sticky top-0 z-50">
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-			<div class="flex justify-between h-16">
-				<!-- Logo / Brand -->
-				<div class="flex items-center">
-					<a
-						href="https://job-vite.com/"
-						data-sveltekit-reload
-						class="flex-shrink-0 flex items-center gap-3 group"
-					>
-						<div class="p-1.5 bg-[#0F172A] rounded-md transition-transform group-hover:scale-110">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="h-6 w-6 text-white"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M13 10V3L4 14h7v7l9-11h-7z"
-								/>
-							</svg>
-						</div>
-						<span
-							class="font-bold text-xl text-[#0F172A] tracking-tight transition-colors group-hover:text-[#0369A1]"
-							>Vite a Job</span
+	<div
+		class="min-h-screen bg-[#F8FAFC] flex flex-col font-body {$auth.isAuthenticated
+			? 'md:ml-16'
+			: ''}"
+	>
+		<!-- Navbar -->
+		<nav class="bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] sticky top-0 z-50">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex justify-between h-16">
+					<!-- Logo / Brand -->
+					<div class="flex items-center">
+						<a
+							href="https://job-vite.com/"
+							data-sveltekit-reload
+							class="flex-shrink-0 flex items-center gap-3 group"
 						>
-					</a>
-				</div>
-
-				<!-- Right Side Menu - Empty for authenticated users, normal for guests -->
-				<div class="flex items-center gap-6">
-					{#if !$auth.isAuthenticated}
-						<div class="flex items-center gap-4">
-							<a
-								href="/login"
-								class="text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
+							<div class="p-1.5 bg-[#0F172A] rounded-md transition-transform group-hover:scale-110">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-6 w-6 text-white"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M13 10V3L4 14h7v7l9-11h-7z"
+									/>
+								</svg>
+							</div>
+							<span
+								class="font-bold text-xl text-[#0F172A] tracking-tight transition-colors group-hover:text-[#0369A1]"
+								>Vite a Job</span
 							>
-								Login
-							</a>
-							<a href="/register" class="btn btn-primary text-sm py-2 px-5"> Get Started </a>
-						</div>
-					{/if}
+						</a>
+					</div>
+
+					<!-- Right Side Menu - Empty for authenticated users, normal for guests -->
+					<div class="flex items-center gap-6">
+						<!-- Language Switcher for guests -->
+						{#if !$auth.isAuthenticated}
+							<div class="flex items-center gap-2 mr-4">
+								<button class="text-xs font-semibold px-2 py-1 rounded {$locale === 'en' ? 'bg-[#0F172A] text-white' : 'text-[#64748B] hover:text-[#0F172A]'}" on:click={() => locale.set('en')}>EN</button>
+								<button class="text-xs font-semibold px-2 py-1 rounded {$locale === 'fr' ? 'bg-[#0F172A] text-white' : 'text-[#64748B] hover:text-[#0F172A]'}" on:click={() => locale.set('fr')}>FR</button>
+								<button class="text-xs font-semibold px-2 py-1 rounded {$locale === 'de' ? 'bg-[#0F172A] text-white' : 'text-[#64748B] hover:text-[#0F172A]'}" on:click={() => locale.set('de')}>DE</button>
+							</div>
+
+							<div class="flex items-center gap-4">
+								<a
+									href="/login"
+									class="text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
+								>
+									{$_('nav.profile')}
+								</a>
+								<a href="/register" class="btn btn-primary text-sm py-2 px-5"> Get Started </a>
+							</div>
+						{/if}
+					</div>
 				</div>
 			</div>
-		</div>
-	</nav>
+		</nav>
 
-	<!-- Main Content -->
-	<main class="flex-grow {$auth.isAuthenticated ? 'mb-16 md:mb-0' : ''}">
-		<slot />
-	</main>
+		<!-- Main Content -->
+		<main class="flex-grow {$auth.isAuthenticated ? 'mb-16 md:mb-0' : ''}">
+			<slot />
+		</main>
 
-	<!-- Footer -->
-	<footer class="bg-white border-t border-[#E2E8F0] mt-auto">
-		<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-			<div class="flex flex-col md:flex-row justify-between items-center gap-4">
-				<div class="flex items-center gap-2 grayscale opacity-50">
-					<span class="font-bold text-gray-900 tracking-tight">Vite a Job</span>
-				</div>
-				<p class="text-sm text-[#64748B]">&copy; 2026 Vite a Job. All rights reserved.</p>
-				<div class="flex gap-6">
-					<a href="/privacy" class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]"
-						>Privacy</a
-					>
-					<a href="/terms" class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]"
-						>Terms</a
-					>
+		<!-- Footer -->
+		<footer class="bg-white border-t border-[#E2E8F0] mt-auto">
+			<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+				<div class="flex flex-col md:flex-row justify-between items-center gap-4">
+					<div class="flex items-center gap-2 grayscale opacity-50">
+						<span class="font-bold text-gray-900 tracking-tight">Vite a Job</span>
+					</div>
+					<p class="text-sm text-[#64748B]">&copy; 2026 Vite a Job. All rights reserved.</p>
+					<div class="flex gap-6">
+						<a href="/privacy" class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]"
+							>Privacy</a
+						>
+						<a href="/terms" class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]"
+							>Terms</a
+						>
+					</div>
 				</div>
 			</div>
-		</div>
-	</footer>
-</div>
+		</footer>
+	</div>
+{/if}

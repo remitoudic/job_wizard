@@ -22,6 +22,7 @@ class UserBase(SQLModel):
     country: Optional[str] = None
 
     phone: Optional[str] = None
+    preferred_language: Optional[str] = Field(default="en")
     is_superuser: bool = False
 
 
@@ -57,4 +58,5 @@ class UserUpdate(SQLModel):
     country: Optional[str] = None
 
     phone: Optional[str] = None
+    preferred_language: Optional[str] = None
     password: Optional[str] = None

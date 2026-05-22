@@ -21,6 +21,7 @@ export interface User {
 	phone?: string;
 	is_superuser?: boolean;
 	last_login?: string;
+	preferred_language?: string;
 }
 
 interface AuthState {

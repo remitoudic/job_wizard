@@ -16,6 +16,7 @@
 	} from '$lib/api';
 	import { auth } from '../../stores/auth';
 	import type { UserCVRead } from '$lib/api';
+	import { _, locale } from 'svelte-i18n';
 
 	// SvelteKit may pass `data` and `params` to pages — declare to prevent runtime warnings
 	export let data: any = {};
@@ -299,9 +300,12 @@
 			const updatedUser = await updateProfile(user);
 			user = updatedUser;
 			auth.updateUser(user!);
-			message = 'Profile updated successfully!';
+			if (user.preferred_language) {
+				locale.set(user.preferred_language);
+			}
+			message = $_('profile.success', { default: 'Profile updated successfully!' });
 		} catch (e: any) {
-			error = e.message || 'Failed to update profile';
+			error = e.message || $_('profile.error', { default: 'Failed to update profile' });
 		} finally {
 			isSaving = false;
 		}
@@ -901,6 +905,18 @@
 						placeholder="+1 234 567 8900"
 					/>
 				</div>
+				<div>
+					<label for="preferred_language" class="block text-sm font-medium text-gray-700 mb-1">{$_('profile.preferred_language', { default: 'Preferred Language' })}</label>
+					<select
+						id="preferred_language"
+						bind:value={user.preferred_language}
+						class="input w-full"
+					>
+						<option value="en">English</option>
+						<option value="fr">Français</option>
+						<option value="de">Deutsch</option>
+					</select>
+				</div>
 				<div class="md:col-span-2">
 					<label for="linkedin" class="block text-sm font-medium text-gray-700 mb-1"
 						>LinkedIn URL</label
@@ -997,7 +1013,7 @@
 					disabled={isSaving}
 					class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
 				>
-					{isSaving ? 'Saving...' : 'Save Changes'}
+					{isSaving ? 'Saving...' : $_('profile.save', { default: 'Save Changes' })}
 				</button>
 				<div
 					class="flex items-start sm:items-center gap-2 text-xs text-slate-400 max-w-sm text-right"
