@@ -1,8 +1,9 @@
 import pytest
 import os
-from app.services.platform.agents import create_writing_agent
+from app.services.cover_letter.llm_service import create_writing_agent
 
 
+@pytest.mark.skipif(os.environ.get("CI") == "true", reason="Ollama not available in CI")
 @pytest.mark.asyncio
 async def test_ollama_connection():
     """

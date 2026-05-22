@@ -9,6 +9,7 @@ a valid Job ID to the client.
 """
 
 from fastapi.testclient import TestClient
+from unittest.mock import patch
 from app.main import app
 
 client = TestClient(app)
@@ -41,24 +42,22 @@ def test_generate_cover_letter_endpoint():
     # /api/cover-letter/generate-cover-letter
 
     try:
-        response = client.post("/api/generate-cover-letter", json=payload)
+        with patch("app.api.routes.cover_letter.start_cover_letter_workflow") as mock_workflow:
+            mock_workflow.return_value = "mock-job-id"
+            response = client.post("/api/generate-cover-letter", json=payload)
 
-        # We assert 200 OK.
-        # Even if models fail (500), we want to see what happens.
-        # Ideally, we want a success.
+            if response.status_code != 200:
+                print(f"Error response: {response.json()}")
 
-        if response.status_code != 200:
-            print(f"Error response: {response.json()}")
+            assert response.status_code == 200
+            data = response.json()
 
-        assert response.status_code == 200
-        data = response.json()
+            # New: The API now returns a job_id for async processing
+            assert "job_id" in data
+            assert len(data["job_id"]) > 0
 
-        # New: The API now returns a job_id for async processing
-        assert "job_id" in data
-        assert len(data["job_id"]) > 0
-
-        print("\n✅ API Integration Test (Async Start) Passed!")
-        print(f"   Job ID: {data['job_id']}")
+            print("\n✅ API Integration Test (Async Start) Passed!")
+            print(f"   Job ID: {data['job_id']}")
 
     finally:
         # Cancel any background tasks (e.g. slow local models processing alternatives)

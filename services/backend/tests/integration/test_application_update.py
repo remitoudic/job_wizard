@@ -1,6 +1,12 @@
 from fastapi.testclient import TestClient
+import pytest
+from app.main import app
 from sqlmodel import Session, select
 from database_pkg.models import Application, JobDescription
+
+@pytest.fixture(scope="module")
+def client() -> TestClient:
+    return TestClient(app)
 
 
 def test_update_application_success(

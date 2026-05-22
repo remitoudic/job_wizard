@@ -6,12 +6,9 @@ client = TestClient(app)
 
 
 def test_generate_cover_letter_api_with_custom_instructions():
-    # Mock the LLM service to avoid actual generation
-    with patch("app.api.routes.cover_letter.llm_service") as mock_service:
-        # Setup mock return value
-        mock_service.generate_cover_letter = AsyncMock(
-            return_value=("Cover Letter Content", "MockAI", "alt-id-123")
-        )
+    # Mock the workflow to avoid actual execution
+    with patch("app.api.routes.cover_letter.start_cover_letter_workflow") as mock_workflow:
+        mock_workflow.return_value = "mock-job-id"
 
         payload = {
             "job_description": {

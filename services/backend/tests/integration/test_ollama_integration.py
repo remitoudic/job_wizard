@@ -8,9 +8,11 @@ fallback capability is ready for use.
 """
 
 import pytest
+import os
 from app.services.cover_letter.llm_service import LLMService
 
 
+@pytest.mark.skipif(os.environ.get("CI") == "true", reason="Ollama not available in CI")
 @pytest.mark.asyncio
 async def test_ollama_integration_connectivity():
     """
