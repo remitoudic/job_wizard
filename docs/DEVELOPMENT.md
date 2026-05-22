@@ -273,6 +273,81 @@ def test_generate_cover_letter_with_ollama():
 - ✅ Use fixtures for common test data
 - ✅ Mock external services (LLM APIs, web scraping)
 
+### Using the Unit Test Script
+
+The project ships with a convenient test runner at `scripts/run_unittest.sh`:
+
+```bash
+# Run all unit tests (no Docker needed)
+./scripts/run_unittest.sh
+
+# Run only one suite
+./scripts/run_unittest.sh backend
+./scripts/run_unittest.sh frontend
+./scripts/run_unittest.sh database
+```
+
+Coverage is always enabled for backend and database — a summary is printed at the end:
+
+```
+========================== Tests Report ==========================
+  Backend (Python / pytest)  OK  67 test(s)  |  Coverage: 50%
+  Frontend (Svelte / vitest)  OK  8 test(s) in 3 file(s)
+  Database (Python / pytest)  OK  8 test(s)  |  Coverage: 64%
+
+  Result: 83 test(s) — all passed
+================================================================
+```
+
+## 🔒 Pre-commit Hooks
+
+The project uses [pre-commit](https://pre-commit.com/) to catch issues before they reach the repository. Every `git commit` triggers the hooks automatically.
+
+### Setup
+
+```bash
+# Install pre-commit (one time only)
+pip install pre-commit
+
+# Install the git hooks
+cd job_wizard
+pre-commit install
+```
+
+### What Gets Checked
+
+The hooks run in this order on every commit:
+
+| Hook | Scope | What it does |
+|---|---|---|
+| `trailing-whitespace` | All files | Removes trailing spaces |
+| `end-of-file-fixer` | All files | Ensures files end with a newline |
+| `check-yaml` | YAML files | Validates YAML syntax |
+| `check-added-large-files` | All files | Blocks files larger than 500 kB |
+| `ruff` | Python files | Lints and auto-fixes PEP 8 issues |
+| `ruff-format` | Python files | Auto-formats Python code (like Black) |
+| `prettier` | JS/TS/Svelte/CSS/HTML | Auto-formats frontend code |
+| `svelte-check` | Svelte/TS files | Type-checks Svelte components |
+
+### What Happens on Failure
+
+If a hook **auto-fixes** code (like `ruff --fix` or `prettier`), the fixed files will be left in your working tree. Just:
+
+```bash
+git add .                          # stage the auto-fixed files
+git commit -m "your message"       # commit again — hooks will pass now
+```
+
+If `svelte-check` reports errors, you need to fix them manually before committing.
+
+### Skipping Hooks (in emergencies only)
+
+```bash
+git commit --no-verify -m "emergency fix"
+```
+
+⚠️  Only use this for hotfixes. Skipping hooks can let broken code into the repository.
+
 ## 🐛 Debugging
 
 For standard debugging (logs, breakpoints), see below. For advanced real-time diagnostics, health checks, and tracing, see the **[Specialized Debugging Guide](DEBUGGING.md)**.
@@ -478,7 +553,7 @@ cd job_wizard
 
 **3. Run tests:**
 ```bash
-docker exec jobwizard-backend pytest tests/ -v
+./scripts/run_unittest.sh
 ```
 
 **4. Commit when ready:**
@@ -486,6 +561,7 @@ docker exec jobwizard-backend pytest tests/ -v
 git add .
 git commit -m "feat: descriptive message"
 ```
+> 💡 Pre-commit hooks will check your code automatically on every commit.
 
 **5. End of day:**
 ```bash
@@ -846,7 +922,8 @@ LOGFIRE_TOKEN=your_logfire_token_here
 ### Code Quality
 
 - ✅ **Write tests** for new features
-- ✅ **Run tests** before committing
+- ✅ **Run tests** before committing (`./scripts/run_unittest.sh`)
+- ✅ **Let pre-commit hooks run** — they auto-format code and catch issues
 - ✅ **Use type hints** in Python code
 - ✅ **Follow naming conventions** (snake_case for Python, camelCase for JS)
 - ✅ **Keep functions small** and focused
@@ -860,6 +937,7 @@ LOGFIRE_TOKEN=your_logfire_token_here
 - ✅ **Commit frequently** with logical chunks
 - ✅ **Pull before push** to avoid conflicts
 - ✅ **Review changes** before committing (`git diff`)
+- ✅ **Pre-commit hooks** validate every commit automatically (see "Pre-commit Hooks" section)
 - ❌ Don't commit `.env` files
 - ❌ Don't force push to main
 - ❌ Don't commit commented-out code
