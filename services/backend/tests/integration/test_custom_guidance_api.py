@@ -8,6 +8,7 @@ client = TestClient(app)
 def test_generate_cover_letter_api_with_custom_instructions():
     # Mock the workflow to avoid actual execution
     from unittest.mock import AsyncMock
+
     with patch(
         "app.api.routes.cover_letter.get_temporal_client", new_callable=AsyncMock
     ) as mock_get_client:

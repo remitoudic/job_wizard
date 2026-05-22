@@ -43,6 +43,7 @@ def test_generate_cover_letter_endpoint():
 
     try:
         from unittest.mock import AsyncMock
+
         with patch(
             "app.api.routes.cover_letter.get_temporal_client", new_callable=AsyncMock
         ) as mock_get_client:
