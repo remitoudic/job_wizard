@@ -59,5 +59,24 @@
 		"ai_engine_progression": "KI-Engine-Fortschritt",
 		"your_cover_letter": "Ihr Anschreiben",
 		"review_edit_download": "Überprüfen, bearbeiten und laden Sie Ihren personalisierten Entwurf herunter."
+	},
+	"login": {
+		"welcome_back": "Willkommen zurück",
+		"subtitle": "Melden Sie sich an, um Ihre Bewerbungen zu verwalten",
+		"email_address": "E-Mail-Adresse",
+		"password": "Passwort",
+		"logging_in": "Anmelden...",
+		"login_btn": "Anmelden",
+		"no_account": "Sie haben noch kein Konto?",
+		"create_account": "Konto erstellen"
+	},
+	"register": {
+		"title": "Konto erstellen",
+		"subtitle": "Starten Sie heute mit Vite a Job",
+		"confirm_password": "Passwort bestätigen",
+		"creating": "Konto wird erstellt...",
+		"submit_btn": "Konto erstellen",
+		"already_have_account": "Sie haben bereits ein Konto?",
+		"sign_in": "Anmelden"
 	}
 }

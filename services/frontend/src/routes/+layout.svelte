@@ -105,9 +105,9 @@
 									href="/login"
 									class="text-sm font-semibold text-[#64748B] hover:text-[#0F172A] transition-colors"
 								>
-									{$_('nav.profile')}
+									{$_('register.sign_in', { default: 'Sign in' })}
 								</a>
-								<a href="/register" class="btn btn-primary text-sm py-2 px-5"> Get Started </a>
+								<a href="/register" class="btn btn-primary text-sm py-2 px-5"> {$_('main.get_started', { default: 'Get Started' })} </a>
 							</div>
 						{/if}
 					</div>

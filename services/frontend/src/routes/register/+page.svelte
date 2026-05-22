@@ -2,6 +2,7 @@
 	import { registerUser, loginUser, API_URL } from '$lib/api';
 	import { auth } from '../../stores/auth';
 	import { goto } from '$app/navigation';
+	import { _ } from 'svelte-i18n';
 
 	let email = '';
 	let password = '';
@@ -73,8 +74,8 @@
 
 <div class="max-w-md mx-auto mt-20 p-10 card">
 	<div class="text-center mb-8">
-		<h1 class="text-3xl font-bold text-[#0F172A] mb-2">Create Account</h1>
-		<p class="text-[#334155] text-sm">Get started with Vite a Job today</p>
+		<h1 class="text-3xl font-bold text-[#0F172A] mb-2">{$_('register.title', { default: 'Create Account' })}</h1>
+		<p class="text-[#334155] text-sm">{$_('register.subtitle', { default: 'Get started with Vite a Job today' })}</p>
 	</div>
 
 	{#if error}
@@ -102,7 +103,7 @@
 	<form on:submit|preventDefault={handleSubmit} class="space-y-5">
 		<div>
 			<label for="email" class="block text-sm font-semibold text-[#334155] mb-2"
-				>Email Address</label
+				>{$_('login.email_address', { default: 'Email Address' })}</label
 			>
 			<input
 				id="email"
@@ -116,7 +117,7 @@
 
 		<div>
 			<label for="password" class="block text-sm font-semibold text-[#334155] mb-2">
-				Password
+				{$_('login.password', { default: 'Password' })}
 			</label>
 			<div class="relative">
 				<input
@@ -177,7 +178,7 @@
 
 		<div>
 			<label for="confirm-password" class="block text-sm font-semibold text-[#334155] mb-2">
-				Confirm Password
+				{$_('register.confirm_password', { default: 'Confirm Password' })}
 			</label>
 			<div class="relative">
 				<input
@@ -253,16 +254,16 @@
 							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 						></path>
 					</svg>
-					Creating account...
+					{$_('register.creating', { default: 'Creating account...' })}
 				</div>
 			{:else}
-				Create Account
+				{$_('register.submit_btn', { default: 'Create Account' })}
 			{/if}
 		</button>
 	</form>
 
 	<div class="mt-8 pt-6 border-t border-[#E2E8F0] text-center text-sm text-[#334155]">
-		Already have an account?
-		<a href="/login" class="text-[#0369A1] font-semibold hover:underline px-1">Sign in</a>
+		{$_('register.already_have_account', { default: 'Already have an account?' })}
+		<a href="/login" class="text-[#0369A1] font-semibold hover:underline px-1">{$_('register.sign_in', { default: 'Sign in' })}</a>
 	</div>
 </div>

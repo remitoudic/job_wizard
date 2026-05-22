@@ -2,6 +2,7 @@
 	import { loginUser, getProfile, API_URL } from '$lib/api';
 	import { auth } from '../../stores/auth';
 	import { goto } from '$app/navigation';
+	import { _ } from 'svelte-i18n';
 
 	let email = '';
 	let password = '';
@@ -46,8 +47,8 @@
 
 <div class="max-w-md mx-auto mt-20 p-10 card">
 	<div class="text-center mb-8">
-		<h1 class="text-3xl font-bold text-[#0F172A] mb-2">Welcome Back</h1>
-		<p class="text-[#334155] text-sm">Log in to manage your job applications</p>
+		<h1 class="text-3xl font-bold text-[#0F172A] mb-2">{$_('login.welcome_back', { default: 'Welcome Back' })}</h1>
+		<p class="text-[#334155] text-sm">{$_('login.subtitle', { default: 'Log in to manage your job applications' })}</p>
 	</div>
 
 	{#if error}
@@ -75,7 +76,7 @@
 	<form on:submit|preventDefault={handleSubmit} class="space-y-5">
 		<div>
 			<label for="email" class="block text-sm font-semibold text-[#334155] mb-2"
-				>Email Address</label
+				>{$_('login.email_address', { default: 'Email Address' })}</label
 			>
 			<input
 				id="email"
@@ -88,7 +89,7 @@
 		</div>
 
 		<div>
-			<label for="password" class="block text-sm font-semibold text-[#334155] mb-2">Password</label>
+			<label for="password" class="block text-sm font-semibold text-[#334155] mb-2">{$_('login.password', { default: 'Password' })}</label>
 			<div class="relative">
 				<input
 					id="password"
@@ -163,18 +164,18 @@
 							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 						></path>
 					</svg>
-					Logging in...
+					{$_('login.logging_in', { default: 'Logging in...' })}
 				</div>
 			{:else}
-				Login
+				{$_('login.login_btn', { default: 'Login' })}
 			{/if}
 		</button>
 	</form>
 
 	<div class="mt-8 pt-6 border-t border-[#E2E8F0] text-center text-sm text-[#334155]">
-		Don't have an account?
+		{$_('login.no_account', { default: "Don't have an account?" })}
 		<a href="/register" class="text-[#0369A1] font-semibold hover:underline px-1"
-			>Create an account</a
+			>{$_('login.create_account', { default: 'Create an account' })}</a
 		>
 	</div>
 </div>

@@ -59,5 +59,24 @@
 		"ai_engine_progression": "Progression de l'IA",
 		"your_cover_letter": "Votre lettre de motivation",
 		"review_edit_download": "Révisez, modifiez et téléchargez votre brouillon personnalisé."
+	},
+	"login": {
+		"welcome_back": "Ravi de vous revoir",
+		"subtitle": "Connectez-vous pour gérer vos candidatures",
+		"email_address": "Adresse e-mail",
+		"password": "Mot de passe",
+		"logging_in": "Connexion en cours...",
+		"login_btn": "Se connecter",
+		"no_account": "Vous n'avez pas de compte ?",
+		"create_account": "Créer un compte"
+	},
+	"register": {
+		"title": "Créer un compte",
+		"subtitle": "Commencez avec Vite a Job aujourd'hui",
+		"confirm_password": "Confirmer le mot de passe",
+		"creating": "Création du compte...",
+		"submit_btn": "Créer un compte",
+		"already_have_account": "Vous avez déjà un compte ?",
+		"sign_in": "Se connecter"
 	}
 }
