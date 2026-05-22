@@ -14,5 +14,14 @@
 		"save": "Änderungen speichern",
 		"success": "Profil erfolgreich aktualisiert",
 		"error": "Fehler beim Aktualisieren des Profils"
+	},
+	"progress": {
+		"extracting": "Analyse Ihres Profilkontexts...",
+		"extracted": "Profilanalyse abgeschlossen.",
+		"generating": "Start der Generierung mit KI...",
+		"partial": "Hauptschreiben fertig. Alternativen werden verarbeitet...",
+		"alternative_ready": "Alternativer Entwurf abgeschlossen.",
+		"completed": "Generierung abgeschlossen!",
+		"error": "Ein Fehler ist aufgetreten."
 	}
 }

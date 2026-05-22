@@ -541,7 +541,10 @@
 						if (firstName || surname) {
 							updateNameInCoverLetter();
 						}
-
+					}
+					
+					// As soon as the first letter is produced, go to step 3
+					if ($step !== 3) {
 						step.set(3);
 					}
 				}
@@ -628,6 +631,10 @@
 							originalCoverLetter = data.text;
 							source = data.source;
 							alternativeId = data.alternative_id;
+						}
+						
+						// As soon as the first letter is produced, go to step 3
+						if ($step !== 3) {
 							step.set(3);
 						}
 					}
@@ -1784,7 +1791,7 @@
 											? 'font-medium text-[#0F172A]'
 											: 'opacity-60'}
 									>
-										{progressItem.message}
+										{$t(`progress.${progressItem.status}`, { default: progressItem.message })}
 									</span>
 								</div>
 							{/each}

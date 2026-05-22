@@ -14,5 +14,14 @@
 		"save": "Save changes",
 		"success": "Profile updated successfully",
 		"error": "Failed to update profile"
+	},
+	"progress": {
+		"extracting": "Analyzing your profile context...",
+		"extracted": "Profile analysis complete.",
+		"generating": "Starting generation race using AI...",
+		"partial": "Primary letter ready. Processing alternatives...",
+		"alternative_ready": "Alternative draft completed.",
+		"completed": "Generation complete!",
+		"error": "An error occurred."
 	}
 }
