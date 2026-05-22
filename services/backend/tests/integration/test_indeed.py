@@ -25,9 +25,9 @@ async def test_indeed():
     # 2. Test Registry
     registry_parser = ParserRegistry.get_parser(test_url)
     print(f"Registry matched: {type(registry_parser).__name__}")
-    assert isinstance(registry_parser, IndeedParser), (
-        "Registry should return IndeedParser"
-    )
+    assert isinstance(
+        registry_parser, IndeedParser
+    ), "Registry should return IndeedParser"
     print("✅ Registry OK")
 
 

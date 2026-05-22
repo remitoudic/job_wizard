@@ -88,12 +88,12 @@ def test_get_llm_service_returns_same_instance(fake_llm_service):
         second = activities_module.get_llm_service()
         third = activities_module.get_llm_service()
 
-    assert first is second is third, (
-        "get_llm_service() must return the same object on repeated calls"
-    )
-    assert call_count["n"] == 1, (
-        f"LLMService.__init__ was called {call_count['n']} times — must be called exactly once"
-    )
+    assert (
+        first is second is third
+    ), "get_llm_service() must return the same object on repeated calls"
+    assert (
+        call_count["n"] == 1
+    ), f"LLMService.__init__ was called {call_count['n']} times — must be called exactly once"
 
 
 # ---------------------------------------------------------------------------
