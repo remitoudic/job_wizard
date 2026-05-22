@@ -1,3 +1,11 @@
+"""
+Integration tests for tracking application history.
+
+This module tests the automatic tracking of state changes (status updates)
+when an application moves through different phases of the hiring process
+(e.g., 'applied' -> 'interview' -> 'finish').
+"""
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, create_engine, SQLModel
@@ -82,6 +90,18 @@ def client_fixture(session: Session):
 def test_application_history_tracking(
     client: TestClient, session: Session, auth_headers: dict
 ):
+    """
+    Tests the end-to-end flow of application history tracking.
+
+    Flow tested:
+    1. Creating a new application (should generate an initial 'applied' history record)
+    2. Fetching the initial history to verify it has 1 entry
+    3. Updating the status to 'interview' with custom notes
+    4. Verifying the history now has 2 entries and correctly reflects the transition
+    5. Updating the status to 'finish' without custom notes
+    6. Verifying the history has 3 entries and auto-generated notes
+    7. Checking that application details correctly include the job_url
+    """
     # 1. Create an application
     # We need to simulate the multi-step process or just call the save-application endpoint
     app_data = {

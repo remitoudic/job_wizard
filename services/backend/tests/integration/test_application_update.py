@@ -1,3 +1,11 @@
+"""
+Integration tests for the application update endpoint.
+
+This module ensures that the full application update endpoint works correctly.
+This allows users to modify the core attributes of an application (e.g., job title,
+company, cover letter body, and status) through a single PATCH request.
+"""
+
 from fastapi.testclient import TestClient
 import pytest
 from app.main import app
@@ -63,6 +71,14 @@ def client_fixture(session: Session):
 def test_update_application_success(
     client: TestClient, session: Session, current_user_token_headers: dict
 ):
+    """
+    Test a successful full update of an existing application.
+
+    This test verifies that:
+    1. A newly created application can be updated via PATCH.
+    2. Multiple fields (title, company, status, notes, cover letter) can be updated simultaneously.
+    3. The changes are properly persisted across both the `Application` and `JobDescription` tables.
+    """
     # 1. Create an application first
     app_data = {
         "job_url": "https://test.com/job/1",
@@ -127,6 +143,12 @@ def test_update_application_success(
 def test_update_application_not_found(
     client: TestClient, current_user_token_headers: dict
 ):
+    """
+    Test updating an application that does not exist.
+
+    Verifies that passing an invalid or non-existent application ID
+    correctly yields a 404 Not Found response.
+    """
     resp = client.patch(
         "/api/application/99999",
         json={"notes": "test"},
@@ -138,6 +160,12 @@ def test_update_application_not_found(
 def test_update_application_invalid_status(
     client: TestClient, session: Session, current_user_token_headers: dict
 ):
+    """
+    Test that updating an application with an invalid status is rejected.
+
+    Ensures data integrity by preventing arbitrary strings from being
+    saved to the application's status field.
+    """
     # Create app
     app_data = {
         "job_url": "https://test.com/job/2",

@@ -1,4 +1,10 @@
-"""Integration tests for update-application-status endpoint."""
+"""
+Integration tests for the update-application-status endpoint.
+
+This module validates that users can successfully update the status
+of their applications (e.g., moving an application from 'applied' to 'interview').
+It also ensures proper error handling for invalid statuses and missing applications.
+"""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -124,7 +130,12 @@ def test_update_status_success(
     test_application: Application,
     test_session: Session,
 ):
-    """Test successful status update."""
+    """
+    Test successful status update.
+
+    Verifies that a valid status transition (e.g., to 'interview')
+    is correctly processed by the API and persisted in the database.
+    """
     new_status = "interview"
     response = client.patch(
         f"/api/application/{test_application.id}/status",
@@ -145,7 +156,12 @@ def test_update_status_success(
 def test_update_status_invalid_enum(
     client: TestClient, auth_headers: dict, test_application: Application
 ):
-    """Test updating with an invalid status string."""
+    """
+    Test updating with an invalid status string.
+
+    Ensures the API rejects random or invalid status strings with a 400 Bad Request
+    so that only valid `ApplicationStatus` enums are allowed in the database.
+    """
     response = client.patch(
         f"/api/application/{test_application.id}/status",
         json={"status": "invalid_status_value"},
@@ -157,7 +173,12 @@ def test_update_status_invalid_enum(
 
 
 def test_update_status_not_found(client: TestClient, auth_headers: dict):
-    """Test updating a non-existent application."""
+    """
+    Test updating a non-existent application.
+
+    Verifies that attempting to update an application ID that doesn't exist
+    returns a standard 404 Not Found error.
+    """
     response = client.patch(
         "/api/application/999999/status",
         json={"status": "interview"},
