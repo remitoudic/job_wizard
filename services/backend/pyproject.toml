@@ -29,7 +29,7 @@ dependencies = [
     "bcrypt==3.2.2",
     "python-jose[cryptography]>=3.3.0",
     "python-multipart>=0.0.9",
-    "job-wizard-db @ file:///Users/Remi/Documents/job_wizard/services/database",
+    "job-wizard-db",
     "curl_cffi>=0.6.0",
     "weasyprint>=62.0",
     "llama-parse>=0.5.0",
@@ -37,7 +37,11 @@ dependencies = [
     "cloudinary>=1.44.1",
     "edgeparse>=0.2.3",
     "temporalio>=1.5.0",
+    "crewai>=0.22.2",
 ]
+
+[tool.uv.sources]
+job-wizard-db = { path = "../database", editable = true }
 
 [project.optional-dependencies]
 dev = [

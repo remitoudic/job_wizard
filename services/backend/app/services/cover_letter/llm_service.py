@@ -420,6 +420,35 @@ CUSTOM USER GUIDANCE:
             except Exception as e:
                 logger.error(f"Failed to create remote agents: {e}")
 
+            # CrewAI Agency participant
+            try:
+                async def run_crewai_wrapper():
+                    from app.services.cover_letter.crewai_workflow import run_crewai_generation
+                    import asyncio
+                    with logfire.span("Agent Generation: CrewAI") as agent_span:
+                        text = await asyncio.to_thread(
+                            run_crewai_generation,
+                            job_description,
+                            job_title,
+                            company,
+                            requirements,
+                            user_name,
+                            user_skills,
+                            context_text,
+                            language
+                        )
+                        return {"output": text, "source": "CrewAI Agency", "usage": None}
+
+                crewai_task = asyncio.create_task(
+                    run_crewai_wrapper(),
+                    name="CrewAI Agency"
+                )
+                task_start_times[id(crewai_task)] = time.perf_counter()
+                tasks.append(crewai_task)
+                logger.info("CrewAI Agency participant added")
+            except Exception as e:
+                logger.error(f"Failed to create CrewAI agent: {e}")
+
             # NVIDIA participant — always races if API key is configured
             try:
                 nvidia_config = self.provider_service.get_nvidia_config()
