@@ -30,7 +30,9 @@ if __name__ == "__main__":
 
     if NVIDIA_API_KEY:
         headers = {"Authorization": f"Bearer {NVIDIA_API_KEY}"}
-        response = httpx.get("https://integrate.api.nvidia.com/v1/models", headers=headers)
+        response = httpx.get(
+            "https://integrate.api.nvidia.com/v1/models", headers=headers
+        )
         models = response.json().get("data", [])
         for m in models:
             print(m["id"])

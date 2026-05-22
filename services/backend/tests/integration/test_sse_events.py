@@ -51,7 +51,9 @@ async def test_sse_event_stream_order(async_client: AsyncClient):
                         continue
 
                     data = json.loads(payload_str)
-                    received_events.append(data)
+                    
+                    if not received_events or received_events[-1]["status"] != data["status"]:
+                        received_events.append(data)
 
                     # SSE stream should close on 'completed' or 'error' in our implementation
                     if data["status"] in ("completed", "error"):

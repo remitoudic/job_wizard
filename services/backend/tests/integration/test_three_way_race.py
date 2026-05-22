@@ -11,9 +11,11 @@ is returned properly to the user.
 
 import pytest
 import asyncio
+import os
 from app.services.cover_letter.llm_service import LLMService
 
 
+@pytest.mark.skipif(os.environ.get("CI") == "true", reason="Integration test requires full local stack")
 @pytest.mark.asyncio
 async def test_three_way_race():
     """Test that all three models participate in the race"""

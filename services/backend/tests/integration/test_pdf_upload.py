@@ -65,15 +65,12 @@ from unittest.mock import patch, AsyncMock  # noqa: E402
 
 
 @patch(
-    "app.services.cover_letter.llm_service.LLMService.generate_cover_letter",
+    "app.api.routes.cover_letter.get_temporal_client",
     new_callable=AsyncMock,
 )
-def test_generate_cover_letter_with_context(mock_generate):
-    mock_generate.return_value = (
-        "Dear Hiring Manager, this is a generated letter.",
-        "MockSource",
-        "mock-alt-id",
-    )
+def test_generate_cover_letter_with_context(mock_get_client):
+    mock_client = AsyncMock()
+    mock_get_client.return_value = mock_client
 
     response = client.post(
         "/api/generate-cover-letter",
@@ -91,7 +88,8 @@ def test_generate_cover_letter_with_context(mock_generate):
     )
 
     assert response.status_code == 200
-    assert mock_generate.called
+    assert mock_client.start_workflow.called
     # storage of arguments verify that context_text was passed
-    kwargs = mock_generate.call_args.kwargs
-    assert kwargs["context_text"] == "My CV Context info"
+    args = mock_client.start_workflow.call_args.args
+    workflow_data = args[1]
+    assert workflow_data["context_text"] == "My CV Context info"

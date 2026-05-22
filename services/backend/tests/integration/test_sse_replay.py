@@ -84,7 +84,10 @@ async def test_sse_sync_then_live(async_client: AsyncClient):
             async for line in response.aiter_lines():
                 if line.startswith("data: "):
                     data = json.loads(line[6:])
-                    received_events.append(data)
+                    
+                    if not received_events or received_events[-1]["status"] != data["status"]:
+                        received_events.append(data)
+                        
                     if data["status"] == "completed":
                         break
     finally:

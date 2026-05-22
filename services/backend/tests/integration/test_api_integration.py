@@ -42,8 +42,12 @@ def test_generate_cover_letter_endpoint():
     # /api/cover-letter/generate-cover-letter
 
     try:
-        with patch("app.api.routes.cover_letter.start_cover_letter_workflow") as mock_workflow:
-            mock_workflow.return_value = "mock-job-id"
+        from unittest.mock import AsyncMock
+        with patch(
+            "app.api.routes.cover_letter.get_temporal_client", new_callable=AsyncMock
+        ) as mock_get_client:
+            mock_client = AsyncMock()
+            mock_get_client.return_value = mock_client
             response = client.post("/api/generate-cover-letter", json=payload)
 
             if response.status_code != 200:

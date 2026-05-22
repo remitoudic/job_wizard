@@ -174,7 +174,7 @@ def run_crewai_generation(
         1. The candidate's 3 most relevant achievements for this specific role.
         2. A suggested 'hook' or opening angle based on their background.
         3. Any missing skills the copywriter should downplay or pivot away from.
-        
+
         Job Title: {job_title}
         Company: {company}
         Job Requirements: {req_list}
@@ -190,7 +190,7 @@ def run_crewai_generation(
     drafting_task = Task(
         description=f"""
         Write the first draft of the cover letter based ONLY on the points provided in the Analyst's brief.
-        Use a confident, professional, yet approachable tone. 
+        Use a confident, professional, yet approachable tone.
         Show how the candidate's past results will solve the company's problems.
         The letter should be written in {language}.
         Target Company: {company}

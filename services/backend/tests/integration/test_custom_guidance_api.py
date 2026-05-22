@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch
 from app.main import app
 
 client = TestClient(app)
@@ -7,8 +7,12 @@ client = TestClient(app)
 
 def test_generate_cover_letter_api_with_custom_instructions():
     # Mock the workflow to avoid actual execution
-    with patch("app.api.routes.cover_letter.start_cover_letter_workflow") as mock_workflow:
-        mock_workflow.return_value = "mock-job-id"
+    from unittest.mock import AsyncMock
+    with patch(
+        "app.api.routes.cover_letter.get_temporal_client", new_callable=AsyncMock
+    ) as mock_get_client:
+        mock_client = AsyncMock()
+        mock_get_client.return_value = mock_client
 
         payload = {
             "job_description": {
@@ -26,9 +30,13 @@ def test_generate_cover_letter_api_with_custom_instructions():
 
         assert response.status_code == 200
         data = response.json()
-        assert data["cover_letter"] == "Cover Letter Content"
+        assert "job_id" in data
 
-        # Verify the service was called with custom_instructions
-        mock_service.generate_cover_letter.assert_called_once()
-        call_kwargs = mock_service.generate_cover_letter.call_args[1]
-        assert call_kwargs["custom_instructions"] == "Make it funny"
+        # Verify the workflow was called with custom_instructions
+        mock_client.start_workflow.assert_called_once()
+        call_args, call_kwargs = mock_client.start_workflow.call_args
+        workflow_data = call_args[1] if len(call_args) > 1 else call_kwargs.get("arg")
+        if workflow_data is None:
+            # Depending on how it's called, check the kwargs
+            workflow_data = call_args[1]
+        assert workflow_data["custom_instructions"] == "Make it funny"
