@@ -1,7 +1,12 @@
 {
 	"nav": {
 		"dashboard": "Dashboard",
-		"profile": "Profil"
+		"profile": "Profil",
+		"applications": "Bewerbungen",
+		"cv_refresh": "Lebenslauf aktualisieren",
+		"why": "Warum dies nutzen?",
+		"admin": "Admin",
+		"logout": "Abmelden"
 	},
 	"lang": {
 		"title": "Sprache",
@@ -23,5 +28,36 @@
 		"alternative_ready": "Alternativer Entwurf abgeschlossen.",
 		"completed": "Generierung abgeschlossen!",
 		"error": "Ein Fehler ist aufgetreten."
+	},
+	"main": {
+		"step_details": "Details",
+		"step_review": "Überprüfung",
+		"step_result": "Ergebnis",
+		"get_started": "Loslegen",
+		"enter_manually": "Manuell eingeben",
+		"use_job_url": "Job-URL verwenden",
+		"job_title": "Jobtitel",
+		"company_name": "Unternehmensname",
+		"job_description": "Jobbeschreibung",
+		"personalize_letter": "Personalisieren Sie Ihr Anschreiben",
+		"cover_letter_language": "Sprache des Anschreibens",
+		"cover_letter_language_desc": "Wählen Sie die Sprache für das generierte Anschreiben.",
+		"custom_guidance": "Benutzerdefinierte Anweisungen",
+		"custom_guidance_desc": "Fügen Sie der KI spezifische Anweisungen hinzu (z. B. \"Fokus auf meine Führungserfahrung\").",
+		"upload_info": "Zusätzliche Informationen",
+		"upload_info_desc": "Laden Sie Informationen über sich hoch, um das Anschreiben zu personalisieren (z. B. Ihren Lebenslauf).",
+		"analyzing_position": "Position wird analysiert...",
+		"next_step": "Nächster Schritt",
+		"review_position": "Position überprüfen",
+		"verify_details": "Überprüfen Sie die Details vor der Generierung Ihres Anschreibens.",
+		"role": "Rolle",
+		"company": "Unternehmen",
+		"full_job_desc": "Vollständige Jobbeschreibung",
+		"key_requirements": "Erkannte Hauptanforderungen",
+		"back": "Zurück",
+		"generate_btn": "Anschreiben generieren",
+		"ai_engine_progression": "KI-Engine-Fortschritt",
+		"your_cover_letter": "Ihr Anschreiben",
+		"review_edit_download": "Überprüfen, bearbeiten und laden Sie Ihren personalisierten Entwurf herunter."
 	}
 }

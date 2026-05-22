@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
+	import { _ } from 'svelte-i18n';
 	import { step } from '../stores/wizard';
 	import {
 		parseJobUrl,
@@ -542,7 +543,7 @@
 							updateNameInCoverLetter();
 						}
 					}
-					
+
 					// As soon as the first letter is produced, go to step 3
 					if ($step !== 3) {
 						step.set(3);
@@ -632,7 +633,7 @@
 							source = data.source;
 							alternativeId = data.alternative_id;
 						}
-						
+
 						// As soon as the first letter is produced, go to step 3
 						if ($step !== 3) {
 							step.set(3);
@@ -1115,7 +1116,7 @@
 					<span
 						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >= 1
 							? 'text-[#0369A1]'
-							: 'text-[#64748B]'}">Details</span
+							: 'text-[#64748B]'}">{$_('main.step_details', { default: 'Details' })}</span
 					>
 				</div>
 				<div class="w-20 h-0.5 {$step >= 2 ? 'bg-[#0369A1]' : 'bg-[#E2E8F0]'} -mt-6"></div>
@@ -1136,7 +1137,7 @@
 					<span
 						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >= 2
 							? 'text-[#0369A1]'
-							: 'text-[#64748B]'}">Review</span
+							: 'text-[#64748B]'}">{$_('main.step_review', { default: 'Review' })}</span
 					>
 				</div>
 				<div class="w-20 h-0.5 {$step >= 3 ? 'bg-[#0369A1]' : 'bg-[#E2E8F0]'} -mt-6"></div>
@@ -1157,7 +1158,7 @@
 					<span
 						class="mt-2 text-xs font-semibold uppercase tracking-wider {$step >= 3
 							? 'text-[#0369A1]'
-							: 'text-[#64748B]'}">Result</span
+							: 'text-[#64748B]'}">{$_('main.step_result', { default: 'Result' })}</span
 					>
 				</div>
 			</div>
@@ -1220,7 +1221,9 @@
 		{#if $step === 1}
 			<div class="card">
 				<div class="mb-8">
-					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">Get Started</h2>
+					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">
+						{$_('main.get_started', { default: 'Get Started' })}
+					</h2>
 					<div class="flex items-center justify-between">
 						<p class="text-[#334155] text-sm">
 							{#if isManualInput}
@@ -1252,7 +1255,7 @@
 										d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
 									/>
 								</svg>
-								Enter manually
+								{$_('main.enter_manually', { default: 'Enter manually' })}
 							</button>
 						{:else}
 							<button
@@ -1277,7 +1280,7 @@
 										d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
 									/>
 								</svg>
-								Use job URL
+								{$_('main.use_job_url', { default: 'Use job URL' })}
 							</button>
 						{/if}
 					</div>
@@ -1290,7 +1293,7 @@
 								<label
 									for="manual-title"
 									class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
-									>Job Title</label
+									>{$_('main.job_title', { default: 'Job Title' })}</label
 								>
 								<input
 									id="manual-title"
@@ -1304,7 +1307,7 @@
 								<label
 									for="manual-company"
 									class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
-									>Company Name</label
+									>{$_('main.company_name', { default: 'Company Name' })}</label
 								>
 								<input
 									id="manual-company"
@@ -1319,7 +1322,7 @@
 							<label
 								for="manual-desc"
 								class="block text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2"
-								>Job Description</label
+								>{$_('main.job_description', { default: 'Job Description' })}</label
 							>
 							<textarea
 								id="manual-desc"
@@ -1401,7 +1404,9 @@
 								class="flex justify-between items-center py-4 cursor-pointer text-[#334155] hover:text-[#0F172A] transition-colors focus:outline-none"
 							>
 								<div class="flex items-center gap-3">
-									<span class="text-sm font-semibold">Personalize your letter</span>
+									<span class="text-sm font-semibold"
+										>{$_('main.personalize_letter', { default: 'Personalize your letter' })}</span
+									>
 								</div>
 
 								<svg
@@ -1431,10 +1436,12 @@
 									<label
 										for="letter-language"
 										class="block text-sm font-semibold text-[#334155] mb-2"
-										>Cover Letter Language</label
+										>{$_('main.cover_letter_language', { default: 'Cover Letter Language' })}</label
 									>
 									<p class="text-xs text-[#64748B] mb-3">
-										Choose the language for the generated cover letter.
+										{$_('main.cover_letter_language_desc', {
+											default: 'Choose the language for the generated cover letter.'
+										})}
 									</p>
 									<select
 										id="letter-language"
@@ -1452,11 +1459,14 @@
 								<div>
 									<label
 										for="custom-instructions"
-										class="block text-sm font-semibold text-[#334155] mb-2">Custom Guidance</label
+										class="block text-sm font-semibold text-[#334155] mb-2"
+										>{$_('main.custom_guidance', { default: 'Custom Guidance' })}</label
 									>
 									<p class="text-xs text-[#64748B] mb-3">
-										Add specific instructions for the AI (e.g., "Focus on my leadership
-										experience").
+										{$_('main.custom_guidance_desc', {
+											default:
+												'Add specific instructions for the AI (e.g., "Focus on my leadership experience").'
+										})}
 									</p>
 									<textarea
 										id="custom-instructions"
@@ -1469,11 +1479,14 @@
 								<div>
 									<label
 										for="file-upload-section"
-										class="block text-sm font-semibold text-[#334155] mb-2">Upload info</label
+										class="block text-sm font-semibold text-[#334155] mb-2"
+										>{$_('main.upload_info', { default: 'Upload info' })}</label
 									>
 									<p class="text-xs text-[#64748B] mb-3">
-										Upload information about yourself so that we can personalize your cover letter
-										(for example, your CV).
+										{$_('main.upload_info_desc', {
+											default:
+												'Upload information about yourself so that we can personalize your cover letter (for example, your CV).'
+										})}
 									</p>
 									<div class="flex items-center gap-4">
 										<input
@@ -1555,7 +1568,9 @@
 							(isManualInput && (!manualTitle || !manualCompany || !manualDescription))}
 						class="btn btn-primary w-full py-4 text-lg"
 					>
-						{isParsing ? 'Analyzing Position...' : 'Next Step'}
+						{isParsing
+							? $_('main.analyzing_position', { default: 'Analyzing Position...' })
+							: $_('main.next_step', { default: 'Next Step' })}
 					</button>
 				</div>
 			</div>
@@ -1565,8 +1580,14 @@
 		{#if $step === 2 && jobData}
 			<div class="card">
 				<div class="mb-8">
-					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">Review Position</h2>
-					<p class="text-[#334155] text-sm">Verify the details before generating your letter.</p>
+					<h2 class="text-2xl font-bold text-[#0F172A] mb-2">
+						{$_('main.review_position', { default: 'Review Position' })}
+					</h2>
+					<p class="text-[#334155] text-sm">
+						{$_('main.verify_details', {
+							default: 'Verify the details before generating your letter.'
+						})}
+					</p>
 				</div>
 
 				<div class="space-y-6 mb-10">
@@ -1578,7 +1599,7 @@
 								for="edit-role"
 								class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 							>
-								Role
+								{$_('main.role', { default: 'Role' })}
 							</label>
 							<input
 								id="edit-role"
@@ -1595,7 +1616,7 @@
 								for="edit-company"
 								class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2"
 							>
-								Company
+								{$_('main.company', { default: 'Company' })}
 							</label>
 							<input
 								id="edit-company"
@@ -1611,7 +1632,9 @@
 						<summary
 							class="flex justify-between items-center p-4 cursor-pointer bg-white hover:bg-[#F8FAFC] transition-colors focus:outline-none"
 						>
-							<span class="text-sm font-semibold text-[#334155]">Full Job Description</span>
+							<span class="text-sm font-semibold text-[#334155]"
+								>{$_('main.full_job_desc', { default: 'Full Job Description' })}</span
+							>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								class="h-5 w-5 transition-transform duration-200 group-open:rotate-180"
@@ -1642,7 +1665,7 @@
 								class="flex justify-between items-center p-4 cursor-pointer hover:bg-[#F8FAFC] transition-colors focus:outline-none list-none"
 							>
 								<span class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
-									Key Requirements Detected
+									{$_('main.key_requirements', { default: 'Key Requirements Detected' })}
 								</span>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -1692,7 +1715,7 @@
 						class="btn btn-secondary sm:flex-1 py-4"
 						disabled={isGenerating}
 					>
-						Back
+						{$_('main.back', { default: 'Back' })}
 					</button>
 					<button
 						on:click={() => (coverLetter ? step.set(3) : handleGenerateCoverLetter())}
@@ -1738,7 +1761,7 @@
 									d="M13 10V3L4 14h7v7l9-11h-7z"
 								/>
 							</svg>
-							Generate Cover Letter
+							{$_('main.generate_btn', { default: 'Generate Cover Letter' })}
 						{/if}
 					</button>
 				</div>
@@ -1757,7 +1780,7 @@
 								></span>
 								<span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
 							</span>
-							AI Engine Progression
+							{$_('main.ai_engine_progression', { default: 'AI Engine Progression' })}
 						</h3>
 						<div class="space-y-3">
 							{#each generationProgress as progressItem, i}
@@ -1806,9 +1829,13 @@
 			<div class="card relative">
 				<div class="flex justify-between items-end mb-8 border-b border-[#E2E8F0] pb-6">
 					<div>
-						<h2 class="text-2xl font-bold text-[#0F172A] mb-1">Your Cover Letter</h2>
+						<h2 class="text-2xl font-bold text-[#0F172A] mb-1">
+							{$_('main.your_cover_letter', { default: 'Your Cover Letter' })}
+						</h2>
 						<p class="text-[#334155] text-sm">
-							Review, edit, and download your personalized draft.
+							{$_('main.review_edit_download', {
+								default: 'Review, edit, and download your personalized draft.'
+							})}
 						</p>
 					</div>
 

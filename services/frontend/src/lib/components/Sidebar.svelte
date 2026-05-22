@@ -108,7 +108,7 @@
 			<span
 				class="absolute left-full ml-4 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none"
 			>
-				Applications
+				{$_('nav.applications', { default: 'Applications' })}
 			</span>
 		</a>
 
@@ -143,7 +143,7 @@
 			<span
 				class="absolute left-full ml-4 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none"
 			>
-				CV Refresh
+				{$_('nav.cv_refresh', { default: 'CV Refresh' })}
 			</span>
 		</a>
 
@@ -186,7 +186,7 @@
 			<span
 				class="absolute left-full ml-4 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none"
 			>
-				Profile
+				{$_('nav.profile', { default: 'Profile' })}
 			</span>
 		</a>
 		<!-- Why use this? -->
@@ -220,7 +220,7 @@
 			<span
 				class="absolute left-full ml-4 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none"
 			>
-				Why use this?
+				{$_('nav.why', { default: 'Why use this?' })}
 			</span>
 		</a>
 
@@ -256,7 +256,7 @@
 				<span
 					class="absolute left-full ml-4 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none"
 				>
-					Admin
+					{$_('nav.admin', { default: 'Admin' })}
 				</span>
 			</a>
 		{/if}
@@ -286,7 +286,7 @@
 		<span
 			class="absolute left-full ml-4 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none"
 		>
-			Logout
+			{$_('nav.logout', { default: 'Logout' })}
 		</span>
 	</button>
 </aside>
@@ -319,7 +319,9 @@
 					d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
 				/>
 			</svg>
-			<span class="text-[10px] font-medium">Applications</span>
+			<span class="text-[10px] font-medium"
+				>{$_('nav.applications', { default: 'Applications' })}</span
+			>
 		</a>
 
 		<!-- CV Refresh -->
@@ -345,7 +347,7 @@
 					d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
 				/>
 			</svg>
-			<span class="text-[10px] font-medium">CV Refresh</span>
+			<span class="text-[10px] font-medium">{$_('nav.cv_refresh', { default: 'CV Refresh' })}</span>
 		</a>
 
 		<!-- Profile -->
@@ -379,7 +381,7 @@
 					/>
 				</svg>
 			{/if}
-			<span class="text-[10px] font-medium">Profile</span>
+			<span class="text-[10px] font-medium">{$_('nav.profile', { default: 'Profile' })}</span>
 		</a>
 
 		<!-- Why -->
@@ -405,7 +407,7 @@
 					d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
 				/>
 			</svg>
-			<span class="text-[10px] font-medium">Why</span>
+			<span class="text-[10px] font-medium">{$_('nav.why', { default: 'Why' })}</span>
 		</a>
 
 		<!-- Admin (Superuser only) -->
@@ -432,7 +434,7 @@
 						d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
 					/>
 				</svg>
-				<span class="text-[10px] font-medium">Admin</span>
+				<span class="text-[10px] font-medium">{$_('nav.admin', { default: 'Admin' })}</span>
 			</a>
 		{/if}
 
@@ -455,7 +457,7 @@
 					d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
 				/>
 			</svg>
-			<span class="text-[10px] font-medium">Logout</span>
+			<span class="text-[10px] font-medium">{$_('nav.logout', { default: 'Logout' })}</span>
 		</button>
 	</div>
 </nav>

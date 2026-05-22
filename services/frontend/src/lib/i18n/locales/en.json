@@ -1,7 +1,12 @@
 {
 	"nav": {
 		"dashboard": "Dashboard",
-		"profile": "Profile"
+		"profile": "Profile",
+		"applications": "Applications",
+		"cv_refresh": "CV Refresh",
+		"why": "Why use this?",
+		"admin": "Admin",
+		"logout": "Logout"
 	},
 	"lang": {
 		"title": "Language",

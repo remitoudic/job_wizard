@@ -1,7 +1,12 @@
 {
 	"nav": {
 		"dashboard": "Tableau de bord",
-		"profile": "Profil"
+		"profile": "Profil",
+		"applications": "Candidatures",
+		"cv_refresh": "Actualiser le CV",
+		"why": "Pourquoi l'utiliser ?",
+		"admin": "Admin",
+		"logout": "Déconnexion"
 	},
 	"lang": {
 		"title": "Langue",
@@ -23,5 +28,36 @@
 		"alternative_ready": "Brouillon alternatif terminé.",
 		"completed": "Génération terminée !",
 		"error": "Une erreur s'est produite."
+	},
+	"main": {
+		"step_details": "Détails",
+		"step_review": "Vérification",
+		"step_result": "Résultat",
+		"get_started": "Commencer",
+		"enter_manually": "Saisir manuellement",
+		"use_job_url": "Utiliser l'URL",
+		"job_title": "Titre du poste",
+		"company_name": "Nom de l'entreprise",
+		"job_description": "Description du poste",
+		"personalize_letter": "Personnalisez votre lettre",
+		"cover_letter_language": "Langue de la lettre",
+		"cover_letter_language_desc": "Choisissez la langue pour la lettre de motivation générée.",
+		"custom_guidance": "Instructions personnalisées",
+		"custom_guidance_desc": "Ajoutez des instructions spécifiques pour l'IA (ex: \"Mettez en avant mon leadership\").",
+		"upload_info": "Informations supplémentaires",
+		"upload_info_desc": "Téléchargez des informations sur vous pour personnaliser la lettre (par exemple, votre CV).",
+		"analyzing_position": "Analyse du poste...",
+		"next_step": "Étape suivante",
+		"review_position": "Vérifier le poste",
+		"verify_details": "Vérifiez les détails avant de générer votre lettre.",
+		"role": "Rôle",
+		"company": "Entreprise",
+		"full_job_desc": "Description complète du poste",
+		"key_requirements": "Exigences clés détectées",
+		"back": "Retour",
+		"generate_btn": "Générer la lettre",
+		"ai_engine_progression": "Progression de l'IA",
+		"your_cover_letter": "Votre lettre de motivation",
+		"review_edit_download": "Révisez, modifiez et téléchargez votre brouillon personnalisé."
 	}
 }
