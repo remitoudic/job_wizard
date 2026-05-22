@@ -16,16 +16,23 @@ has access to it, and what alternatives are available (like 'mistralai/mistral-l
 import os
 import httpx
 
-NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
-if not NVIDIA_API_KEY:
-    with open(".env/.env.production") as f:
-        for line in f:
-            if line.startswith("NVIDIA_API_KEY="):
-                NVIDIA_API_KEY = line.strip().split("=")[1]
-                break
+if __name__ == "__main__":
+    NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
+    if not NVIDIA_API_KEY:
+        try:
+            with open("../../.env/.env") as f:
+                for line in f:
+                    if line.startswith("NVIDIA_API_KEY="):
+                        NVIDIA_API_KEY = line.strip().split("=")[1]
+                        break
+        except FileNotFoundError:
+            pass
 
-headers = {"Authorization": f"Bearer {NVIDIA_API_KEY}"}
-response = httpx.get("https://integrate.api.nvidia.com/v1/models", headers=headers)
-models = response.json().get("data", [])
-for m in models:
-    print(m["id"])
+    if NVIDIA_API_KEY:
+        headers = {"Authorization": f"Bearer {NVIDIA_API_KEY}"}
+        response = httpx.get("https://integrate.api.nvidia.com/v1/models", headers=headers)
+        models = response.json().get("data", [])
+        for m in models:
+            print(m["id"])
+    else:
+        print("No NVIDIA_API_KEY found")
