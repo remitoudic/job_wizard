@@ -422,10 +422,14 @@ CUSTOM USER GUIDANCE:
 
             # CrewAI Agency participant
             try:
+
                 async def run_crewai_wrapper():
-                    from app.services.cover_letter.crewai_workflow import run_crewai_generation
+                    from app.services.cover_letter.crewai_workflow import (
+                        run_crewai_generation,
+                    )
                     import asyncio
-                    with logfire.span("Agent Generation: CrewAI") as agent_span:
+
+                    with logfire.span("Agent Generation: CrewAI"):
                         text = await asyncio.to_thread(
                             run_crewai_generation,
                             job_description,
@@ -435,13 +439,16 @@ CUSTOM USER GUIDANCE:
                             user_name,
                             user_skills,
                             context_text,
-                            language
+                            language,
                         )
-                        return {"output": text, "source": "CrewAI Agency", "usage": None}
+                        return {
+                            "output": text,
+                            "source": "CrewAI Agency",
+                            "usage": None,
+                        }
 
                 crewai_task = asyncio.create_task(
-                    run_crewai_wrapper(),
-                    name="CrewAI Agency"
+                    run_crewai_wrapper(), name="CrewAI Agency"
                 )
                 task_start_times[id(crewai_task)] = time.perf_counter()
                 tasks.append(crewai_task)

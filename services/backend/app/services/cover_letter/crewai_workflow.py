@@ -28,8 +28,9 @@ logger = logging.getLogger(__name__)
 # Provider Compatibility Hooks
 # ==============================================================================
 # Some remote LLM providers (like Groq) inject custom fields into their OpenAI-compatible
-# API responses. Langchain strict-parses these responses. 
+# API responses. Langchain strict-parses these responses.
 # The hooks below strip out these extra fields (e.g. `service_tier`) before Langchain sees them.
+
 
 async def strip_service_tier_hook_async(response: httpx.Response):
     """Async hook to strip 'service_tier' from Groq responses."""
@@ -44,6 +45,7 @@ async def strip_service_tier_hook_async(response: httpx.Response):
         except Exception:
             pass
 
+
 def strip_service_tier_hook_sync(response: httpx.Response):
     """Sync hook to strip 'service_tier' from Groq responses."""
     if response.status_code == 200:
@@ -57,14 +59,16 @@ def strip_service_tier_hook_sync(response: httpx.Response):
         except Exception:
             pass
 
+
 # ==============================================================================
 # LLM Initialization
 # ==============================================================================
 
+
 def get_llm_for_agent(temperature: float) -> ChatOpenAI:
     """
     Constructs the LangChain LLM instance dynamically.
-    
+
     Why dynamic?
     Instead of hardcoding OpenAI, we fetch the active provider config (Groq, OpenRouter, etc.)
     from our `llm_provider_service`. This allows the CrewAI agents to smoothly failover
@@ -74,15 +78,13 @@ def get_llm_for_agent(temperature: float) -> ChatOpenAI:
         temperature (float): The creativity setting. 0.1 for analytical, 0.7 for creative.
     """
     config = llm_provider_service.get_provider_config()
-    
+
     # Grab the primary model defined in the active provider's config
     model_name = config.get("model_1", "llama3-8b-8192")
-    
-    # Initialize the HTTP clients with our Groq-compatibility hooks
-    client = httpx.Client(event_hooks={"response": [strip_service_tier_hook_sync]}, timeout=120.0)
-    async_client = httpx.AsyncClient(event_hooks={"response": [strip_service_tier_hook_async]}, timeout=120.0)
-    
-    # We omit `max_tokens` here because some LLM providers (like NVIDIA NIM) throw errors 
+
+    # Initialize the HTTP clients with our Groq-compatibility hooks (removed since unused)
+
+    # We omit `max_tokens` here because some LLM providers (like NVIDIA NIM) throw errors
     # if `max_completion_tokens` is provided in an incompatible format.
     return ChatOpenAI(
         model=model_name,
@@ -91,9 +93,11 @@ def get_llm_for_agent(temperature: float) -> ChatOpenAI:
         temperature=temperature,
     )
 
+
 # ==============================================================================
 # Core Workflow Execution
 # ==============================================================================
+
 
 def run_crewai_generation(
     job_description: str,
@@ -103,18 +107,18 @@ def run_crewai_generation(
     user_name: str = "",
     user_skills: str = "",
     context_text: Optional[str] = None,
-    language: str = "english"
+    language: str = "english",
 ) -> str:
     """
     Kicks off the Sequential CrewAI process to generate a cover letter.
-    
-    This function initializes three distinct agents with varying "temperatures" 
+
+    This function initializes three distinct agents with varying "temperatures"
     (creativity levels) to simulate a real-world writing pipeline.
     """
     logger.info(f"Starting CrewAI generation for {company} - {job_title}")
-    
+
     req_list = ", ".join(requirements) if requirements else "See description"
-    
+
     # ---------------------------------------------------------
     # AGENT 1: The Profile Analyst
     # Temperature: 0.1 (Very low creativity, high precision)
@@ -126,9 +130,9 @@ def run_crewai_generation(
         backstory="A ruthless tech recruiter who knows exactly what hiring managers look for. You only care about cold, hard facts and perfect alignment between a candidate's history and the job's needs.",
         verbose=True,
         allow_delegation=False,
-        llm=get_llm_for_agent(temperature=0.1)
+        llm=get_llm_for_agent(temperature=0.1),
     )
-    
+
     # ---------------------------------------------------------
     # AGENT 2: The Copywriter
     # Temperature: 0.7 (High creativity, persuasive)
@@ -140,9 +144,9 @@ def run_crewai_generation(
         backstory="An expert career coach and persuasive storyteller who writes engaging, human copy. You focus on enthusiasm and showing how the candidate's past results will solve the hiring company's future problems.",
         verbose=True,
         allow_delegation=False,
-        llm=get_llm_for_agent(temperature=0.7)
+        llm=get_llm_for_agent(temperature=0.7),
     )
-    
+
     # ---------------------------------------------------------
     # AGENT 3: The Editor
     # Temperature: 0.3 (Low creativity, strict formatting)
@@ -154,14 +158,14 @@ def run_crewai_generation(
         backstory="A strict copy editor who hates fluff, buzzwords, and overly formal corporate speak. You cut common AI clichés ('In today's fast-paced world', 'delve', 'testament to'), tighten prose, and format perfectly.",
         verbose=True,
         allow_delegation=False,
-        llm=get_llm_for_agent(temperature=0.3)
+        llm=get_llm_for_agent(temperature=0.3),
     )
-    
+
     # ---------------------------------------------------------
     # TASK DEFINITIONS
     # The output of one task becomes the context for the next in a sequential process.
     # ---------------------------------------------------------
-    
+
     # Task 1: Strategy (Handled by Analyst)
     strategy_task = Task(
         description=f"""
@@ -176,12 +180,12 @@ def run_crewai_generation(
         Job Requirements: {req_list}
         Job Description: {job_description}
         Candidate Skills: {user_skills}
-        Candidate Background: {context_text or 'No detailed background provided.'}
+        Candidate Background: {context_text or "No detailed background provided."}
         """,
         expected_output="A structured brief detailing the 3 strongest overlaps, a hook, and skills to downplay.",
-        agent=analyst
+        agent=analyst,
     )
-    
+
     # Task 2: Drafting (Handled by Copywriter)
     drafting_task = Task(
         description=f"""
@@ -191,12 +195,12 @@ def run_crewai_generation(
         The letter should be written in {language}.
         Target Company: {company}
         Target Role: {job_title}
-        Candidate Name: {user_name if user_name else '[Your Name]'}
+        Candidate Name: {user_name if user_name else "[Your Name]"}
         """,
         expected_output="A full draft of a cover letter.",
-        agent=copywriter
+        agent=copywriter,
     )
-    
+
     # Task 3: Polish (Handled by Editor)
     polish_task = Task(
         description=f"""
@@ -209,24 +213,23 @@ def run_crewai_generation(
         6. Do NOT output anything other than the final cover letter text.
         """,
         expected_output="The final, polished cover letter ready to be sent.",
-        agent=editor
+        agent=editor,
     )
-    
+
     # ---------------------------------------------------------
     # CREW ASSEMBLY & EXECUTION
     # ---------------------------------------------------------
-    
+
     cover_letter_crew = Crew(
         agents=[analyst, copywriter, editor],
         tasks=[strategy_task, drafting_task, polish_task],
         process=Process.sequential,  # Tasks execute in exact order
-        verbose=True
+        verbose=True,
     )
-    
-    # Kickoff is synchronous. In our llm_service.py, we wrap this in `asyncio.to_thread` 
+
+    # Kickoff is synchronous. In our llm_service.py, we wrap this in `asyncio.to_thread`
     # to ensure it doesn't block the main Temporal.io event loop.
     result = cover_letter_crew.kickoff()
-    
+
     logger.info("CrewAI generation completed.")
     return str(result)
-

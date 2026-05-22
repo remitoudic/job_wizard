@@ -9,21 +9,28 @@ import asyncio
 from unittest.mock import patch, MagicMock, AsyncMock
 from app.services.cover_letter.llm_service import LLMService
 
+
 @pytest.mark.asyncio
 async def test_llm_service_spawns_crewai_task():
     """
     Test that the LLMService spawns the CrewAI background task
     and processes its result alongside the standard LLM race.
     """
-    with patch("app.services.cover_letter.llm_service.create_writing_agent") as mock_create_agent, \
-         patch("app.services.cover_letter.crewai_workflow.run_crewai_generation") as mock_run_crewai:
-         
+    with (
+        patch(
+            "app.services.cover_letter.llm_service.create_writing_agent"
+        ) as mock_create_agent,
+        patch(
+            "app.services.cover_letter.crewai_workflow.run_crewai_generation"
+        ) as mock_run_crewai,
+    ):
         # Mock the CrewAI generation to return a specific string after a small delay
         def mock_crewai_sync(*args, **kwargs):
             import time
+
             time.sleep(0.1)
             return "CrewAI Final Letter"
-            
+
         mock_run_crewai.side_effect = mock_crewai_sync
 
         service = LLMService()
@@ -39,10 +46,11 @@ async def test_llm_service_spawns_crewai_task():
 
         # Mock Remote Agents (they will be slower)
         remote_mock = MagicMock()
+
         async def succeed_slow(*args, **kwargs):
             await asyncio.sleep(0.2)
             return MagicMock(output="Remote Result")
-        
+
         remote_mock.run = AsyncMock(side_effect=succeed_slow)
         remote_mock.get_name.return_value = "Remote"
         mock_create_agent.return_value = remote_mock
@@ -75,27 +83,29 @@ async def test_llm_service_spawns_crewai_task():
 
         # The local agent should win because it is the fastest
         assert "Local Result" in winner_text
-        
+
         # Give the background tasks time to finish (Remote=0.2s, CrewAI=0.1s)
         await asyncio.sleep(0.3)
-        
+
         # Verify run_crewai_generation was called
         mock_run_crewai.assert_called_once()
-        
+
         # Verify the CrewAI result is stored as an alternative
         state = service.get_alternative(alt_id)
         assert state is not None
         assert state["status"] == "completed"
-        
+
         alternatives = state.get("alternatives", [])
-        
+
         # We should have at least the CrewAI alternative and the remote alternative
         assert len(alternatives) >= 1
-        
+
         # Check if CrewAI Agency is in the sources
         sources = [alt["source"] for alt in alternatives]
         assert "CrewAI Agency" in sources
-        
+
         # Check if the text matches
-        crewai_alt = next(alt for alt in alternatives if alt["source"] == "CrewAI Agency")
+        crewai_alt = next(
+            alt for alt in alternatives if alt["source"] == "CrewAI Agency"
+        )
         assert crewai_alt["text"] == "CrewAI Final Letter"
