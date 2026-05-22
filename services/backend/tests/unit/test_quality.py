@@ -3,7 +3,7 @@ import os
 import json
 import httpx
 from pydantic_ai.providers.openai import OpenAIProvider
-from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai import Agent
 
 # Configuration
@@ -101,7 +101,7 @@ async def run_test(name, prompt):
     provider = OpenAIProvider(
         base_url=BASE_URL, api_key=API_KEY, http_client=http_client
     )
-    model = OpenAIChatModel(model_name=MODEL_NAME, provider=provider)
+    model = OpenAIModel(model_name=MODEL_NAME, provider=provider)
     agent = Agent(model, system_prompt=prompt)
 
     try:
