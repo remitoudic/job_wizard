@@ -1,12 +1,63 @@
 from fastapi.testclient import TestClient
 import pytest
 from app.main import app
-from sqlmodel import Session, select
-from database_pkg.models import Application, JobDescription
+from sqlmodel import Session, select, create_engine, SQLModel
+from sqlalchemy.pool import StaticPool
+from database_pkg.models import Application, JobDescription, User
+from app.core.db import get_session
+from app.core.security import create_access_token
 
-@pytest.fixture(scope="module")
-def client() -> TestClient:
-    return TestClient(app)
+
+@pytest.fixture(name="test_db")
+def test_db_fixture():
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    SQLModel.metadata.create_all(engine)
+    return engine
+
+
+@pytest.fixture(name="session")
+def session_fixture(test_db):
+    with Session(test_db) as session:
+        yield session
+
+
+@pytest.fixture(name="test_user")
+def test_user_fixture(session: Session):
+    from app.core.security import get_password_hash
+
+    user = User(
+        email="testuser@example.com",
+        hashed_password=get_password_hash("testpass123"),
+        first_name="Test",
+        surname="User",
+        username="testuser",
+        is_superuser=False,
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+
+@pytest.fixture(name="current_user_token_headers")
+def auth_headers_fixture(test_user: User):
+    access_token = create_access_token(subject=test_user.email)
+    return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture(name="client")
+def client_fixture(session: Session):
+    def override_get_session():
+        yield session
+
+    app.dependency_overrides[get_session] = override_get_session
+    client = TestClient(app)
+    yield client
+    app.dependency_overrides.clear()
 
 
 def test_update_application_success(
