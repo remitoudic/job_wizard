@@ -65,9 +65,9 @@ def test_resolver_ttl_is_set(nginx_conf_text):
     An absent TTL defaults to the DNS response TTL (often 0), which may
     cause excessive DNS lookups or no re-resolution at all.
     """
-    assert re.search(
-        r"resolver\s+127\.0\.0\.11\s+valid=\d+s", nginx_conf_text
-    ), "resolver directive must include a 'valid=<seconds>s' TTL, e.g. 'valid=30s'."
+    assert re.search(r"resolver\s+127\.0\.0\.11\s+valid=\d+s", nginx_conf_text), (
+        "resolver directive must include a 'valid=<seconds>s' TTL, e.g. 'valid=30s'."
+    )
 
 
 # ── Static upstream blocks ────────────────────────────────────────────────────
@@ -139,9 +139,9 @@ def test_backend_variable_uses_port(nginx_conf_text):
         "Backend proxy variables must explicitly include the port."
     )
     for port in backend_sets:
-        assert (
-            port == "8000"
-        ), f"Backend set variable uses unexpected port {port} (expected 8000)."
+        assert port == "8000", (
+            f"Backend set variable uses unexpected port {port} (expected 8000)."
+        )
 
 
 def test_frontend_variable_uses_port(nginx_conf_text):
@@ -154,9 +154,9 @@ def test_frontend_variable_uses_port(nginx_conf_text):
         "Frontend proxy variables must explicitly include the port."
     )
     for port in frontend_sets:
-        assert (
-            port == "3000"
-        ), f"Frontend set variable uses unexpected port {port} (expected 3000)."
+        assert port == "3000", (
+            f"Frontend set variable uses unexpected port {port} (expected 3000)."
+        )
 
 
 # ── Timeouts ─────────────────────────────────────────────────────────────────

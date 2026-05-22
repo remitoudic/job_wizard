@@ -22,14 +22,14 @@ jobs:
           node-version: '20'
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: '1.1.43'
+          bun-version: 'latest'
       - name: Install dependencies
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           version: "0.5.x"
       - name: Install pre-commit
-        run: uv pip install pre-commit --system
+        run: uv tool install pre-commit
       - name: Install frontend dependencies
         run: |
           cd services/frontend
@@ -82,7 +82,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: '1.1.43'
+          bun-version: 'latest'
       - name: Install dependencies
         run: |
           cd services/frontend

@@ -32,12 +32,12 @@ def test_linkedin_parsing_accuracy():
     expected_title = "Backend Developer (Remote from Germany)"
 
     # Assertions
-    assert (
-        extracted_data["title"] == expected_title
-    ), f"Expected '{expected_title}', got '{extracted_data['title']}'"
-    assert (
-        extracted_data["company"] == "Jobgether"
-    ), f"Expected 'Jobgether', got '{extracted_data['company']}'"
+    assert extracted_data["title"] == expected_title, (
+        f"Expected '{expected_title}', got '{extracted_data['title']}'"
+    )
+    assert extracted_data["company"] == "Jobgether", (
+        f"Expected 'Jobgether', got '{extracted_data['company']}'"
+    )
 
     # Calculate Similarity for Description
     # Normalize whitespace for fair comparison
@@ -103,9 +103,9 @@ We appreciate your interest and wish you the best!"""
     print(f"Similarity Score: {ratio:.4f}")
 
     # User asked for 80%
-    assert (
-        ratio > 0.80
-    ), f"Similarity {ratio:.2f} is below 0.80 threshold. Extracted:\n{extracted_data['description']}"
+    assert ratio > 0.80, (
+        f"Similarity {ratio:.2f} is below 0.80 threshold. Extracted:\n{extracted_data['description']}"
+    )
 
     # requirements check
     # LinkedIn parser currently returns empty list for requirements due to unstructured format

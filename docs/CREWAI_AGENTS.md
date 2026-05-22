@@ -44,7 +44,7 @@ The process runs sequentially (`Process.sequential`). The output of one task dir
 
 ## 🔧 LLM Configuration & Resiliency
 
-Instead of hardcoding a single provider like OpenAI, our CrewAI implementation dynamically fetches its LLM configuration from the `llm_provider_service`. 
+Instead of hardcoding a single provider like OpenAI, our CrewAI implementation dynamically fetches its LLM configuration from the `llm_provider_service`.
 
 - **Dynamic Providers:** Agents can seamlessly use Groq, OpenRouter, OpenAI, or local Ollama instances depending on the active configuration.
 - **Resiliency:** If a provider encounters rate limits, the system can fail over to a different model, ensuring the CrewAI pipeline remains highly reliable.
