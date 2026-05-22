@@ -1095,8 +1095,10 @@
 		<div class="text-center mb-16 px-4">
 			<h1 class="text-5xl font-extrabold text-[#0F172A] tracking-tight mb-4">Vite a Job</h1>
 			<p class="text-lg text-[#334155] max-w-lg mx-auto leading-relaxed">
-				Craft professional, personalized cover letters in seconds. Just paste a LinkedIn job URL and
-				let AI do the heavy lifting.
+				{$_('main.hero_subtitle', {
+					default:
+						'Craft professional, personalized cover letters in seconds. Just paste a LinkedIn job URL and let AI do the heavy lifting.'
+				})}
 			</p>
 		</div>
 
@@ -1227,9 +1229,13 @@
 					<div class="flex items-center justify-between">
 						<p class="text-[#334155] text-sm">
 							{#if isManualInput}
-								Enter the job details manually below.
+								{$_('main.enter_details_manually', {
+									default: 'Enter the job details manually below.'
+								})}
 							{:else}
-								Paste the link to the job posting below.
+								{$_('main.paste_link_below', {
+									default: 'Paste the link to the job posting below.'
+								})}
 							{/if}
 						</p>
 						{#if !isManualInput}
@@ -1372,7 +1378,7 @@
 								>
 									<div>
 										<div class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1">
-											Parsed Position
+											{$_('main.parsed_position', { default: 'Parsed Position' })}
 										</div>
 										<div class="font-semibold text-[#0F172A]">{jobData.title}</div>
 										<div class="text-sm text-[#334155]">{jobData.company}</div>
