@@ -48,8 +48,9 @@
 
 	<!-- Schema.org JSON-LD -->
 	{#if schema}
+		<!-- prettier-ignore -->
 		<script type="application/ld+json">
-            {JSON.stringify(schema)}
+			{@html JSON.stringify(schema)}
 		</script>
 	{/if}
 </svelte:head>

@@ -56,9 +56,9 @@ def test_pdf_generation_and_download_flow():
     assert url.startswith("/api/download/")
 
     response_static = client.get(url)
-    assert response_static.status_code == 200, (
-        "Failed to access file via static /uploads mount"
-    )
+    assert (
+        response_static.status_code == 200
+    ), "Failed to access file via static /uploads mount"
     assert response_static.headers["content-type"] == "application/pdf"
     assert len(response_static.content) > 0
 
@@ -69,9 +69,9 @@ def test_pdf_generation_and_download_flow():
     download_api_url = f"/api/download/{filename}"
     response_api = client.get(download_api_url)
 
-    assert response_api.status_code == 200, (
-        "Failed to access file via /api/download endpoint"
-    )
+    assert (
+        response_api.status_code == 200
+    ), "Failed to access file via /api/download endpoint"
     assert response_api.headers["content-type"] == "application/pdf"
     # Content should match
     assert response_api.content == response_static.content
