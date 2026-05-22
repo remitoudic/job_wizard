@@ -530,6 +530,8 @@
 						if (firstName || surname) {
 							updateNameInCoverLetter();
 						}
+
+						step.set(3);
 					}
 				}
 

@@ -46,7 +46,11 @@ When asked to fix the CI:
 
 4. **Verify Locally (Tests and Linting)**
    - Re-run the simulated CI test command (e.g., `CI=true pytest`) to ensure all tests pass and skipped tests are correctly omitted.
-   - Run the linting and formatting checks locally (e.g., `uvx pre-commit run --all-files`). If pre-commit modifies any files (like `ruff-format` or `prettier`), ensure those formatting fixes are added to the staging area before committing.
+   - Run the linting and formatting checks locally exactly as CI runs them: `uvx pre-commit run --all-files`.
+   - **Crucial Formatting Gotchas**:
+     - *Version Mismatches*: Always use `pre-commit run --all-files` rather than standalone commands (like `ruff format .`) so you use the exact linter versions defined in `.pre-commit-config.yaml`. Otherwise, slight formatting differences between versions will cause the CI to fail.
+     - *Prettier Crashes in Svelte*: If Prettier crashes on a Svelte file (e.g., `SyntaxError`), check for `<script type="application/ld+json">` tags. Svelte interpolations like `{JSON.stringify(schema)}` are invalid JS and will crash Prettier. Add `<!-- prettier-ignore -->` immediately above the script tag to fix this.
+   - If `pre-commit` modifies any files (like `ruff-format` or `prettier`), ensure those formatting fixes are added to the staging area before committing.
 
 5. **Commit and Push**
    - Commit the fixes with a descriptive message (e.g., `fix: resolve integration tests for CI`).
