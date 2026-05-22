@@ -82,14 +82,19 @@ def get_llm_for_agent(temperature: float) -> ChatOpenAI:
     # Grab the primary model defined in the active provider's config
     model_name = config.get("model_1", "llama3-8b-8192")
 
-    # Initialize the HTTP clients with our Groq-compatibility hooks (removed since unused)
+    # LangChain ChatOpenAI requires a non-empty api_key during instantiation.
+    # If it's missing in local dev, we provide a dummy key to pass validation.
+    api_key = config.get("api_key")
+    if not api_key:
+        api_key = "dummy-key"
 
     # We omit `max_tokens` here because some LLM providers (like NVIDIA NIM) throw errors
     # if `max_completion_tokens` is provided in an incompatible format.
     return ChatOpenAI(
         model=model_name,
-        api_key=config["api_key"],
-        base_url=config["base_url"],
+        api_key=api_key,
+        openai_api_key=api_key,  # For backward compatibility with older LangChain/Pydantic validation
+        base_url=config.get("base_url"),
         temperature=temperature,
     )
 
