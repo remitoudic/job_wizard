@@ -1820,7 +1820,7 @@
 											? 'font-medium text-[#0F172A]'
 											: 'opacity-60'}
 									>
-										{$t(`progress.${progressItem.status}`, { default: progressItem.message })}
+										{$_(`progress.${progressItem.status}`, { default: progressItem.message })}
 									</span>
 								</div>
 							{/each}

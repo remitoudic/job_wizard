@@ -47,8 +47,12 @@
 
 <div class="max-w-md mx-auto mt-20 p-10 card">
 	<div class="text-center mb-8">
-		<h1 class="text-3xl font-bold text-[#0F172A] mb-2">{$_('login.welcome_back', { default: 'Welcome Back' })}</h1>
-		<p class="text-[#334155] text-sm">{$_('login.subtitle', { default: 'Log in to manage your job applications' })}</p>
+		<h1 class="text-3xl font-bold text-[#0F172A] mb-2">
+			{$_('login.welcome_back', { default: 'Welcome Back' })}
+		</h1>
+		<p class="text-[#334155] text-sm">
+			{$_('login.subtitle', { default: 'Log in to manage your job applications' })}
+		</p>
 	</div>
 
 	{#if error}
@@ -89,7 +93,9 @@
 		</div>
 
 		<div>
-			<label for="password" class="block text-sm font-semibold text-[#334155] mb-2">{$_('login.password', { default: 'Password' })}</label>
+			<label for="password" class="block text-sm font-semibold text-[#334155] mb-2"
+				>{$_('login.password', { default: 'Password' })}</label
+			>
 			<div class="relative">
 				<input
 					id="password"

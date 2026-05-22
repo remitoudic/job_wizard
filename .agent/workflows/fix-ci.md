@@ -47,10 +47,12 @@ When asked to fix the CI:
 4. **Verify Locally (Tests and Linting)**
    - Re-run the simulated CI test command (e.g., `CI=true pytest`) to ensure all tests pass and skipped tests are correctly omitted.
    - Run the linting and formatting checks locally exactly as CI runs them: `uvx pre-commit run --all-files`.
-   - **Crucial Formatting Gotchas**:
+   - **Crucial Formatting & Typing Gotchas**:
      - *Version Mismatches*: Always use `pre-commit run --all-files` rather than standalone commands (like `ruff format .`) so you use the exact linter versions defined in `.pre-commit-config.yaml`. Otherwise, slight formatting differences between versions will cause the CI to fail.
+     - *Pre-commit File Modifications*: If `pre-commit` modifies any files (like `prettier` formatting Svelte files), it will fail with exit code 1. **In CI, this causes a failure.** You MUST commit the formatting changes that `pre-commit` applied locally before pushing.
      - *Prettier Crashes in Svelte*: If Prettier crashes on a Svelte file (e.g., `SyntaxError`), check for `<script type="application/ld+json">` tags. Svelte interpolations like `{JSON.stringify(schema)}` are invalid JS and will crash Prettier. Add `<!-- prettier-ignore -->` immediately above the script tag to fix this.
-   - If `pre-commit` modifies any files (like `ruff-format` or `prettier`), ensure those formatting fixes are added to the staging area before committing.
+     - *Svelte-Check Type Errors*: Unused props or accessibility warnings won't necessarily fail CI, but **TypeScript type errors** (e.g., mismatching interfaces in `src/lib/api.ts` vs backend schemas) will cause `bun run check` to exit with code 1. Always run `bun run check` locally after modifying data structures or APIs.
+   - Ensure all `pre-commit` formatting fixes are added to the staging area and committed.
 
 5. **Commit and Push**
    - Commit the fixes with a descriptive message (e.g., `fix: resolve integration tests for CI`).

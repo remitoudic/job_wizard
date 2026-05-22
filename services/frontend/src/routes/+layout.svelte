@@ -107,7 +107,9 @@
 								>
 									{$_('register.sign_in', { default: 'Sign in' })}
 								</a>
-								<a href="/register" class="btn btn-primary text-sm py-2 px-5"> {$_('main.get_started', { default: 'Get Started' })} </a>
+								<a href="/register" class="btn btn-primary text-sm py-2 px-5">
+									{$_('main.get_started', { default: 'Get Started' })}
+								</a>
 							</div>
 						{/if}
 					</div>

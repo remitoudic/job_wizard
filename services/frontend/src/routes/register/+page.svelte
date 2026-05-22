@@ -74,8 +74,12 @@
 
 <div class="max-w-md mx-auto mt-20 p-10 card">
 	<div class="text-center mb-8">
-		<h1 class="text-3xl font-bold text-[#0F172A] mb-2">{$_('register.title', { default: 'Create Account' })}</h1>
-		<p class="text-[#334155] text-sm">{$_('register.subtitle', { default: 'Get started with Vite a Job today' })}</p>
+		<h1 class="text-3xl font-bold text-[#0F172A] mb-2">
+			{$_('register.title', { default: 'Create Account' })}
+		</h1>
+		<p class="text-[#334155] text-sm">
+			{$_('register.subtitle', { default: 'Get started with Vite a Job today' })}
+		</p>
 	</div>
 
 	{#if error}
@@ -264,6 +268,8 @@
 
 	<div class="mt-8 pt-6 border-t border-[#E2E8F0] text-center text-sm text-[#334155]">
 		{$_('register.already_have_account', { default: 'Already have an account?' })}
-		<a href="/login" class="text-[#0369A1] font-semibold hover:underline px-1">{$_('register.sign_in', { default: 'Sign in' })}</a>
+		<a href="/login" class="text-[#0369A1] font-semibold hover:underline px-1"
+			>{$_('register.sign_in', { default: 'Sign in' })}</a
+		>
 	</div>
 </div>
