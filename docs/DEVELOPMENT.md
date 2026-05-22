@@ -305,13 +305,36 @@ The project uses [pre-commit](https://pre-commit.com/) to catch issues before th
 
 ### Setup
 
-```bash
-# Install pre-commit (one time only)
-pip install pre-commit
+Choose your package manager:
 
-# Install the git hooks
+```bash
+# With uv (recommended)
+uv tool install pre-commit
+
+# Or with pip
+pip install pre-commit
+```
+
+Then install the hooks into your local git repository:
+
+```bash
 cd job_wizard
 pre-commit install
+```
+
+### Running Manually
+
+To check all files (not just staged ones):
+
+```bash
+pre-commit run --all-files
+```
+
+Run a single hook:
+
+```bash
+pre-commit run ruff --all-files
+pre-commit run svelte-check --all-files
 ```
 
 ### What Gets Checked
