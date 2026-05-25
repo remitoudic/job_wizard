@@ -51,7 +51,7 @@ describe('Cover Letter +page.svelte', () => {
 		});
 
 		// The page component uses $auth natively
-		render(Page, { props: { data: {} } });
+		render(Page, { props: { data: {} } } as any);
 
 		// Progress to Step 2/3: type in URL and click Next
 		const input = screen.getByPlaceholderText(/linkedin\.com\/jobs/i);
@@ -62,7 +62,7 @@ describe('Cover Letter +page.svelte', () => {
 	});
 
 	it('should have a correctly linked upload info file input', async () => {
-		render(Page, { props: { data: {} } });
+		render(Page, { props: { data: {} } } as any);
 
 		// Open the 'Personalize your letter' details section
 		// There are two elements with this text; pick the first one

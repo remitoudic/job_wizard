@@ -17,11 +17,6 @@
 	import { auth } from '../../stores/auth';
 	import type { UserCVRead } from '$lib/api';
 	import { _, locale } from 'svelte-i18n';
-
-	// SvelteKit may pass `data` and `params` to pages — declare to prevent runtime warnings
-	export let data: any = {};
-	export let params: Record<string, string> = {};
-
 	let fileInput: HTMLInputElement;
 	let cvFileInput: HTMLInputElement;
 	let imageToCrop: string | null = null;

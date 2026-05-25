@@ -70,7 +70,7 @@ jobs:
           uv pip install -e ./services/backend[dev] --system
       - name: Run tests
         env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/job_wizard_test
+          DATABASE_URL: postgresql://postgres:password@127.0.0.1:5432/job_wizard_test
         run: |
           cd services/backend
           pytest tests

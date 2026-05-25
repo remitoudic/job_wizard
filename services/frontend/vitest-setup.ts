@@ -1,5 +1,23 @@
 import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
+import { readable, writable } from 'svelte/store';
+
+// Mock svelte-i18n to prevent intl-messageformat ESM resolution issues in jsdom
+vi.mock('svelte-i18n', () => {
+	const locale = writable('en');
+	const _ = readable((key: string, opts?: { default?: string }) => {
+		return opts?.default || key;
+	});
+	const isLoading = readable(false);
+	return {
+		locale,
+		_: _,
+		isLoading,
+		init: vi.fn(),
+		addMessages: vi.fn(),
+		getLocaleFromNavigator: vi.fn()
+	};
+});
 
 // Mock SvelteKit stores/app environment
 vi.mock('$app/environment', () => ({

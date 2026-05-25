@@ -492,7 +492,8 @@
 									</th>
 									<th class="p-4 font-semibold text-slate-600 text-sm">
 										<div class="flex items-center justify-between">
-											<div
+											<button
+												type="button"
 												class="flex items-center gap-1 cursor-pointer hover:text-[#0369A1] transition-colors"
 												on:click={() => handleSort('company')}
 											>
@@ -513,7 +514,7 @@
 														/>
 													</svg>
 												{/if}
-											</div>
+											</button>
 
 											<div class="relative">
 												<button
@@ -539,14 +540,18 @@
 
 												{#if isFilterVisible}
 													<!-- Click outside to close -->
-													<div
-														class="fixed inset-0 z-10"
+													<button
+														type="button"
+														class="fixed inset-0 z-10 cursor-default"
 														on:click={() => (isFilterVisible = false)}
-													></div>
+														aria-label="Close"
+													></button>
 
 													<div
+														role="dialog"
 														class="absolute right-0 mt-2 w-64 bg-white border border-[#E2E8F0] rounded-lg shadow-xl p-3 z-20"
 														on:click|stopPropagation
+														on:keydown|stopPropagation
 													>
 														<div class="flex items-center gap-2 mb-2 justify-between">
 															<span
@@ -977,7 +982,13 @@
 													<h4 class="font-bold text-slate-900 leading-tight">{app.company}</h4>
 													<p class="text-xs text-slate-500 mt-0.5">{formatDate(app.created_at)}</p>
 												</div>
-												<div class="relative group" on:click|stopPropagation>
+												<div
+													role="button"
+													tabindex="0"
+													class="relative group"
+													on:click|stopPropagation
+													on:keydown|stopPropagation
+												>
 													<select
 														class="appearance-none pl-3 pr-8 py-1 rounded-full text-[10px] font-bold uppercase cursor-pointer border-0 outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 transition-all {getStatusColor(
 															app.status

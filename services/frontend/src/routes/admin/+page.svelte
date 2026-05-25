@@ -3,10 +3,6 @@
 	import { goto } from '$app/navigation';
 	import { auth } from '../../stores/auth';
 	import { getUsers, type User } from '$lib/api';
-
-	export let data: any = {};
-	export let params: Record<string, string> = {};
-
 	let users: User[] = [];
 	let error = '';
 	let isLoading = true;

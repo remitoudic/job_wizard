@@ -8,10 +8,6 @@
 	import SEO from '$lib/components/SEO.svelte';
 	import '$lib/i18n';
 	import { isLoading, locale, _ } from 'svelte-i18n';
-
-	export let data: any = {};
-	export let params: Record<string, string> = {};
-
 	onMount(() => {
 		auth.initialize();
 	});
@@ -77,29 +73,7 @@
 
 					<!-- Right Side Menu - Empty for authenticated users, normal for guests -->
 					<div class="flex items-center gap-6">
-						<!-- Language Switcher for guests -->
 						{#if !$auth.isAuthenticated}
-							<div class="flex items-center gap-2 mr-4">
-								<button
-									class="text-xs font-semibold px-2 py-1 rounded {$locale === 'en'
-										? 'bg-[#0F172A] text-white'
-										: 'text-[#64748B] hover:text-[#0F172A]'}"
-									on:click={() => locale.set('en')}>EN</button
-								>
-								<button
-									class="text-xs font-semibold px-2 py-1 rounded {$locale === 'fr'
-										? 'bg-[#0F172A] text-white'
-										: 'text-[#64748B] hover:text-[#0F172A]'}"
-									on:click={() => locale.set('fr')}>FR</button
-								>
-								<button
-									class="text-xs font-semibold px-2 py-1 rounded {$locale === 'de'
-										? 'bg-[#0F172A] text-white'
-										: 'text-[#64748B] hover:text-[#0F172A]'}"
-									on:click={() => locale.set('de')}>DE</button
-								>
-							</div>
-
 							<div class="flex items-center gap-4">
 								<a
 									href="/login"

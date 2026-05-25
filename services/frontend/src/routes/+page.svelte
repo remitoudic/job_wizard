@@ -18,10 +18,6 @@
 	import SEO from '$lib/components/SEO.svelte';
 	import ContextPreview from '$lib/components/ContextPreview.svelte';
 	import { generateCoverLetterFilename } from '$lib/pdfUtils';
-
-	// SvelteKit automatically passes these props - declare them to avoid warnings
-	export let data: any = {};
-
 	let jobUrl = '';
 	let userName = '';
 	let imageFile: File | null = null;
