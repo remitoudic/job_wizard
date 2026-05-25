@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { fade, slide } from 'svelte/transition';
 	import Cropper from 'cropperjs';
 	import {
@@ -285,12 +285,27 @@
 		}
 	});
 
-	async function handleSave() {
+	let saveTimeout: any;
+	let saveStatus: 'saved' | 'saving' | 'error' = 'saved';
+	let lastLanguage = '';
+	let isFirstLoad = true;
+
+	function triggerAutoSave(immediate = false) {
+		saveStatus = 'saving';
+		if (saveTimeout) clearTimeout(saveTimeout);
+
+		if (immediate) {
+			performAutoSave();
+		} else {
+			saveTimeout = setTimeout(performAutoSave, 800);
+		}
+	}
+
+	async function performAutoSave() {
 		if (!user) return;
 		isSaving = true;
-		message = '';
 		error = '';
-
+		message = '';
 		try {
 			const updatedUser = await updateProfile(user);
 			user = updatedUser;
@@ -298,18 +313,120 @@
 			if (user.preferred_language) {
 				locale.set(user.preferred_language);
 			}
-			message = $_('profile.success', { default: 'Profile updated successfully!' });
+			saveStatus = 'saved';
 		} catch (e: any) {
+			saveStatus = 'error';
 			error = e.message || $_('profile.error', { default: 'Failed to update profile' });
 		} finally {
 			isSaving = false;
 		}
 	}
+
+	// Svelte reactive statement to watch user changes
+	$: if (user && !isLoading) {
+		if (isFirstLoad) {
+			lastLanguage = user.preferred_language;
+			isFirstLoad = false;
+		} else {
+			const languageChanged = user.preferred_language !== lastLanguage;
+			if (languageChanged) {
+				lastLanguage = user.preferred_language;
+				triggerAutoSave(true); // immediate
+			} else {
+				triggerAutoSave(false); // debounced
+			}
+		}
+	}
+
+	// Fallback handleSave if form is submitted (e.g. hitting Enter)
+	function handleSave() {
+		triggerAutoSave(true);
+	}
+
+	onDestroy(() => {
+		if (saveTimeout) clearTimeout(saveTimeout);
+	});
 </script>
 
 <div class="max-w-2xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-md border border-gray-100">
 	<div class="flex justify-between items-start mb-6 pb-6 border-b border-gray-100">
-		<h1 class="text-2xl font-bold text-gray-800 mt-2">My Profile</h1>
+		<div class="flex flex-col gap-1 sm:gap-2">
+			<h1 class="text-2xl font-bold text-gray-800">My Profile</h1>
+			{#if !isLoading && user}
+				<div class="transition-all duration-300 flex items-center h-6 mt-1">
+					{#if saveStatus === 'saving'}
+						<div
+							class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-100 shadow-sm"
+							transition:fade={{ duration: 150 }}
+						>
+							<svg
+								class="animate-spin h-3 w-3 text-blue-600"
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+							>
+								<circle
+									class="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									stroke-width="4"
+								></circle>
+								<path
+									class="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+								></path>
+							</svg>
+							Saving...
+						</div>
+					{:else if saveStatus === 'saved'}
+						<div
+							class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm"
+							transition:fade={{ duration: 150 }}
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-3 w-3 text-emerald-500"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2.5"
+									d="M5 13l4 4L19 7"
+								/>
+							</svg>
+							Changes saved
+						</div>
+					{:else if saveStatus === 'error'}
+						<div
+							class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-600 border border-rose-100 shadow-sm"
+							transition:fade={{ duration: 150 }}
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-3 w-3 text-rose-500"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2.5"
+									d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+								/>
+							</svg>
+							Failed to save
+						</div>
+					{/if}
+				</div>
+			{/if}
+		</div>
 
 		{#if !isLoading && user}
 			<button
@@ -1001,13 +1118,6 @@
 			</div>
 
 			<div class="pt-6 border-t border-gray-100 flex flex-col items-end gap-3">
-				<button
-					type="submit"
-					disabled={isSaving}
-					class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
-				>
-					{isSaving ? 'Saving...' : $_('profile.save', { default: 'Save Changes' })}
-				</button>
 				<div
 					class="flex items-start sm:items-center gap-2 text-xs text-slate-400 max-w-sm text-right"
 				>
