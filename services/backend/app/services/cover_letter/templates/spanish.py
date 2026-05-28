@@ -169,14 +169,11 @@ class SpanishTemplate(BaseTemplate):
                         story.append(Paragraph(line.strip(), self.header_style))
             story.append(Spacer(1, 0.4 * inch))
 
-        # 3. Date — right-aligned, Spanish format
-        if custom_date is None:
+        if custom_date is not None:
+            full_date_string = custom_date
+        else:
             now = datetime.now()
             raw_date = now.strftime("%d %B %Y")
-        else:
-            raw_date = custom_date
-
-        if raw_date:
             spanish_date = _format_spanish_date(raw_date)
             # Add city prefix as requested: "Madrid, 12 de abril de 2026"
             # If city is missing, we just use the date.
@@ -184,6 +181,7 @@ class SpanishTemplate(BaseTemplate):
                 f"{address_city}, {spanish_date}" if address_city else spanish_date
             )
 
+        if full_date_string:
             date_style = ParagraphStyle(
                 "SpanishDate",
                 parent=self.body_style,

@@ -38,6 +38,46 @@ def test_french_template_generation(tmp_path):
     assert os.path.getsize(output_path) > 0
 
 
+def test_french_custom_date():
+    from app.services.cover_letter.templates.french import FrenchTemplate
+    from reportlab.platypus import SimpleDocTemplate
+    template = FrenchTemplate()
+    doc = SimpleDocTemplate("dummy.pdf")
+    
+    # 1. Custom date already containing city prefix (should be used as-is)
+    story = []
+    template.generate(
+        doc=doc,
+        story=story,
+        cover_letter="Bonjour",
+        job_title="Ingénieur",
+        company="Tech Co",
+        user_name="Jean",
+        address_city="Paris",
+        custom_date="À Paris, le 28 mai 2026",
+    )
+    
+    date_paras = [p.text for p in story if hasattr(p, "text") and "28 mai" in p.text]
+    assert len(date_paras) == 1
+    assert date_paras[0] == "À Paris, le 28 mai 2026"
+
+    # 2. Custom date is None (should dynamically format current date with city prefix)
+    story2 = []
+    template.generate(
+        doc=doc,
+        story=story2,
+        cover_letter="Bonjour",
+        job_title="Ingénieur",
+        company="Tech Co",
+        user_name="Jean",
+        address_city="Paris",
+        custom_date=None,
+    )
+    
+    date_paras2 = [p.text for p in story2 if hasattr(p, "text") and "À Paris, le" in p.text]
+    assert len(date_paras2) == 1
+
+
 def test_clean_model_output_french():
     # Test with header junk and signature
     text = """

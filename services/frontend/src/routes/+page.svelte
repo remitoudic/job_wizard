@@ -821,7 +821,7 @@
 			company: manualCompany,
 			description: manualDescription,
 			requirements: [],
-			url: jobUrl || `manual-${Date.now()}`
+			url: (jobUrl && jobUrl.startsWith('http')) ? jobUrl : `manual-${Date.now()}`
 		};
 		editableJobTitle = manualTitle;
 		editableCompany = manualCompany;
@@ -852,25 +852,36 @@
 			// Saving application to database (only if logged in)
 			if ($auth.isAuthenticated) {
 				try {
+					const finalJobUrl = (jobData.url && (jobData.url.startsWith('http') || jobData.url.startsWith('manual-'))) 
+						? jobData.url 
+						: ((jobUrl && jobUrl.startsWith('http')) ? jobUrl : `manual-${Date.now()}`);
+
 					await saveApplication({
-						job_url: jobData.url || jobUrl || `manual-${Date.now()}`,
+						job_url: finalJobUrl,
 						job_title: editableJobTitle || jobData.title,
 						job_company: editableCompany || jobData.company,
 						job_description: jobData.full_description || jobData.description, // Use full description if available
-						job_requirements: jobData.requirements,
+						job_requirements: jobData.requirements || [],
 						job_source: jobData.source || 'unknown',
-						generated_letters: allCoverLetters.map((l) => ({
-							model: l.source.includes('GPT') ? 'gpt-4o' : 'llama-3.2-1b', // precise mapping if possible, else approximation
-							letter: l.text,
-							timestamp: new Date().toISOString() // API expects this
-						})),
-						selected_letter_index: currentVersionIndex,
+						generated_letters: allCoverLetters.length > 0 
+							? allCoverLetters.map((l) => ({
+								model: l.source && l.source.includes('GPT') ? 'gpt-4o' : 'llama-3.2-1b',
+								letter: l.text,
+								timestamp: new Date().toISOString() // API expects this
+							}))
+							: [{
+								model: 'gpt-4o',
+								letter: coverLetter,
+								timestamp: new Date().toISOString()
+							}],
+						selected_letter_index: allCoverLetters.length > 0 ? currentVersionIndex : 0,
 						header: header,
 						cover_letter_body: coverLetter
 					});
-				} catch (err) {
+				} catch (err: any) {
 					console.warn('Failed to save application to history:', err);
-					// Continue to PDF generation even if save fails
+					// Surface error cleanly without blocking PDF generation
+					error = `Cover letter PDF generated, but failed to save application to history: ${err.message || err}`;
 				}
 			}
 

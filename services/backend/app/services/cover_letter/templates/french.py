@@ -179,19 +179,17 @@ class FrenchTemplate(BaseTemplate):
                         story.append(Paragraph(line.strip(), self.recipient_style))
             story.append(Spacer(1, 0.4 * inch))
 
-        # 3. Date — right-aligned, French format
-        if custom_date is None:
+        if custom_date is not None:
+            full_date_string = custom_date
+        else:
             now = datetime.now()
             raw_date = now.strftime("%d %B %Y")
-        else:
-            raw_date = custom_date
-
-        if raw_date:
             french_date = _format_french_date(raw_date)
             # Add city if available
             city_prefix = f"À {address_city}, le " if address_city else "Le "
             full_date_string = f"{city_prefix}{french_date}"
 
+        if full_date_string:
             date_style = ParagraphStyle(
                 "FrenchDate",
                 parent=self.body_style,

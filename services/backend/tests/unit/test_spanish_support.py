@@ -81,3 +81,43 @@ def test_placeholder_replacement_spanish():
 
     assert "[Su nombre]" not in replaced
     assert "Juan Pérez" in replaced
+
+
+def test_spanish_custom_date():
+    from app.services.cover_letter.templates.spanish import SpanishTemplate
+    from reportlab.platypus import SimpleDocTemplate
+    template = SpanishTemplate()
+    doc = SimpleDocTemplate("dummy.pdf")
+    
+    # 1. Custom date already containing city prefix (should be used as-is)
+    story = []
+    template.generate(
+        doc=doc,
+        story=story,
+        cover_letter="Hola",
+        job_title="Desarrollador",
+        company="Tech Co",
+        user_name="Juan",
+        address_city="Madrid",
+        custom_date="Madrid, 28 de mayo de 2026",
+    )
+    
+    date_paras = [p.text for p in story if hasattr(p, "text") and "de mayo" in p.text]
+    assert len(date_paras) == 1
+    assert date_paras[0] == "Madrid, 28 de mayo de 2026"
+
+    # 2. Custom date is None (should dynamically format current date with city prefix)
+    story2 = []
+    template.generate(
+        doc=doc,
+        story=story2,
+        cover_letter="Hola",
+        job_title="Desarrollador",
+        company="Tech Co",
+        user_name="Juan",
+        address_city="Madrid",
+        custom_date=None,
+    )
+    
+    date_paras2 = [p.text for p in story2 if hasattr(p, "text") and "Madrid, " in p.text]
+    assert len(date_paras2) == 1
