@@ -66,6 +66,7 @@ jobs:
           version: "0.5.x"
       - name: Install backend dependencies
         run: |
+          uv venv
           uv pip install -e ./services/database
           uv pip install -e "./services/backend[dev]"
       - name: Run tests
