@@ -474,6 +474,31 @@ export async function createApplication(
 	);
 }
 
+export interface DuplicateCheckResponse {
+	is_duplicate: boolean;
+	existing_application: {
+		id: number;
+		job_title: string;
+		company: string;
+		status: string;
+		notes: string | null;
+		cover_letter_body: string;
+		created_at: string;
+	} | null;
+}
+
+export async function checkDuplicateApplication(jobUrl: string): Promise<DuplicateCheckResponse> {
+	const response = await apiFetch(
+		`${API_URL}/api/application/check-duplicate?job_url=${encodeURIComponent(jobUrl)}`,
+		{
+			method: 'GET',
+			headers: getHeaders()
+		}
+	);
+
+	return handleResponse<DuplicateCheckResponse>(response, 'Failed to check for duplicate');
+}
+
 export interface ApplicationStatusHistory {
 	id: number;
 	application_id: number;

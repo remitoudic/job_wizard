@@ -355,6 +355,61 @@ async def get_application_details(
         )
 
 
+@router.get("/application/check-duplicate")
+async def check_duplicate_application(
+    job_url: str,
+    session: SessionDep,
+    current_user: CurrentUser,
+):
+    """
+    Check if the current user already has an application for a given job URL.
+    Requires JWT authentication.
+    """
+    try:
+        statement = (
+            select(Application, DBJobDescription)
+            .join(
+                DBJobDescription,
+                Application.job_description_id == DBJobDescription.id,
+            )
+            .where(
+                Application.user_id == current_user.id,
+                DBJobDescription.url == job_url,
+            )
+        )
+        result = session.exec(statement).first()
+
+        if not result:
+            return {"is_duplicate": False, "existing_application": None}
+
+        app, job_desc = result
+
+        cover_letter_body = None
+        if app.cover_letter_final and "body" in app.cover_letter_final:
+            cover_letter_body = app.cover_letter_final["body"]
+
+        return {
+            "is_duplicate": True,
+            "existing_application": {
+                "id": app.id,
+                "job_title": job_desc.job_title,
+                "company": job_desc.company,
+                "status": app.status.value,
+                "notes": app.notes,
+                "cover_letter_body": cover_letter_body,
+                "created_at": app.created_at.isoformat(),
+            },
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to check duplicate application: {str(e)}",
+        )
+
+
 @router.patch("/application/{application_id}/status")
 async def update_application_status(
     application_id: int,
