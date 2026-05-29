@@ -66,14 +66,15 @@ jobs:
           version: "0.5.x"
       - name: Install backend dependencies
         run: |
-          uv pip install -e ./services/database --system
-          uv pip install -e ./services/backend[dev] --system
+          uv pip install -e ./services/database
+          uv pip install -e "./services/backend[dev]"
       - name: Run tests
         env:
           DATABASE_URL: postgresql://postgres:password@127.0.0.1:5432/job_wizard_test
         run: |
           cd services/backend
-          pytest tests
+          uv run pytest tests
+
 
   frontend-tests:
     name: Frontend Tests
