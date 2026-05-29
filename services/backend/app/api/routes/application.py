@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
+from urllib.parse import urlparse, urlunparse
 
-# Import database models
 from database_pkg.models import (
     Application,
     ApplicationStatus,
@@ -364,8 +364,46 @@ async def check_duplicate_application(
     """
     Check if the current user already has an application for a given job URL.
     Requires JWT authentication.
+
+    Uses normalized URL matching to handle www/non-www, trailing slashes, etc.
     """
     try:
+        # Build normalized URL variants for flexible matching
+        parsed = urlparse(job_url)
+        netloc = parsed.netloc.lower()
+        path = parsed.path.rstrip("/") or "/"
+
+        # Variant 1: Original URL (as-is)
+        # Variant 2: Without www prefix
+        # Variant 3: Without www, without trailing slash
+        normalized_netloc = netloc.removeprefix("www.")
+        normalized_url = urlunparse(
+            (
+                parsed.scheme,
+                normalized_netloc,
+                path,
+                parsed.params,
+                parsed.query,
+                parsed.fragment,
+            )
+        ).rstrip("/")
+
+        # Also try with 'www.' prepended if not present
+        www_url = urlunparse(
+            (
+                parsed.scheme,
+                f"www.{normalized_netloc}",
+                path,
+                parsed.params,
+                parsed.query,
+                parsed.fragment,
+            )
+        ).rstrip("/")
+
+        url_variants = [job_url, normalized_url, www_url]
+        # Deduplicate
+        url_variants = list(dict.fromkeys(url_variants))
+
         statement = (
             select(Application, DBJobDescription)
             .join(
@@ -374,7 +412,7 @@ async def check_duplicate_application(
             )
             .where(
                 Application.user_id == current_user.id,
-                DBJobDescription.url == job_url,
+                DBJobDescription.url.in_(url_variants),
             )
         )
         result = session.exec(statement).first()

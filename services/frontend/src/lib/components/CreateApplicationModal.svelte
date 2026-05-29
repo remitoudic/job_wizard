@@ -26,7 +26,12 @@
 
 	let duplicateCheck: DuplicateCheckResponse | null = null;
 	let showDuplicateWarning = false;
-	let duplicateChecked = false;
+
+	// Reset duplicate state when the URL field changes
+	$: if (job_url) {
+		duplicateCheck = null;
+		showDuplicateWarning = false;
+	}
 
 	async function handleSubmit() {
 		if (!job_title || !company) {
@@ -34,14 +39,15 @@
 			return;
 		}
 
-		// Check for duplicates if a job_url is provided and we haven't checked yet
-		if (job_url && !duplicateChecked) {
-			isSaving = true;
-			error = '';
+		isSaving = true;
+		error = '';
+
+		// Check for duplicates if a job_url is provided
+		if (job_url) {
 			try {
-				duplicateCheck = await checkDuplicateApplication(job_url);
-				duplicateChecked = true;
-				if (duplicateCheck.is_duplicate) {
+				const result = await checkDuplicateApplication(job_url);
+				if (result.is_duplicate) {
+					duplicateCheck = result;
 					showDuplicateWarning = true;
 					isSaving = false;
 					return;
@@ -54,9 +60,6 @@
 		}
 
 		// Proceed with normal creation
-		isSaving = true;
-		error = '';
-
 		try {
 			const data: CreateApplicationRequest = {
 				job_title,
@@ -108,7 +111,6 @@
 	function handleForceCreate() {
 		showDuplicateWarning = false;
 		duplicateCheck = null;
-		duplicateChecked = true;
 		isSaving = true;
 		error = '';
 
@@ -137,7 +139,6 @@
 	function handleCancelDuplicate() {
 		showDuplicateWarning = false;
 		duplicateCheck = null;
-		duplicateChecked = false;
 	}
 
 	function close() {
@@ -151,7 +152,6 @@
 		cover_letter_body = '';
 		duplicateCheck = null;
 		showDuplicateWarning = false;
-		duplicateChecked = false;
 		dispatch('close');
 	}
 
