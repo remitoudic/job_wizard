@@ -86,9 +86,10 @@ def test_placeholder_replacement_spanish():
 def test_spanish_custom_date():
     from app.services.cover_letter.templates.spanish import SpanishTemplate
     from reportlab.platypus import SimpleDocTemplate
+
     template = SpanishTemplate()
     doc = SimpleDocTemplate("dummy.pdf")
-    
+
     # 1. Custom date already containing city prefix (should be used as-is)
     story = []
     template.generate(
@@ -101,7 +102,7 @@ def test_spanish_custom_date():
         address_city="Madrid",
         custom_date="Madrid, 28 de mayo de 2026",
     )
-    
+
     date_paras = [p.text for p in story if hasattr(p, "text") and "de mayo" in p.text]
     assert len(date_paras) == 1
     assert date_paras[0] == "Madrid, 28 de mayo de 2026"
@@ -118,6 +119,8 @@ def test_spanish_custom_date():
         address_city="Madrid",
         custom_date=None,
     )
-    
-    date_paras2 = [p.text for p in story2 if hasattr(p, "text") and "Madrid, " in p.text]
+
+    date_paras2 = [
+        p.text for p in story2 if hasattr(p, "text") and "Madrid, " in p.text
+    ]
     assert len(date_paras2) == 1

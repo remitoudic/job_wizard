@@ -66,8 +66,9 @@ build/
 Thumbs.db
 
 # Uploads
-backend/uploads/*
-!backend/uploads/.gitkeep
+services/backend/uploads/*
+!services/backend/uploads/.gitkeep
+services/backend/data/uploads/*
 
 # Agents
 .agent/

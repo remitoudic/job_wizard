@@ -821,7 +821,7 @@
 			company: manualCompany,
 			description: manualDescription,
 			requirements: [],
-			url: (jobUrl && jobUrl.startsWith('http')) ? jobUrl : `manual-${Date.now()}`
+			url: jobUrl && jobUrl.startsWith('http') ? jobUrl : `manual-${Date.now()}`
 		};
 		editableJobTitle = manualTitle;
 		editableCompany = manualCompany;
@@ -852,9 +852,12 @@
 			// Saving application to database (only if logged in)
 			if ($auth.isAuthenticated) {
 				try {
-					const finalJobUrl = (jobData.url && (jobData.url.startsWith('http') || jobData.url.startsWith('manual-'))) 
-						? jobData.url 
-						: ((jobUrl && jobUrl.startsWith('http')) ? jobUrl : `manual-${Date.now()}`);
+					const finalJobUrl =
+						jobData.url && (jobData.url.startsWith('http') || jobData.url.startsWith('manual-'))
+							? jobData.url
+							: jobUrl && jobUrl.startsWith('http')
+								? jobUrl
+								: `manual-${Date.now()}`;
 
 					await saveApplication({
 						job_url: finalJobUrl,
@@ -863,17 +866,20 @@
 						job_description: jobData.full_description || jobData.description, // Use full description if available
 						job_requirements: jobData.requirements || [],
 						job_source: jobData.source || 'unknown',
-						generated_letters: allCoverLetters.length > 0 
-							? allCoverLetters.map((l) => ({
-								model: l.source && l.source.includes('GPT') ? 'gpt-4o' : 'llama-3.2-1b',
-								letter: l.text,
-								timestamp: new Date().toISOString() // API expects this
-							}))
-							: [{
-								model: 'gpt-4o',
-								letter: coverLetter,
-								timestamp: new Date().toISOString()
-							}],
+						generated_letters:
+							allCoverLetters.length > 0
+								? allCoverLetters.map((l) => ({
+										model: l.source && l.source.includes('GPT') ? 'gpt-4o' : 'llama-3.2-1b',
+										letter: l.text,
+										timestamp: new Date().toISOString() // API expects this
+									}))
+								: [
+										{
+											model: 'gpt-4o',
+											letter: coverLetter,
+											timestamp: new Date().toISOString()
+										}
+									],
 						selected_letter_index: allCoverLetters.length > 0 ? currentVersionIndex : 0,
 						header: header,
 						cover_letter_body: coverLetter

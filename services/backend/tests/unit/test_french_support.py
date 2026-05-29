@@ -41,9 +41,10 @@ def test_french_template_generation(tmp_path):
 def test_french_custom_date():
     from app.services.cover_letter.templates.french import FrenchTemplate
     from reportlab.platypus import SimpleDocTemplate
+
     template = FrenchTemplate()
     doc = SimpleDocTemplate("dummy.pdf")
-    
+
     # 1. Custom date already containing city prefix (should be used as-is)
     story = []
     template.generate(
@@ -56,7 +57,7 @@ def test_french_custom_date():
         address_city="Paris",
         custom_date="À Paris, le 28 mai 2026",
     )
-    
+
     date_paras = [p.text for p in story if hasattr(p, "text") and "28 mai" in p.text]
     assert len(date_paras) == 1
     assert date_paras[0] == "À Paris, le 28 mai 2026"
@@ -73,8 +74,10 @@ def test_french_custom_date():
         address_city="Paris",
         custom_date=None,
     )
-    
-    date_paras2 = [p.text for p in story2 if hasattr(p, "text") and "À Paris, le" in p.text]
+
+    date_paras2 = [
+        p.text for p in story2 if hasattr(p, "text") and "À Paris, le" in p.text
+    ]
     assert len(date_paras2) == 1
 
 
