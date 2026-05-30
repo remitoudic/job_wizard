@@ -1,11 +1,12 @@
 """Unit tests for the check-duplicate-application endpoint logic."""
 
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from database_pkg.models import Application, ApplicationStatus, JobDescription
 from fastapi import HTTPException
+from sqlalchemy.sql import Select
 
 from app.api.routes.application import check_duplicate_application
 
@@ -110,7 +111,6 @@ class TestUrlNormalization:
             current_user=MagicMock(id=1),
         )
         call_args = session.exec.call_args[0][0]
-        from sqlalchemy.sql import Select
         assert isinstance(call_args, Select)
 
     async def test_trailing_slash_normalized(self):
