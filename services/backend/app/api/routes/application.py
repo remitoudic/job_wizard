@@ -143,10 +143,6 @@ async def get_application_details(application_id: int, session: SessionDep, curr
 
 @router.get("/application/check-duplicate")
 async def check_duplicate_application(job_url: str, session: SessionDep, current_user: CurrentUser):
-    """
-    Check if the current user already has an application for a given job URL.
-    Handles: www/non-www, trailing slashes, LinkedIn job ID extraction.
-    """
     try:
         parsed = urlparse(job_url)
         netloc = parsed.netloc.lower()
@@ -155,6 +151,8 @@ async def check_duplicate_application(job_url: str, session: SessionDep, current
         normalized_url = urlunparse((parsed.scheme, normalized_netloc, path, parsed.params, parsed.query, parsed.fragment)).rstrip("/")
         www_url = urlunparse((parsed.scheme, f"www.{normalized_netloc}", path, parsed.params, parsed.query, parsed.fragment)).rstrip("/")
         url_variants = set([job_url, normalized_url, www_url])
+        url_variants.add(normalized_url + "/")
+        url_variants.add(www_url + "/")
         job_id = None
         m = re.search(r"linkedin\.com/jobs/view/(\d+)", job_url)
         if not m:
@@ -163,6 +161,8 @@ async def check_duplicate_application(job_url: str, session: SessionDep, current
             job_id = m.group(1)
             url_variants.add(f"https://www.linkedin.com/jobs/view/{job_id}/")
             url_variants.add(f"https://linkedin.com/jobs/view/{job_id}/")
+            url_variants.add(f"https://www.linkedin.com/jobs/collections/recommended/?currentJobId={job_id}")
+            url_variants.add(f"https://linkedin.com/jobs/collections/recommended/?currentJobId={job_id}")
         url_variants = list(url_variants)
         statement = select(Application, DBJobDescription).join(DBJobDescription, Application.job_description_id == DBJobDescription.id).where(Application.user_id == current_user.id, DBJobDescription.url.in_(url_variants))
         result = session.exec(statement).first()
