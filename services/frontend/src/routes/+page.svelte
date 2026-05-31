@@ -11,6 +11,7 @@
 		uploadContext,
 		getAlternativeCoverLetter,
 		saveApplication,
+		checkDuplicateApplication,
 		getUserCVs,
 		API_URL
 	} from '$lib/api';
@@ -20,6 +21,48 @@
 	import { generateCoverLetterFilename } from '$lib/pdfUtils';
 	let jobUrl = '';
 	let userName = '';
+	let duplicateCheckResult: any = null;
+	let showDuplicateWarning = false;
+	let isCheckingDuplicate = false;
+
+	$: if (jobUrl) {
+		duplicateCheckResult = null;
+		showDuplicateWarning = false;
+	}
+
+	function formatDate(isoString: string): string {
+		if (!isoString) return '';
+		const date = new Date(isoString);
+		return date.toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric'
+		});
+	}
+
+	async function handleProceedDuplicate() {
+		showDuplicateWarning = false;
+		isParsing = true;
+		error = '';
+		try {
+			jobData = await parseJobUrl(jobUrl);
+			editableJobTitle = jobData?.title || '';
+			editableCompany = jobData?.company || '';
+			step.set(2);
+			handleGenerateCoverLetter();
+		} catch (e: any) {
+			error = e.message || 'Failed to parse job URL';
+		} finally {
+			isParsing = false;
+			duplicateCheckResult = null;
+		}
+	}
+
+	function handleCancelDuplicate() {
+		showDuplicateWarning = false;
+		duplicateCheckResult = null;
+		jobUrl = '';
+	}
 	let imageFile: File | null = null;
 	let imagePreview = '';
 	let uploadedImageFilename = '';
@@ -389,6 +432,26 @@
 		error = '';
 		isManualInput = false;
 
+		// Check for duplicates first if authenticated and not already warned
+		if ($auth.isAuthenticated && !showDuplicateWarning) {
+			isCheckingDuplicate = true;
+			try {
+				const result = await checkDuplicateApplication(jobUrl);
+				if (result.is_duplicate) {
+					duplicateCheckResult = result;
+					showDuplicateWarning = true;
+					isParsing = false;
+					isCheckingDuplicate = false;
+					return;
+				}
+			} catch (e: any) {
+				console.warn('Failed to check duplicate application:', e);
+				// Non-blocking duplicate check error, proceed normally
+			} finally {
+				isCheckingDuplicate = false;
+			}
+		}
+
 		try {
 			jobData = await parseJobUrl(jobUrl);
 			editableJobTitle = jobData?.title || '';
@@ -402,6 +465,8 @@
 			error = e.message || 'Failed to parse job URL';
 		} finally {
 			isParsing = false;
+			showDuplicateWarning = false;
+			duplicateCheckResult = null;
 		}
 	}
 
@@ -1008,6 +1073,9 @@
 		isParsing = false;
 		isGenerating = false;
 		isPdfGenerating = false;
+		duplicateCheckResult = null;
+		showDuplicateWarning = false;
+		isCheckingDuplicate = false;
 		error = '';
 		step.set(1);
 
@@ -1351,6 +1419,86 @@
 								placeholder="Paste the full job description here..."
 							></textarea>
 						</div>
+					{:else if showDuplicateWarning && duplicateCheckResult?.existing_application}
+						{@const existing = duplicateCheckResult.existing_application}
+						<div
+							class="p-5 bg-amber-50 border border-amber-200 rounded-xl mb-6 text-left"
+							transition:fade={{ duration: 200 }}
+						>
+							<div class="flex items-start gap-3 mb-4 text-left">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									class="h-6 w-6 text-amber-600 shrink-0 mt-0.5"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.072 16.5c-.77.833.192 2.5 1.732 2.5z"
+									/>
+								</svg>
+								<div>
+									<h3 class="font-bold text-amber-900 text-base leading-snug">
+										You already have an application for this job posting
+									</h3>
+									<p class="text-sm text-amber-700 mt-1 leading-normal">
+										The URL you entered matches an existing application in your dashboard. What
+										would you like to do?
+									</p>
+								</div>
+							</div>
+
+							<!-- Existing application summary -->
+							<div class="bg-white rounded-lg border border-amber-200 p-4 mb-4 space-y-2 text-left">
+								<div class="flex items-center justify-between">
+									<div>
+										<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider"
+											>Existing Application</span
+										>
+									</div>
+									<span
+										class="text-xs font-bold px-2 py-1 rounded-full capitalize {existing.status ===
+										'applied'
+											? 'bg-blue-100 text-blue-700'
+											: existing.status === 'interview'
+												? 'bg-green-100 text-green-700'
+												: existing.status === 'waiting'
+													? 'bg-yellow-100 text-yellow-700'
+													: existing.status === 'accepted'
+														? 'bg-emerald-100 text-emerald-700'
+														: existing.status === 'refused'
+															? 'bg-red-100 text-red-700'
+															: 'bg-gray-100 text-gray-700'}"
+									>
+										{existing.status}
+									</span>
+								</div>
+								<p class="font-bold text-slate-900 leading-tight">{existing.job_title}</p>
+								<p class="text-sm text-slate-500">{existing.company}</p>
+								<p class="text-xs text-slate-400">
+									Created {formatDate(existing.created_at)}
+								</p>
+							</div>
+
+							<!-- Action buttons -->
+							<div class="flex flex-wrap gap-3">
+								<button
+									on:click={handleProceedDuplicate}
+									class="bg-[#0369A1] hover:bg-[#0284C7] text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center gap-2 text-sm"
+								>
+									Update & Regenerate
+								</button>
+								<button
+									on:click={handleCancelDuplicate}
+									class="px-6 py-2.5 rounded-xl font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors text-sm"
+								>
+									Cancel
+								</button>
+							</div>
+						</div>
 					{:else}
 						<div class="relative">
 							<input
@@ -1358,9 +1506,9 @@
 								bind:value={jobUrl}
 								placeholder="e.g. https://www.linkedin.com/jobs/view/..."
 								class="input pr-12"
-								disabled={isParsing}
+								disabled={isParsing || isCheckingDuplicate}
 							/>
-							{#if isParsing}
+							{#if isParsing || isCheckingDuplicate}
 								<div class="absolute right-4 top-1/2 -translate-y-1/2">
 									<svg
 										class="animate-spin h-5 w-5 text-[#0369A1]"
@@ -1573,24 +1721,26 @@
 						</details>
 					</div>
 
-					<button
-						on:click={() => {
-							if (isManualInput) {
-								handleManualSubmit();
-							} else if (jobData) {
-								step.set(2);
-							} else {
-								handleParseJob(true);
-							}
-						}}
-						disabled={(!isManualInput && (isParsing || !jobUrl)) ||
-							(isManualInput && (!manualTitle || !manualCompany || !manualDescription))}
-						class="btn btn-primary w-full py-4 text-lg"
-					>
-						{isParsing
-							? $_('main.analyzing_position', { default: 'Analyzing Position...' })
-							: $_('main.next_step', { default: 'Next Step' })}
-					</button>
+					{#if !showDuplicateWarning}
+						<button
+							on:click={() => {
+								if (isManualInput) {
+									handleManualSubmit();
+								} else if (jobData) {
+									step.set(2);
+								} else {
+									handleParseJob(true);
+								}
+							}}
+							disabled={(!isManualInput && (isParsing || isCheckingDuplicate || !jobUrl)) ||
+								(isManualInput && (!manualTitle || !manualCompany || !manualDescription))}
+							class="btn btn-primary w-full py-4 text-lg"
+						>
+							{isParsing || isCheckingDuplicate
+								? $_('main.analyzing_position', { default: 'Analyzing Position...' })
+								: $_('main.next_step', { default: 'Next Step' })}
+						</button>
+					{/if}
 				</div>
 			</div>
 		{/if}

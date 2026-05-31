@@ -144,7 +144,7 @@ def test_save_application_success(
 def test_save_application_job_description_deduplication(
     client: TestClient, test_session: Session, auth_headers: dict, test_user: User
 ):
-    """Test that same job URL reuses existing JobDescription."""
+    """Test that same job URL reuses existing JobDescription and updates the existing Application."""
     job_url = "https://www.linkedin.com/jobs/view/987654321"
 
     # Create first application
@@ -173,6 +173,7 @@ def test_save_application_job_description_deduplication(
     assert response1.status_code == 200
     data1 = response1.json()
     job_desc_id_1 = data1["job_description_id"]
+    app_id_1 = data1["application_id"]
 
     # Create second application with same URL
     request_data["cover_letter_body"] = "Second application letter..."
@@ -184,12 +185,18 @@ def test_save_application_job_description_deduplication(
     assert response2.status_code == 200
     data2 = response2.json()
     job_desc_id_2 = data2["job_description_id"]
+    app_id_2 = data2["application_id"]
 
     # Verify same JobDescription was reused
     assert job_desc_id_1 == job_desc_id_2
 
-    # Verify we have two separate applications
-    assert data1["application_id"] != data2["application_id"]
+    # Verify that the existing application was updated and reused (deduplicated)
+    assert app_id_1 == app_id_2
+
+    # Verify database was updated with new cover letter
+    updated_app = test_session.get(Application, app_id_1)
+    assert updated_app is not None
+    assert updated_app.cover_letter_final["body"] == "Second application letter..."
 
 
 def test_save_application_unauthorized(client: TestClient):

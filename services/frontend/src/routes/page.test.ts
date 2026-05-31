@@ -15,6 +15,9 @@ vi.mock('$lib/api', () => ({
 	uploadContext: vi.fn(),
 	uploadImage: vi.fn(),
 	saveApplication: vi.fn(),
+	checkDuplicateApplication: vi
+		.fn()
+		.mockResolvedValue({ is_duplicate: false, existing_application: null }),
 	getUserCVs: vi.fn().mockResolvedValue([]),
 	API_URL: 'http://test'
 }));

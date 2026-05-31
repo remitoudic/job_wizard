@@ -46,10 +46,55 @@ async def save_application(
     - Application (final selected version with header)
     """
     try:
-        # Step 1: Create or get existing JobDescription
-        # Check if job description already exists for this URL
+        # Step 1: Create or get existing JobDescription using normalized URL variants
+        parsed = urlparse(request.job_url)
+        netloc = parsed.netloc.lower()
+        path = parsed.path.rstrip("/") or "/"
+        normalized_netloc = netloc.removeprefix("www.")
+        normalized_url = urlunparse(
+            (
+                parsed.scheme,
+                normalized_netloc,
+                path,
+                parsed.params,
+                parsed.query,
+                parsed.fragment,
+            )
+        ).rstrip("/")
+
+        www_url = urlunparse(
+            (
+                parsed.scheme,
+                f"www.{normalized_netloc}",
+                path,
+                parsed.params,
+                parsed.query,
+                parsed.fragment,
+            )
+        ).rstrip("/")
+
+        url_variants = set([request.job_url, normalized_url, www_url])
+        url_variants.add(normalized_url + "/")
+        url_variants.add(www_url + "/")
+
+        # LinkedIn ID matching
+        job_id = None
+        m = re.search(r"linkedin\.com/jobs/view/(\d+)", request.job_url)
+        if not m:
+            m = re.search(r"currentJobId=(\d+)", request.job_url)
+        if m:
+            job_id = m.group(1)
+            url_variants.add(f"https://www.linkedin.com/jobs/view/{job_id}/")
+            url_variants.add(f"https://linkedin.com/jobs/view/{job_id}/")
+            url_variants.add(
+                f"https://www.linkedin.com/jobs/collections/recommended/?currentJobId={job_id}"
+            )
+            url_variants.add(
+                f"https://linkedin.com/jobs/collections/recommended/?currentJobId={job_id}"
+            )
+
         statement = select(DBJobDescription).where(
-            DBJobDescription.url == request.job_url
+            DBJobDescription.url.in_(list(url_variants))
         )
         existing_job = session.exec(statement).first()
 
@@ -86,7 +131,7 @@ async def save_application(
         session.commit()
         session.refresh(generated_letter)
 
-        # Step 3: Create Application with final selected letter
+        # Step 3: Create or update Application with final selected letter
         # Prepare cover_letter_final structure
         selected_letter = request.generated_letters[request.selected_letter_index]
         cover_letter_final = {
@@ -95,27 +140,44 @@ async def save_application(
             "body": request.cover_letter_body,  # The final edited version
         }
 
-        application = Application(
-            user_id=current_user.id,
-            job_description_id=job_description.id,
-            generated_letter_id=generated_letter.id,
-            header=request.header,
-            cover_letter_final=cover_letter_final,
-            status=ApplicationStatus.APPLIED,
+        # Check if user already has an application for this job description
+        existing_app_statement = select(Application).where(
+            Application.user_id == current_user.id,
+            Application.job_description_id == job_description.id,
         )
-        session.add(application)
-        session.commit()
-        session.refresh(application)
+        existing_application = session.exec(existing_app_statement).first()
 
-        # Record initial status history
-        history = ApplicationStatusHistory(
-            application_id=application.id,
-            old_status=None,
-            new_status=ApplicationStatus.APPLIED,
-            notes="Initial application creation",
-        )
-        session.add(history)
-        session.commit()
+        if existing_application:
+            existing_application.generated_letter_id = generated_letter.id
+            existing_application.header = request.header
+            existing_application.cover_letter_final = cover_letter_final
+            existing_application.updated_at = datetime.now(timezone.utc)
+            session.add(existing_application)
+            session.commit()
+            session.refresh(existing_application)
+            application = existing_application
+        else:
+            application = Application(
+                user_id=current_user.id,
+                job_description_id=job_description.id,
+                generated_letter_id=generated_letter.id,
+                header=request.header,
+                cover_letter_final=cover_letter_final,
+                status=ApplicationStatus.APPLIED,
+            )
+            session.add(application)
+            session.commit()
+            session.refresh(application)
+
+            # Record initial status history
+            history = ApplicationStatusHistory(
+                application_id=application.id,
+                old_status=None,
+                new_status=ApplicationStatus.APPLIED,
+                notes="Initial application creation",
+            )
+            session.add(history)
+            session.commit()
 
         return SaveApplicationResponse(
             success=True,
