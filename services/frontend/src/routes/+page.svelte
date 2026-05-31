@@ -40,22 +40,11 @@
 		});
 	}
 
-	async function handleProceedDuplicate() {
+	function handleProceedDuplicate() {
 		showDuplicateWarning = false;
-		isParsing = true;
-		error = '';
-		try {
-			jobData = await parseJobUrl(jobUrl);
-			editableJobTitle = jobData?.title || '';
-			editableCompany = jobData?.company || '';
-			step.set(2);
-			handleGenerateCoverLetter();
-		} catch (e: any) {
-			error = e.message || 'Failed to parse job URL';
-		} finally {
-			isParsing = false;
-			duplicateCheckResult = null;
-		}
+		duplicateCheckResult = null;
+		step.set(2);
+		handleGenerateCoverLetter();
 	}
 
 	function handleCancelDuplicate() {
@@ -431,31 +420,32 @@
 		isParsing = true;
 		error = '';
 		isManualInput = false;
-
-		// Check for duplicates first if authenticated and not already warned
-		if ($auth.isAuthenticated && !showDuplicateWarning) {
-			isCheckingDuplicate = true;
-			try {
-				const result = await checkDuplicateApplication(jobUrl);
-				if (result.is_duplicate) {
-					duplicateCheckResult = result;
-					showDuplicateWarning = true;
-					isParsing = false;
-					isCheckingDuplicate = false;
-					return;
-				}
-			} catch (e: any) {
-				console.warn('Failed to check duplicate application:', e);
-				// Non-blocking duplicate check error, proceed normally
-			} finally {
-				isCheckingDuplicate = false;
-			}
-		}
+		showDuplicateWarning = false;
+		duplicateCheckResult = null;
 
 		try {
+			// Step 1: Parse the job URL first to resolve redirects/canonical URLs
 			jobData = await parseJobUrl(jobUrl);
 			editableJobTitle = jobData?.title || '';
 			editableCompany = jobData?.company || '';
+
+			// Step 2: Check for duplicates using the resolved canonical URL
+			if ($auth.isAuthenticated && jobData?.url) {
+				isCheckingDuplicate = true;
+				try {
+					const result = await checkDuplicateApplication(jobData.url);
+					if (result.is_duplicate) {
+						duplicateCheckResult = result;
+						showDuplicateWarning = true;
+						return; // Svelte's finally will run and set isParsing = false, keeping warning active
+					}
+				} catch (e: any) {
+					console.warn('Failed to check duplicate application:', e);
+				} finally {
+					isCheckingDuplicate = false;
+				}
+			}
+
 			if (advance) {
 				step.set(2);
 				// Auto-start generation in background
@@ -465,8 +455,6 @@
 			error = e.message || 'Failed to parse job URL';
 		} finally {
 			isParsing = false;
-			showDuplicateWarning = false;
-			duplicateCheckResult = null;
 		}
 	}
 
