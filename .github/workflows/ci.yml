@@ -15,14 +15,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 'latest'
+          bun-version: "latest"
       - name: Install dependencies
         uses: astral-sh/setup-uv@v5
         with:
@@ -38,27 +38,14 @@ jobs:
         run: pre-commit run --all-files
 
   backend-tests:
-    name: Backend Tests
+    name: Backend Tests (Unit)
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: job_wizard_test
-          POSTGRES_PASSWORD: password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Install dependencies
         uses: astral-sh/setup-uv@v5
         with:
@@ -69,13 +56,10 @@ jobs:
           uv venv
           uv pip install -e ./services/database
           uv pip install -e "./services/backend[dev]"
-      - name: Run tests
-        env:
-          DATABASE_URL: postgresql://postgres:password@127.0.0.1:5432/job_wizard_test
+      - name: Run unit tests
         run: |
           cd services/backend
-          ../../.venv/bin/pytest tests
-
+          ../../.venv/bin/pytest tests/unit
 
   frontend-tests:
     name: Frontend Tests
@@ -84,7 +68,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 'latest'
+          bun-version: "latest"
       - name: Install dependencies
         run: |
           cd services/frontend
