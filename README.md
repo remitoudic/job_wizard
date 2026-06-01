@@ -16,7 +16,6 @@ Transform your job application process from hours of manual writing to seconds o
 - 🎨 **Premium Templates**: Choose from **Modern**, **Classic**, or **Timeline** templates, engineered for ATS compatibility and visual impact.
 - 🌍 **Deep Localization**: Standardized professional formatting for:
   - 🇬🇧 **English** (Standard) | 🇩🇪 **German** (DIN 5008) | 🇫🇷 **French** (Lettre de Motivation) | 🇪🇸 **Spanish** (Standard)
-- 👁️ **Atomic Block Preview**: 1:1 parity between the web preview and final PDF output via specialized reconciliation logic.
 - 🔗 **Intelligent Scraping**: Instant extraction from LinkedIn, We Work Remotely, and Arbeitnow...
 - 🚀 **Hybrid LLM Race Mode**: Sub-second generation using a concurrent race between local (**Ollama**) and remote (**Groq/Nvidia/OpenRouter**) providers.
 
