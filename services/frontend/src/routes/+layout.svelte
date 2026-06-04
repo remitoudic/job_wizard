@@ -2,8 +2,6 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { auth } from '../stores/auth';
-	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import SEO from '$lib/components/SEO.svelte';
 	import '$lib/i18n';
@@ -16,11 +14,6 @@
 		if ($auth.user?.preferred_language) {
 			locale.set($auth.user.preferred_language);
 		}
-	}
-
-	function handleLogout() {
-		auth.logout();
-		goto('/login');
 	}
 </script>
 
