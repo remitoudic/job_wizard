@@ -328,8 +328,9 @@
 	let hasAutoSelectedNvidia = false;
 	let hasAutoSelectedMistral = false;
 	let hasAutoSelectedQwen = false;
+	let hasAutoSelectedCrewAI = false;
 
-	// Reactive: Auto-select Nvidia/Qwen if it's in the list
+	// Reactive: Auto-select CrewAI/Nvidia/Qwen if it's in the list
 	$: {
 		if (allCoverLetters.length > 0) {
 			console.log(
@@ -337,33 +338,53 @@
 				allCoverLetters.map((l) => l.source)
 			);
 
-			// 1. Priority: Mistral or Qwen (always switch to it even if we already selected a generic Nvidia)
-			const bestModelIdx = allCoverLetters.findIndex(
+			// 1. Highest Priority: CrewAI Agency (always switch to it when it is ready/created)
+			const crewAiIdx = allCoverLetters.findIndex(
 				(l) =>
-					(l.source.toLowerCase().includes('mistral') || l.source.toLowerCase().includes('qwen')) &&
+					l.source.toLowerCase().includes('crewai') &&
 					l.status !== 'failed' &&
 					!l.text.startsWith('Generation failed')
 			);
 
-			if (bestModelIdx !== -1 && !hasAutoSelectedMistral && !hasAutoSelectedQwen) {
-				console.log(`[AutoSelect] Found Priority Model at index ${bestModelIdx}. Switching...`);
-				switchVersion(bestModelIdx);
+			if (crewAiIdx !== -1 && !hasAutoSelectedCrewAI) {
+				console.log(`[AutoSelect] Found CrewAI Agency at index ${crewAiIdx}. Switching...`);
+				switchVersion(crewAiIdx);
+				hasAutoSelectedCrewAI = true;
 				hasAutoSelectedMistral = true;
 				hasAutoSelectedQwen = true;
 				hasAutoSelectedNvidia = true;
 			}
-			// 2. Secondary: Generic Nvidia
-			else if (!hasAutoSelectedNvidia) {
-				const nvidiaIdx = allCoverLetters.findIndex(
+			// 2. Medium Priority: Mistral or Qwen (always switch to it even if we already selected a generic Nvidia)
+			else if (!hasAutoSelectedCrewAI) {
+				const bestModelIdx = allCoverLetters.findIndex(
 					(l) =>
-						l.source.toLowerCase().includes('nvidia') &&
+						(l.source.toLowerCase().includes('mistral') ||
+							l.source.toLowerCase().includes('qwen')) &&
 						l.status !== 'failed' &&
 						!l.text.startsWith('Generation failed')
 				);
-				if (nvidiaIdx !== -1) {
-					console.log(`[AutoSelect] Found Nvidia at index ${nvidiaIdx}. Switching...`);
-					switchVersion(nvidiaIdx);
+
+				if (bestModelIdx !== -1 && !hasAutoSelectedMistral && !hasAutoSelectedQwen) {
+					console.log(`[AutoSelect] Found Priority Model at index ${bestModelIdx}. Switching...`);
+					switchVersion(bestModelIdx);
+					hasAutoSelectedMistral = true;
+					hasAutoSelectedQwen = true;
 					hasAutoSelectedNvidia = true;
+				}
+				// 3. Lowest Priority: Generic Nvidia
+				else if (!hasAutoSelectedNvidia) {
+					const nvidiaIdx = allCoverLetters.findIndex(
+						(l) =>
+							l.source.toLowerCase().includes('nvidia') &&
+							l.status !== 'failed' &&
+							!l.text.startsWith('Generation failed')
+					);
+
+					if (nvidiaIdx !== -1) {
+						console.log(`[AutoSelect] Found Nvidia at index ${nvidiaIdx}. Switching...`);
+						switchVersion(nvidiaIdx);
+						hasAutoSelectedNvidia = true;
+					}
 				}
 			}
 		}
@@ -507,6 +528,7 @@
 		hasAutoSelectedNvidia = false;
 		hasAutoSelectedMistral = false;
 		hasAutoSelectedQwen = false;
+		hasAutoSelectedCrewAI = false;
 
 		try {
 			const { job_id } = await generateCoverLetter({
@@ -673,6 +695,7 @@
 
 						if (
 							isUpdateNeeded &&
+							!hasAutoSelectedCrewAI &&
 							!hasAutoSelectedNvidia &&
 							!hasAutoSelectedMistral &&
 							!hasAutoSelectedQwen
@@ -806,8 +829,28 @@
 					updateNameInCoverLetter();
 				}
 
+				// Check for CrewAI Agency auto-selection during alternative polling
+				if (!hasAutoSelectedCrewAI) {
+					const crewAiIndex = allCoverLetters.findIndex(
+						(l) =>
+							l.source.toLowerCase().includes('crewai') &&
+							l.status !== 'failed' &&
+							!l.text.startsWith('Generation failed')
+					);
+					if (crewAiIndex !== -1) {
+						console.log(
+							`Auto-selected CrewAI Agency from polled alternatives at index ${crewAiIndex}`
+						);
+						switchVersion(crewAiIndex);
+						hasAutoSelectedCrewAI = true;
+						hasAutoSelectedNvidia = true;
+						hasAutoSelectedMistral = true;
+						hasAutoSelectedQwen = true;
+					}
+				}
+
 				// Check for Nvidia auto-selection during alternative polling
-				if (!hasAutoSelectedNvidia) {
+				if (!hasAutoSelectedNvidia && !hasAutoSelectedCrewAI) {
 					const nvidiaIndex = allCoverLetters.findIndex(
 						(l) =>
 							(l.source.toLowerCase().includes('nvidia') ||
@@ -1058,6 +1101,7 @@
 		pdfUrl = '';
 		downloaded = false;
 		hasAutoSelectedNvidia = false;
+		hasAutoSelectedCrewAI = false;
 		isParsing = false;
 		isGenerating = false;
 		isPdfGenerating = false;
