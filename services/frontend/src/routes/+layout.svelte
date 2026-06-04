@@ -36,13 +36,13 @@
 			? 'md:ml-16'
 			: ''}"
 	>
-		<nav class="bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] sticky top-0 z-50">
-			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-				<div class="flex justify-between h-16">
-					<div class="flex items-center" />
+		{#if !$auth.isAuthenticated}
+			<nav class="bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] sticky top-0 z-50">
+				<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+					<div class="flex justify-between h-16">
+						<div class="flex items-center" />
 
-					<div class="flex items-center gap-6">
-						{#if !$auth.isAuthenticated}
+						<div class="flex items-center gap-6">
 							<div class="flex items-center gap-4">
 								<a
 									href="/login"
@@ -54,11 +54,11 @@
 									{$_('main.get_started', { default: 'Get Started' })}
 								</a>
 							</div>
-						{/if}
+						</div>
 					</div>
 				</div>
-			</div>
-		</nav>
+			</nav>
+		{/if}
 
 		<main class="flex-grow {$auth.isAuthenticated ? 'mb-16 md:mb-0' : ''}">
 			<slot />
