@@ -625,6 +625,13 @@
 				if (data.alternatives && Array.isArray(data.alternatives)) {
 					data.alternatives.forEach((alt: any) => {
 						if (!allCoverLetters.some((l) => l.source === alt.source)) {
+							if (
+								alt.status === 'failed' ||
+								(alt.text && alt.text.startsWith('Generation failed'))
+							) {
+								console.log(`Model generation failed for: ${alt.source}`, alt.text);
+								return;
+							}
 							allCoverLetters = [
 								...allCoverLetters,
 								{
@@ -641,21 +648,32 @@
 				// Handle Step: Alternative Ready
 				if (data.status === 'alternative_ready') {
 					if (data.text && data.source && !allCoverLetters.some((l) => l.source === data.source)) {
-						allCoverLetters = [
-							...allCoverLetters,
-							{
-								text: data.text,
-								rawText: data.text,
-								source: data.source,
-								status: 'completed'
-							}
-						];
+						if (data.text.startsWith('Generation failed')) {
+							console.log(`Model generation failed for: ${data.source}`, data.text);
+						} else {
+							allCoverLetters = [
+								...allCoverLetters,
+								{
+									text: data.text,
+									rawText: data.text,
+									source: data.source,
+									status: 'completed'
+								}
+							];
+						}
 					}
 
 					// Always sync from data.alternatives if backend provides it
 					if (data.alternatives && Array.isArray(data.alternatives)) {
 						data.alternatives.forEach((alt: any) => {
 							if (!allCoverLetters.some((l) => l.source === alt.source)) {
+								if (
+									alt.status === 'failed' ||
+									(alt.text && alt.text.startsWith('Generation failed'))
+								) {
+									console.log(`Model generation failed for: ${alt.source}`, alt.text);
+									return;
+								}
 								allCoverLetters = [
 									...allCoverLetters,
 									{
@@ -716,6 +734,13 @@
 					if (data.alternatives && Array.isArray(data.alternatives)) {
 						data.alternatives.forEach((alt: any) => {
 							if (!allCoverLetters.some((l) => l.source === alt.source)) {
+								if (
+									alt.status === 'failed' ||
+									(alt.text && alt.text.startsWith('Generation failed'))
+								) {
+									console.log(`Model generation failed for: ${alt.source}`, alt.text);
+									return;
+								}
 								allCoverLetters = [
 									...allCoverLetters,
 									{
@@ -808,6 +833,10 @@
 
 					// Add if not duplicate (checks source)
 					if (!mapped.some((m) => m.source === alt.source)) {
+						if (alt.status === 'failed' || (alt.text && alt.text.startsWith('Generation failed'))) {
+							console.log(`Model generation failed for: ${alt.source}`, alt.text);
+							return;
+						}
 						mapped.push({
 							text: alt.text,
 							rawText: alt.text, // Assume incoming is raw
