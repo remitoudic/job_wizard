@@ -17,7 +17,6 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
-
 from app.api.validation.schemas import (
     CreateApplicationRequest,
     SaveApplicationRequest,
@@ -34,6 +33,7 @@ async def save_application(
     request: SaveApplicationRequest, session: SessionDep, current_user: CurrentUser
 ):
     try:
+        assert current_user.id is not None
         parsed = urlparse(request.job_url)
         netloc = parsed.netloc.lower()
         path = parsed.path.rstrip("/") or "/"
@@ -76,11 +76,12 @@ async def save_application(
                 f"https://linkedin.com/jobs/collections/recommended/?currentJobId={job_id}"
             )
         statement = select(DBJobDescription).where(
-            DBJobDescription.url.in_(list(url_variants))
+            DBJobDescription.url.in_(list(url_variants))  # type: ignore[operator]
         )
         existing_job = session.exec(statement).first()
         if existing_job:
             job_description = existing_job
+            assert job_description.id is not None
         else:
             job_description = DBJobDescription(
                 url=request.job_url,
@@ -93,6 +94,7 @@ async def save_application(
             session.add(job_description)
             session.commit()
             session.refresh(job_description)
+            assert job_description.id is not None
         generated_letters_data = [
             {
                 "model": letter.model,
@@ -107,6 +109,7 @@ async def save_application(
         session.add(generated_letter)
         session.commit()
         session.refresh(generated_letter)
+        assert generated_letter.id is not None
         selected_letter = request.generated_letters[request.selected_letter_index]
         cover_letter_final = {
             "model": selected_letter.model,
@@ -126,6 +129,7 @@ async def save_application(
             session.add(existing_application)
             session.commit()
             session.refresh(existing_application)
+            assert existing_application.id is not None
             application = existing_application
         else:
             application = Application(
@@ -139,6 +143,7 @@ async def save_application(
             session.add(application)
             session.commit()
             session.refresh(application)
+            assert application.id is not None
             history = ApplicationStatusHistory(
                 application_id=application.id,
                 old_status=None,
@@ -147,6 +152,9 @@ async def save_application(
             )
             session.add(history)
             session.commit()
+        assert application.id is not None
+        assert job_description.id is not None
+        assert generated_letter.id is not None
         return SaveApplicationResponse(
             success=True,
             application_id=application.id,
@@ -165,6 +173,7 @@ async def create_manual_application(
     request: CreateApplicationRequest, session: SessionDep, current_user: CurrentUser
 ):
     try:
+        assert current_user.id is not None
         job_description = None
         if request.job_url:
             statement = select(DBJobDescription).where(
@@ -173,7 +182,8 @@ async def create_manual_application(
             job_description = session.exec(statement).first()
         if not job_description:
             job_description = DBJobDescription(
-                url=request.job_url or f"manual-{datetime.utcnow().timestamp()}",
+                url=request.job_url
+                or f"manual-{datetime.now(timezone.utc).timestamp()}",
                 job_title=request.job_title,
                 company=request.company,
                 full_description=f"Manually created application for {request.job_title} at {request.company}",
@@ -183,6 +193,8 @@ async def create_manual_application(
             session.add(job_description)
             session.commit()
             session.refresh(job_description)
+            assert job_description.id is not None
+        assert job_description.id is not None
         application = Application(
             user_id=current_user.id,
             job_description_id=job_description.id,
@@ -190,7 +202,7 @@ async def create_manual_application(
             notes=request.notes,
             cover_letter_final={
                 "model": "Manual",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "body": request.cover_letter_body,
             },
             header={},
@@ -198,6 +210,7 @@ async def create_manual_application(
         session.add(application)
         session.commit()
         session.refresh(application)
+        assert application.id is not None
         history = ApplicationStatusHistory(
             application_id=application.id,
             old_status=None,
@@ -227,13 +240,13 @@ async def get_user_applications(
 ):
     try:
         count_stmt = (
-            select(func.count(Application.id))
+            select(func.count(Application.id))  # type: ignore[arg-type]
             .join(DBJobDescription)
             .where(Application.user_id == current_user.id)
         )
         if company:
             count_stmt = count_stmt.where(
-                DBJobDescription.company.ilike(f"%{company}%")
+                DBJobDescription.company.ilike(f"%{company}%")  # type: ignore[union-attr]
             )
         total = session.exec(count_stmt).one()
         sort_map = {
@@ -252,7 +265,7 @@ async def get_user_applications(
             .where(Application.user_id == current_user.id)
         )
         if company:
-            statement = statement.where(DBJobDescription.company.ilike(f"%{company}%"))
+            statement.where(DBJobDescription.company.ilike(f"%{company}%"))  # type: ignore[union-attr]
         statement = statement.order_by(order_expr).offset(skip).limit(limit)
         results = session.exec(statement).all()
         applications = []
@@ -303,7 +316,8 @@ async def get_application_details(
         statement = (
             select(Application, DBJobDescription)
             .join(
-                DBJobDescription, Application.job_description_id == DBJobDescription.id
+                DBJobDescription,
+                Application.job_description_id == DBJobDescription.id,  # type: ignore[arg-type]
             )
             .where(
                 Application.id == application_id, Application.user_id == current_user.id
@@ -383,11 +397,12 @@ async def check_duplicate_application(
         statement = (
             select(Application, DBJobDescription)
             .join(
-                DBJobDescription, Application.job_description_id == DBJobDescription.id
+                DBJobDescription,
+                Application.job_description_id == DBJobDescription.id,  # type: ignore[arg-type]
             )
             .where(
                 Application.user_id == current_user.id,
-                DBJobDescription.url.in_(url_variants),
+                DBJobDescription.url.in_(url_variants),  # type: ignore[operator]
             )
         )
         result = session.exec(statement).first()
@@ -480,7 +495,7 @@ async def delete_application(
             deleted_letter_ids.add(letter.id)
             session.delete(letter)
         if letter_id and letter_id not in deleted_letter_ids:
-            refs_stmt = select(func.count(Application.id)).where(
+            refs_stmt = select(func.count(Application.id)).where(  # type: ignore[arg-type]
                 Application.generated_letter_id == letter_id,
                 Application.id != application_id,
             )
@@ -511,7 +526,8 @@ async def update_application(
         statement = (
             select(Application, DBJobDescription)
             .join(
-                DBJobDescription, Application.job_description_id == DBJobDescription.id
+                DBJobDescription,
+                Application.job_description_id == DBJobDescription.id,  # type: ignore[arg-type]
             )
             .where(
                 Application.id == application_id, Application.user_id == current_user.id
@@ -521,6 +537,7 @@ async def update_application(
         if not result:
             raise HTTPException(status_code=404, detail="Application not found")
         application, job_description = result
+        assert application.id is not None
         if request.status is not None:
             try:
                 new_status = ApplicationStatus(request.status)
@@ -585,7 +602,7 @@ async def get_application_history(
         history_statement = (
             select(ApplicationStatusHistory)
             .where(ApplicationStatusHistory.application_id == application_id)
-            .order_by(ApplicationStatusHistory.created_at.desc())
+            .order_by(ApplicationStatusHistory.created_at.desc())  # type: ignore[union-attr]
         )
         history = session.exec(history_statement).all()
         return history
