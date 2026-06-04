@@ -265,7 +265,7 @@ async def get_user_applications(
             .where(Application.user_id == current_user.id)
         )
         if company:
-            statement.where(DBJobDescription.company.ilike(f"%{company}%"))  # type: ignore[union-attr]
+            statement = statement.where(DBJobDescription.company.ilike(f"%{company}%"))  # type: ignore[union-attr]
         statement = statement.order_by(order_expr).offset(skip).limit(limit)
         results = session.exec(statement).all()
         applications = []
