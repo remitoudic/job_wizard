@@ -33,10 +33,7 @@
 		<nav class="bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] sticky top-0 z-50">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div class="flex justify-between h-16">
-					<div class="flex items-center">
-						<a href="https://job-vite.com/" data-sveltekit-reload class="flex-shrink-0 flex items-center gap-3 group">
-						</a>
-					</div>
+					<div class="flex items-center" />
 					<div class="flex items-center gap-6">
 						{#if !$auth.isAuthenticated}
 							<div class="flex items-center gap-4">
