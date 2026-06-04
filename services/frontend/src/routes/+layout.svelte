@@ -72,13 +72,11 @@
 					</div>
 					<p class="text-sm text-[#64748B]">&copy; 2026 Vite a Job. All rights reserved.</p>
 					<div class="flex gap-6">
-						<a
-							href="/privacy"
-							class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]">Privacy</a
+						<a href="/privacy" class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]"
+							>Privacy</a
 						>
-						<a
-							href="/terms"
-							class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]">Terms</a
+						<a href="/terms" class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]"
+							>Terms</a
 						>
 					</div>
 				</div>
