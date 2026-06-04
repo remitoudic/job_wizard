@@ -24,7 +24,6 @@
 	}
 </script>
 
-<!-- Sidebar for authenticated users -->
 {#if !$isLoading}
 	{#if $auth.isAuthenticated}
 		<Sidebar />
@@ -37,14 +36,11 @@
 			? 'md:ml-16'
 			: ''}"
 	>
-		<!-- Navbar -->
 		<nav class="bg-white/80 backdrop-blur-md border-b border-[#E2E8F0] sticky top-0 z-50">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div class="flex justify-between h-16">
-					<!-- Logo / Brand -->
 					<div class="flex items-center" />
 
-					<!-- Right Side Menu - Empty for authenticated users, normal for guests -->
 					<div class="flex items-center gap-6">
 						{#if !$auth.isAuthenticated}
 							<div class="flex items-center gap-4">
@@ -64,12 +60,10 @@
 			</div>
 		</nav>
 
-		<!-- Main Content -->
 		<main class="flex-grow {$auth.isAuthenticated ? 'mb-16 md:mb-0' : ''}">
 			<slot />
 		</main>
 
-		<!-- Footer -->
 		<footer class="bg-white border-t border-[#E2E8F0] mt-auto">
 			<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 				<div class="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -78,8 +72,14 @@
 					</div>
 					<p class="text-sm text-[#64748B]">&copy; 2026 Vite a Job. All rights reserved.</p>
 					<div class="flex gap-6">
-						<a href="/privacy" class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]">Privacy</a>
-						<a href="/terms" class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]">Terms</a>
+						<a
+							href="/privacy"
+							class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]">Privacy</a
+						>
+						<a
+							href="/terms"
+							class="text-xs font-semibold text-[#64748B] hover:text-[#0F172A]">Terms</a
+						>
 					</div>
 				</div>
 			</div>
