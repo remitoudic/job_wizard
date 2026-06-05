@@ -13,6 +13,7 @@ Transform your job application process from hours of manual writing to seconds o
 ## ✨ Features
 
 - 📄 **CV Revitalization**: Transform legacy PDF CVs into sleek, professional documents. Powered by **LlamaParse** and **Groq** for high-accuracy extraction.
+- 👥 **Multi-Agent Cover Letter Agency**: Powered by **CrewAI**, simulating a professional writing team where three specialized agents (Profile Analyst, Copywriter, and Strict Editor) collaborate sequentially to construct highly tailored, human-sounding cover letters without generic templates or AI clichés.
 - 🎨 **Premium Templates**: Choose from **Modern**, **Classic**, or **Timeline** templates, engineered for ATS compatibility and visual impact.
 - 🌍 **Deep Localization**: Standardized professional formatting for:
   - 🇬🇧 **English** (Standard) | 🇩🇪 **German** (DIN 5008) | 🇫🇷 **French** (Lettre de Motivation) | 🇪🇸 **Spanish** (Standard)
@@ -86,6 +87,14 @@ All generation workflows are managed by **Temporal**, providing:
 - **Logfire Observability**: Deep tracing of every LLM span and database transaction.
 - **Atomic Rendering**: A custom ReportLab engine that guarantees the PDF exactly matches the "Atomic Blocks" seen in the browser preview.
 
+### 4. Multi-Agent Orchestration (CrewAI)
+To elevate the quality of generated cover letters, Job Wizard integrates a **CrewAI** sequential agent pipeline. Instead of relying on a single prompt (which often yields generic or robotic text), the system simulates a professional writing agency with three specialized agents working in sequence:
+- **Profile Analyst** (low temperature `0.1` for maximum precision): Extracts the candidate's core background, matches it to the job description, and defines the top 3 alignment points and an opening hook.
+- **Copywriter** (higher temperature `0.7` for persuasion): Converts the analyst's brief into a cohesive, engaging narrative focused on how the candidate's achievements solve the employer's problems.
+- **Strict Copy Editor** (low temperature `0.3` for structure and style): Tightens the prose, enforces word counts (< 300 words), removes sycophantic language, and strips out standard AI clichés (e.g., *“delve”*, *“testament to”*, *“in today's fast-paced world”*).
+
+This sequential flow is dynamic and uses the central `llm_provider_service` to allow agents to seamlessly failover across Groq, Nvidia NIM, OpenRouter, or Ollama depending on API health.
+
 ---
 
 ## 🚀 Life of a Generation
@@ -111,7 +120,7 @@ sequenceDiagram
     T->>PS: Broadcast "Extracted"
     PS-->>FE: Update UI (Extraction Done)
 
-    T->>LLM: Generation Race (Ollama vs Groq vs Nvidia)
+    T->>LLM: Generation Race (Ollama vs Groq vs Nvidia vs CrewAI)
     Note over LLM: Provider Failover & Throttling
     LLM-->>T: Winner Found
     T->>PS: Broadcast "Completed" + Content
@@ -141,6 +150,7 @@ Detailed guides for developers and operators:
 - [Development Guide](docs/DEVELOPMENT.md) - Local setup, environment variables, and testing.
 - [Deployment Guide](docs/DEPLOYMENT.md) - Production deployment with Docker & Nginx.
 - [Temporal Workflows](docs/TEMPORAL_WORKFLOWS.md) - Deep dive into the orchestration logic.
+- [CrewAI Agents Guide](docs/CREWAI_AGENTS.md) - Deep dive into the multi-agent cover letter generation pipeline.
 - [Debugging Guide](docs/DEBUGGING.md) - Troubleshooting common issues.
 - [Monorepo Guide](docs/MONOREPO_GUIDE.md) - Overview of the project structure.
 
