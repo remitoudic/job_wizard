@@ -1,7 +1,11 @@
+import io
 import re
 from datetime import datetime, timezone
 from urllib.parse import urlparse, urlunparse
 
+import openpyxl
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.utils import get_column_letter
 from database_pkg.models import (
     Application,
     ApplicationStatus,
@@ -14,6 +18,7 @@ from database_pkg.models import (
     JobDescription as DBJobDescription,
 )
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
@@ -308,6 +313,181 @@ async def get_user_companies(session: SessionDep, current_user: CurrentUser):
         return [c for c in companies if c]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/applications/export")
+async def export_applications_excel(
+    session: SessionDep,
+    current_user: CurrentUser,
+    format: str = "xlsx",
+):
+    """Export all user applications to an Excel (.xlsx) or CSV file."""
+    try:
+        statement = (
+            select(Application, DBJobDescription)
+            .join(DBJobDescription)
+            .where(Application.user_id == current_user.id)
+            .order_by(Application.created_at.desc())  # type: ignore[union-attr]
+        )
+        results = session.exec(statement).all()
+
+        rows = []
+        for app, job_desc in results:
+            cover_letter_body = ""
+            if app.cover_letter_final and "body" in app.cover_letter_final:
+                cover_letter_body = app.cover_letter_final["body"] or ""
+            requirements = ""
+            if job_desc.requirements:
+                requirements = ", ".join(job_desc.requirements)
+            rows.append(
+                {
+                    "date": app.created_at.strftime("%Y-%m-%d"),
+                    "company": job_desc.company or "",
+                    "job_title": job_desc.job_title or "",
+                    "status": app.status.value if app.status else "",
+                    "job_url": job_desc.url or "",
+                    "notes": app.notes or "",
+                    "requirements": requirements,
+                    "cover_letter": cover_letter_body,
+                    "job_description": job_desc.full_description or "",
+                }
+            )
+
+        # ── CSV branch ─────────────────────────────────────────────────────
+        if format.lower() == "csv":
+            import csv
+
+            output = io.StringIO()
+            writer = csv.DictWriter(
+                output,
+                fieldnames=[
+                    "date",
+                    "company",
+                    "job_title",
+                    "status",
+                    "job_url",
+                    "notes",
+                    "requirements",
+                    "cover_letter",
+                    "job_description",
+                ],
+            )
+            writer.writeheader()
+            writer.writerows(rows)
+            csv_bytes = output.getvalue().encode("utf-8-sig")
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            filename = f"vite-a-job-applications-{today}.csv"
+            return StreamingResponse(
+                io.BytesIO(csv_bytes),
+                media_type="text/csv",
+                headers={
+                    "Content-Disposition": f'attachment; filename="{filename}"',
+                    "Content-Length": str(len(csv_bytes)),
+                },
+            )
+
+        # ── XLSX branch ────────────────────────────────────────────────────
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "My Applications"  # type: ignore[union-attr]
+
+        headers = [
+            "Date",
+            "Company",
+            "Job Title",
+            "Status",
+            "Job URL",
+            "Notes",
+            "Requirements",
+            "Cover Letter",
+            "Job Description",
+        ]
+        keys = [
+            "date",
+            "company",
+            "job_title",
+            "status",
+            "job_url",
+            "notes",
+            "requirements",
+            "cover_letter",
+            "job_description",
+        ]
+
+        # Header row styling — sky-blue background, white bold text
+        header_fill = PatternFill(
+            start_color="0369A1", end_color="0369A1", fill_type="solid"
+        )
+        header_font = Font(bold=True, color="FFFFFF", name="Calibri", size=11)
+        header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=False)
+
+        for col_idx, header in enumerate(headers, start=1):
+            cell = ws.cell(row=1, column=col_idx, value=header)  # type: ignore[union-attr]
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_alignment
+
+        # Freeze the header row
+        ws.freeze_panes = "A2"  # type: ignore[union-attr]
+
+        # Data rows
+        row_alignment = Alignment(vertical="top", wrap_text=True)
+        for row_idx, row_data in enumerate(rows, start=2):
+            # Alternate row background for readability
+            if row_idx % 2 == 0:
+                row_fill = PatternFill(
+                    start_color="EFF6FF", end_color="EFF6FF", fill_type="solid"
+                )
+            else:
+                row_fill = PatternFill(fill_type=None)
+
+            for col_idx, key in enumerate(keys, start=1):
+                cell = ws.cell(row=row_idx, column=col_idx, value=row_data[key])  # type: ignore[union-attr]
+                cell.alignment = row_alignment
+                cell.fill = row_fill
+                cell.font = Font(name="Calibri", size=10)
+
+        # Set column widths
+        col_widths = {
+            1: 14,   # Date
+            2: 22,   # Company
+            3: 30,   # Job Title
+            4: 12,   # Status
+            5: 45,   # Job URL
+            6: 30,   # Notes
+            7: 40,   # Requirements
+            8: 60,   # Cover Letter
+            9: 60,   # Job Description
+        }
+        for col_idx, width in col_widths.items():
+            ws.column_dimensions[get_column_letter(col_idx)].width = width  # type: ignore[union-attr]
+
+        # Set row height for data rows (tall for wrapped text)
+        for row_idx in range(2, len(rows) + 2):
+            ws.row_dimensions[row_idx].height = 60  # type: ignore[union-attr]
+
+        # Stream the workbook
+        output_bytes = io.BytesIO()
+        wb.save(output_bytes)
+        output_bytes.seek(0)
+        xlsx_content = output_bytes.read()
+
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        filename = f"vite-a-job-applications-{today}.xlsx"
+        return StreamingResponse(
+            io.BytesIO(xlsx_content),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Length": str(len(xlsx_content)),
+            },
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to export applications: {str(e)}"
+        )
+
+
 
 
 @router.get("/application/{application_id}/details")
