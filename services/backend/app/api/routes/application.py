@@ -30,6 +30,9 @@ from app.api.validation.schemas import (
     UpdateApplicationStatusRequest,
 )
 
+# Matches characters that cannot be serialized to XML (control chars in range 0x00-0x1F, except tab, LF, CR)
+ILLEGAL_CHARACTERS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
 router = APIRouter(tags=["application"])
 
 
@@ -444,7 +447,12 @@ async def export_applications_excel(
                 row_fill = PatternFill(fill_type=None)
 
             for col_idx, key in enumerate(keys, start=1):
-                cell = ws.cell(row=row_idx, column=col_idx, value=row_data[key])  # type: ignore[union-attr]
+                val = row_data[key]
+                if isinstance(val, str):
+                    val = ILLEGAL_CHARACTERS_RE.sub(
+                        lambda m: f"\\x{ord(m.group(0)):02x}", val
+                    )
+                cell = ws.cell(row=row_idx, column=col_idx, value=val)  # type: ignore[union-attr]
                 cell.alignment = row_alignment
                 cell.fill = row_fill
                 cell.font = Font(name="Calibri", size=10)
