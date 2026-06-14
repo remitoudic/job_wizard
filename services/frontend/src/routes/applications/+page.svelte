@@ -431,7 +431,13 @@
 								fill="none"
 								viewBox="0 0 24 24"
 							>
-								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+								<circle
+									class="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									stroke-width="4"
 								></circle>
 								<path
 									class="opacity-75"
@@ -471,7 +477,9 @@
 							on:click|stopPropagation
 							on:keydown|stopPropagation
 						>
-							<p class="px-3 pt-1.5 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+							<p
+								class="px-3 pt-1.5 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400"
+							>
 								Export Data
 							</p>
 

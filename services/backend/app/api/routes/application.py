@@ -419,7 +419,9 @@ async def export_applications_excel(
             start_color="0369A1", end_color="0369A1", fill_type="solid"
         )
         header_font = Font(bold=True, color="FFFFFF", name="Calibri", size=11)
-        header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=False)
+        header_alignment = Alignment(
+            horizontal="center", vertical="center", wrap_text=False
+        )
 
         for col_idx, header in enumerate(headers, start=1):
             cell = ws.cell(row=1, column=col_idx, value=header)  # type: ignore[union-attr]
@@ -449,15 +451,15 @@ async def export_applications_excel(
 
         # Set column widths
         col_widths = {
-            1: 14,   # Date
-            2: 22,   # Company
-            3: 30,   # Job Title
-            4: 12,   # Status
-            5: 45,   # Job URL
-            6: 30,   # Notes
-            7: 40,   # Requirements
-            8: 60,   # Cover Letter
-            9: 60,   # Job Description
+            1: 14,  # Date
+            2: 22,  # Company
+            3: 30,  # Job Title
+            4: 12,  # Status
+            5: 45,  # Job URL
+            6: 30,  # Notes
+            7: 40,  # Requirements
+            8: 60,  # Cover Letter
+            9: 60,  # Job Description
         }
         for col_idx, width in col_widths.items():
             ws.column_dimensions[get_column_letter(col_idx)].width = width  # type: ignore[union-attr]
@@ -486,8 +488,6 @@ async def export_applications_excel(
         raise HTTPException(
             status_code=500, detail=f"Failed to export applications: {str(e)}"
         )
-
-
 
 
 @router.get("/application/{application_id}/details")
