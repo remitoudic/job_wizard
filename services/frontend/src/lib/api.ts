@@ -536,6 +536,32 @@ export async function deleteApplication(id: number): Promise<any> {
 	return handleResponse<any>(response, 'Failed to delete application');
 }
 
+export async function exportApplications(format: 'xlsx' | 'csv' = 'xlsx'): Promise<void> {
+	const response = await apiFetch(`${API_URL}/api/applications/export?format=${format}`, {
+		method: 'GET',
+		headers: getAuthHeaders()
+	});
+	if (!response.ok) {
+		const text = await response.text();
+		let msg = 'Failed to export applications';
+		try {
+			const data = JSON.parse(text);
+			if (data.detail) msg = data.detail;
+		} catch {}
+		throw new Error(msg);
+	}
+	const blob = await response.blob();
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	const today = new Date().toISOString().split('T')[0];
+	a.href = url;
+	a.download = `vite-a-job-applications-${today}.${format}`;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+}
+
 // ── User CV Management Types & API ─────────────────────────────────────────
 
 export interface UserCVRead {

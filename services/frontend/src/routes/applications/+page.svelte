@@ -6,6 +6,7 @@
 		updateApplicationStatus,
 		deleteApplication,
 		fetchUserCompanies,
+		exportApplications,
 		type ApplicationListItem
 	} from '$lib/api';
 	import { auth } from '../../stores/auth';
@@ -32,6 +33,9 @@
 	let filterTimeout: any;
 	let isFilterVisible = false;
 	let authChecked = false;
+	let isMoreMenuOpen = false;
+	let isExporting = false;
+	let exportError = '';
 
 	$: filteredCompanies = companySearchText
 		? availableCompanies.filter((c) => c.toLowerCase().includes(companySearchText.toLowerCase()))
@@ -201,6 +205,20 @@
 			} finally {
 				loadingDetailsId = null;
 			}
+		}
+	}
+
+	async function handleExport(format: 'xlsx' | 'csv') {
+		isMoreMenuOpen = false;
+		isExporting = true;
+		exportError = '';
+		try {
+			await exportApplications(format);
+		} catch (e: any) {
+			exportError = e.message || 'Export failed. Please try again.';
+			setTimeout(() => (exportError = ''), 4000);
+		} finally {
+			isExporting = false;
 		}
 	}
 
@@ -392,6 +410,141 @@
 						</button>
 					</div>
 				{/if}
+
+				<!-- More Actions (⋮) Dropdown -->
+				<div class="relative">
+					<button
+						id="more-actions-btn"
+						aria-label="More actions"
+						aria-haspopup="true"
+						aria-expanded={isMoreMenuOpen}
+						class="flex items-center justify-center w-10 h-10 rounded-lg border border-[#E2E8F0] bg-white text-[#64748B] hover:text-[#0F172A] hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm cursor-pointer {isMoreMenuOpen
+							? 'bg-slate-100 border-slate-300 text-[#0F172A]'
+							: ''}"
+						on:click|stopPropagation={() => (isMoreMenuOpen = !isMoreMenuOpen)}
+					>
+						{#if isExporting}
+							<!-- Spinner while exporting -->
+							<svg
+								class="animate-spin h-5 w-5 text-[#0369A1]"
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+							>
+								<circle
+									class="opacity-25"
+									cx="12"
+									cy="12"
+									r="10"
+									stroke="currentColor"
+									stroke-width="4"
+								></circle>
+								<path
+									class="opacity-75"
+									fill="currentColor"
+									d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+								></path>
+							</svg>
+						{:else}
+							<!-- Three dots icon -->
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-5 w-5"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+							>
+								<path
+									d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
+								/>
+							</svg>
+						{/if}
+					</button>
+
+					{#if isMoreMenuOpen}
+						<!-- Click-outside overlay -->
+						<button
+							type="button"
+							class="fixed inset-0 z-20 cursor-default"
+							on:click={() => (isMoreMenuOpen = false)}
+							aria-label="Close menu"
+						></button>
+
+						<!-- Dropdown panel -->
+						<div
+							role="menu"
+							aria-labelledby="more-actions-btn"
+							class="absolute right-0 mt-2 w-56 bg-white border border-[#E2E8F0] rounded-xl shadow-xl z-30 py-1.5 overflow-hidden"
+							on:click|stopPropagation
+							on:keydown|stopPropagation
+						>
+							<p
+								class="px-3 pt-1.5 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400"
+							>
+								Export Data
+							</p>
+
+							<!-- Export to Excel -->
+							<button
+								role="menuitem"
+								class="w-full text-left flex items-center gap-3 px-3 py-2.5 text-sm text-[#0F172A] hover:bg-[#F0FDF4] hover:text-[#15803D] transition-colors cursor-pointer group"
+								on:click={() => handleExport('xlsx')}
+								disabled={isExporting}
+							>
+								<!-- Excel icon -->
+								<span
+									class="flex-shrink-0 w-8 h-8 rounded-md bg-[#DCFCE7] group-hover:bg-[#BBF7D0] flex items-center justify-center transition-colors"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-4 w-4 text-[#16A34A]"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+									>
+										<path
+											d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 17l-1.5-2.5L5.5 17H4l2-3-2-3h1.5L7 13.5 8.5 11H10l-2 3 2 3H8.5zm4.5-6h1v6h-1v-6zm3 0h1l-2 3 2 3h-1.5L14 14.5 12.5 17H11l2-3-2-3h1.5L14 13.5 15.5 11z"
+										/>
+									</svg>
+								</span>
+								<div>
+									<div class="font-semibold">Export to Excel</div>
+									<div class="text-xs text-slate-400">.xlsx format</div>
+								</div>
+							</button>
+
+							<!-- Export to CSV -->
+							<button
+								role="menuitem"
+								class="w-full text-left flex items-center gap-3 px-3 py-2.5 text-sm text-[#0F172A] hover:bg-[#F0F9FF] hover:text-[#0369A1] transition-colors cursor-pointer group"
+								on:click={() => handleExport('csv')}
+								disabled={isExporting}
+							>
+								<!-- CSV icon -->
+								<span
+									class="flex-shrink-0 w-8 h-8 rounded-md bg-[#E0F2FE] group-hover:bg-[#BAE6FD] flex items-center justify-center transition-colors"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-4 w-4 text-[#0284C7]"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+										/>
+									</svg>
+								</span>
+								<div>
+									<div class="font-semibold">Export to CSV</div>
+									<div class="text-xs text-slate-400">.csv format</div>
+								</div>
+							</button>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</div>
 
@@ -412,6 +565,28 @@
 						d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 					></path>
 				</svg>
+			</div>
+		{/if}
+
+		<!-- Export Error Toast -->
+		{#if exportError}
+			<div
+				class="fixed top-6 right-6 z-50 flex items-center gap-3 bg-red-600 text-white px-4 py-3 rounded-lg shadow-xl text-sm font-semibold animate-fade-in"
+				role="alert"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-5 w-5 flex-shrink-0"
+					viewBox="0 0 20 20"
+					fill="currentColor"
+				>
+					<path
+						fill-rule="evenodd"
+						d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+						clip-rule="evenodd"
+					/>
+				</svg>
+				{exportError}
 			</div>
 		{/if}
 
