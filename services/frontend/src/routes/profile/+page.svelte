@@ -1198,38 +1198,17 @@
 					</div>
 				</div>
 
-				<!-- Developer Settings / API Keys -->
-				<div class="md:col-span-2 pt-6 mt-2 border-t border-gray-100">
-					<div class="bg-slate-50/50 border border-slate-200 rounded-xl p-6 shadow-sm">
-						<div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								class="h-5 w-5 text-slate-500"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-								/>
-							</svg>
-							<h3 class="text-lg font-semibold text-slate-800">Developer Settings</h3>
-						</div>
+				<div class="md:col-span-2 pt-8 mt-4 border-t border-slate-100">
+					<div class="relative group">
+						<!-- Subtle gradient glow -->
+						<div class="absolute -inset-0.5 bg-gradient-to-r from-primary-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
 
-						<p class="text-sm text-slate-600 mb-4">
-							Manage API keys to allow external AI assistants (like Claude, Gemini, Cursor) to
-							connect to your Job Wizard MCP server.
-						</p>
-
-						{#if generatedSecretKey}
-							<div class="mb-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-								<div class="flex gap-2 items-start">
+						<div class="relative bg-white border border-slate-200/60 rounded-xl p-6 shadow-sm">
+							<div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-4">
+								<div class="p-2 bg-primary-50 text-primary-600 rounded-lg">
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
-										class="h-5 w-5 text-emerald-600 mt-0.5 shrink-0"
+										class="h-5 w-5"
 										fill="none"
 										viewBox="0 0 24 24"
 										stroke="currentColor"
@@ -1238,156 +1217,222 @@
 											stroke-linecap="round"
 											stroke-linejoin="round"
 											stroke-width="2"
-											d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+											d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
 										/>
 									</svg>
-									<div>
-										<h4 class="text-sm font-bold text-emerald-800 mb-1">
-											Store this key securely!
-										</h4>
-										<p class="text-xs text-emerald-700 mb-3">
-											This is the only time the API key will be shown to you. If you lose it, you
-											will need to generate a new one.
-										</p>
-										<div
-											class="flex items-center gap-2 bg-white border border-emerald-100 rounded-md p-1 pl-3 overflow-hidden"
-										>
-											<code class="text-sm font-mono text-slate-800 flex-1 truncate select-all"
-												>{generatedSecretKey}</code
+								</div>
+								<div>
+									<h3 class="text-lg font-bold text-slate-900 tracking-tight">Developer Settings</h3>
+									<p class="text-xs text-slate-500 mt-0.5">Manage access for external AI assistants</p>
+								</div>
+							</div>
+
+							<p class="text-sm text-slate-600 mb-6 leading-relaxed">
+								Manage API keys to allow external AI assistants (like Claude, Gemini, Cursor) to
+								connect to your Job Wizard MCP server.
+							</p>
+
+							{#if generatedSecretKey}
+								<div class="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200/60 shadow-sm relative overflow-hidden">
+									<div class="absolute top-0 right-0 p-4 opacity-10">
+										<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+										</svg>
+									</div>
+									<div class="flex gap-3 items-start relative z-10">
+										<div class="p-1.5 bg-emerald-100 text-emerald-600 rounded-full shrink-0">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												class="h-4 w-4"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
 											>
-											<button
-												type="button"
-												on:click={() => copyToClipboard(generatedSecretKey || '')}
-												class="px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded text-xs font-semibold transition-colors flex items-center gap-1 shrink-0"
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M5 13l4 4L19 7"
+												/>
+											</svg>
+										</div>
+										<div class="w-full">
+											<h4 class="text-sm font-bold text-emerald-900 mb-1">
+												Store this key securely!
+											</h4>
+											<p class="text-xs text-emerald-700/80 mb-3 max-w-[90%]">
+												This is the only time the API key will be shown to you. If you lose it, you
+												will need to generate a new one.
+											</p>
+											<div
+												class="flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-emerald-200/50 rounded-lg p-1.5 pl-3 shadow-inner"
 											>
-												<svg
-													xmlns="http://www.w3.org/2000/svg"
-													class="h-3.5 w-3.5"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
+												<code class="text-sm font-mono text-emerald-900 flex-1 truncate select-all"
+													>{generatedSecretKey}</code
 												>
-													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
-														d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-													/>
-												</svg>
-												Copy
-											</button>
+												<button
+													type="button"
+													on:click={() => copyToClipboard(generatedSecretKey || '')}
+													class="px-4 py-1.5 bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-md active:scale-95 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0"
+												>
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														class="h-3.5 w-3.5"
+														fill="none"
+														viewBox="0 0 24 24"
+														stroke="currentColor"
+													>
+														<path
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															stroke-width="2"
+															d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+														/>
+													</svg>
+													Copy
+												</button>
+											</div>
 										</div>
 									</div>
 								</div>
-							</div>
-						{/if}
+							{/if}
 
-						<div class="flex gap-2 mb-6">
-							<input
-								type="text"
-								bind:value={newKeyName}
-								placeholder="e.g. AI assistant: Claude, Gemini, Cursor"
-								class="input flex-1"
-							/>
-							<button
-								type="button"
-								on:click={handleGenerateApiKey}
-								disabled={isGeneratingKey || !newKeyName.trim()}
-								class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-900 transition-colors disabled:opacity-50 flex items-center gap-2"
-							>
-								{#if isGeneratingKey}
-									<svg
-										class="animate-spin h-4 w-4"
-										xmlns="http://www.w3.org/2000/svg"
-										fill="none"
-										viewBox="0 0 24 24"
-									>
-										<circle
-											class="opacity-25"
-											cx="12"
-											cy="12"
-											r="10"
+							<div class="flex flex-col sm:flex-row gap-3 mb-8">
+								<input
+									type="text"
+									bind:value={newKeyName}
+									placeholder="e.g. AI assistant: Claude, Gemini, Cursor"
+									class="input flex-1 !rounded-lg !border-slate-200 focus:!ring-indigo-500 focus:!border-indigo-500 shadow-sm transition-shadow hover:shadow-md"
+								/>
+								<button
+									type="button"
+									on:click={handleGenerateApiKey}
+									disabled={isGeneratingKey || !newKeyName.trim()}
+									class="px-5 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none flex items-center gap-2 justify-center sm:w-auto w-full"
+								>
+									{#if isGeneratingKey}
+										<svg
+											class="animate-spin h-4 w-4"
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+										>
+											<circle
+												class="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												stroke-width="4"
+											></circle>
+											<path
+												class="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+											></path>
+										</svg>
+										Generating...
+									{:else}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-4 w-4"
+											fill="none"
+											viewBox="0 0 24 24"
 											stroke="currentColor"
-											stroke-width="4"
-										></circle>
-										<path
-											class="opacity-75"
-											fill="currentColor"
-											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-										></path>
-									</svg>
-									Generating...
-								{:else}
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										class="h-4 w-4"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											stroke-width="2"
-											d="M12 4v16m8-8H4"
-										/>
-									</svg>
-									Generate Key
-								{/if}
-							</button>
-						</div>
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M12 4v16m8-8H4"
+											/>
+										</svg>
+										Generate Key
+									{/if}
+								</button>
+							</div>
 
-						{#if isKeysLoading}
-							<div class="text-center py-4 text-sm text-slate-500">Loading API keys...</div>
-						{:else if apiKeysList.length === 0}
-							<div
-								class="text-center py-6 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500"
-							>
-								No API keys generated yet.
-							</div>
-						{:else}
-							<div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-								<table class="w-full text-sm text-left">
-									<thead
-										class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200"
-									>
-										<tr>
-											<th scope="col" class="px-4 py-3 font-medium">Key Name</th>
-											<th scope="col" class="px-4 py-3 font-medium">Created</th>
-											<th scope="col" class="px-4 py-3 font-medium">Last Used</th>
-											<th scope="col" class="px-4 py-3 font-medium text-right">Action</th>
-										</tr>
-									</thead>
-									<tbody>
-										{#each apiKeysList as key (key.id)}
-											<tr
-												class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors last:border-0"
-												transition:fade={{ duration: 150 }}
-											>
-												<td class="px-4 py-3 font-medium text-slate-800">{key.name}</td>
-												<td class="px-4 py-3 text-slate-500">{formatDate(key.created_at)}</td>
-												<td class="px-4 py-3 text-slate-500">
-													{key.last_used_at ? formatDate(key.last_used_at) : 'Never'}
-												</td>
-												<td class="px-4 py-3 text-right">
-													<button
-														type="button"
-														on:click={() => handleDeleteApiKey(key.id, key.name)}
-														disabled={isDeletingKey === key.id}
-														class="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 inline-flex items-center gap-1"
-													>
-														{#if isDeletingKey === key.id}
-															Revoking...
-														{:else}
-															Revoke
-														{/if}
-													</button>
-												</td>
+							{#if isKeysLoading}
+								<div class="flex justify-center items-center py-8">
+									<svg class="animate-spin h-6 w-6 text-slate-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+										<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+										<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+									</svg>
+								</div>
+							{:else if apiKeysList.length === 0}
+								<div
+									class="text-center py-10 border border-dashed border-slate-200 bg-slate-50/50 rounded-xl flex flex-col items-center justify-center gap-2"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+									</svg>
+									<p class="text-sm font-medium text-slate-500">No API keys generated yet</p>
+									<p class="text-xs text-slate-400">Generate your first key to connect external assistants.</p>
+								</div>
+							{:else}
+								<div class="border border-slate-200/80 rounded-xl overflow-hidden bg-white shadow-sm ring-1 ring-slate-900/5">
+									<table class="w-full text-sm text-left">
+										<thead
+											class="text-xs text-slate-500 font-semibold uppercase tracking-wider bg-slate-50/80 border-b border-slate-200/80"
+										>
+											<tr>
+												<th scope="col" class="px-5 py-4">Key Name</th>
+												<th scope="col" class="px-5 py-4">Created</th>
+												<th scope="col" class="px-5 py-4">Last Used</th>
+												<th scope="col" class="px-5 py-4 text-right">Action</th>
 											</tr>
-										{/each}
-									</tbody>
-								</table>
-							</div>
+										</thead>
+										<tbody class="divide-y divide-slate-100">
+											{#each apiKeysList as key (key.id)}
+												<tr
+													class="group hover:bg-slate-50 transition-colors"
+													transition:fade={{ duration: 150 }}
+												>
+													<td class="px-5 py-3.5">
+														<div class="flex items-center gap-2">
+															<div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+															<span class="font-medium text-slate-900">{key.name}</span>
+														</div>
+													</td>
+													<td class="px-5 py-3.5 text-slate-500">{formatDate(key.created_at)}</td>
+													<td class="px-5 py-3.5 text-slate-500">
+														{#if key.last_used_at}
+															<span class="inline-flex items-center gap-1">
+																<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+																</svg>
+																{formatDate(key.last_used_at)}
+															</span>
+														{:else}
+															<span class="text-slate-400 italic">Never</span>
+														{/if}
+													</td>
+													<td class="px-5 py-3.5 text-right">
+														<button
+															type="button"
+															on:click={() => handleDeleteApiKey(key.id, key.name)}
+															disabled={isDeletingKey === key.id}
+															class="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 inline-flex items-center gap-1.5 opacity-0 group-hover:opacity-100 focus:opacity-100"
+														>
+															{#if isDeletingKey === key.id}
+																<svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+																	<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+																	<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+																</svg>
+																Revoking...
+															{:else}
+																<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+																</svg>
+																Revoke
+															{/if}
+														</button>
+													</td>
+												</tr>
+											{/each}
+										</tbody>
+									</table>
+								</div>
 						{/if}
 					</div>
 				</div>
