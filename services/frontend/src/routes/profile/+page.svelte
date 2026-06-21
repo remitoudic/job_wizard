@@ -12,10 +12,13 @@
 		updateUserCV,
 		deleteUserCV,
 		uploadProfilePicture,
-		deleteProfilePicture
+		deleteProfilePicture,
+		getApiKeys,
+		createApiKey,
+		deleteApiKey
 	} from '$lib/api';
 	import { auth } from '../../stores/auth';
-	import type { UserCVRead } from '$lib/api';
+	import type { UserCVRead, ApiKeyRead } from '$lib/api';
 	import { _, locale } from 'svelte-i18n';
 	let fileInput: HTMLInputElement;
 	let cvFileInput: HTMLInputElement;
@@ -37,6 +40,14 @@
 	let newCvName = 'My CV';
 	let editingCvId: number | null = null;
 	let editingCvName = '';
+
+	// API Keys State
+	let apiKeysList: ApiKeyRead[] = [];
+	let isKeysLoading = true;
+	let isGeneratingKey = false;
+	let newKeyName = '';
+	let generatedSecretKey: string | null = null;
+	let isDeletingKey: number | null = null;
 
 	function handleFileSelect(event: Event) {
 		const file = (event.target as HTMLInputElement).files?.[0];
@@ -273,11 +284,82 @@
 		});
 	}
 
+	// ── API Keys Functions ──────────────────────────────────────────────────
+
+	async function loadApiKeys() {
+		isKeysLoading = true;
+		try {
+			apiKeysList = await getApiKeys();
+		} catch (e: any) {
+			console.error('Failed to load API keys:', e);
+		} finally {
+			isKeysLoading = false;
+		}
+	}
+
+	async function handleGenerateApiKey() {
+		if (!newKeyName.trim()) {
+			error = 'API Key name is required';
+			return;
+		}
+
+		isGeneratingKey = true;
+		error = '';
+		message = '';
+		generatedSecretKey = null;
+
+		try {
+			const newKey = await createApiKey(newKeyName.trim());
+			generatedSecretKey = newKey.secret_key;
+			// Refresh list
+			await loadApiKeys();
+			newKeyName = '';
+			message = 'API Key generated successfully!';
+		} catch (e: any) {
+			error = e.message || 'Failed to generate API Key';
+		} finally {
+			isGeneratingKey = false;
+		}
+	}
+
+	async function handleDeleteApiKey(keyId: number, keyName: string) {
+		if (
+			!confirm(
+				`Are you sure you want to revoke the API key "${keyName}"? Any applications using this key will immediately lose access.`
+			)
+		) {
+			return;
+		}
+
+		isDeletingKey = keyId;
+		error = '';
+		try {
+			await deleteApiKey(keyId);
+			apiKeysList = apiKeysList.filter((k) => k.id !== keyId);
+			message = `API Key "${keyName}" revoked.`;
+		} catch (e: any) {
+			error = e.message || 'Failed to revoke API Key';
+		} finally {
+			isDeletingKey = null;
+		}
+	}
+
+	function copyToClipboard(text: string) {
+		navigator.clipboard
+			.writeText(text)
+			.then(() => {
+				alert('Copied to clipboard!');
+			})
+			.catch((err) => {
+				console.error('Failed to copy: ', err);
+			});
+	}
+
 	onMount(async () => {
 		try {
 			user = await getProfile();
 			auth.updateUser(user!);
-			await loadCVs();
+			await Promise.all([loadCVs(), loadApiKeys()]);
 		} catch (e) {
 			error = 'Failed to load profile';
 		} finally {
@@ -1113,6 +1195,200 @@
 								/>
 							</div>
 						</div>
+					</div>
+				</div>
+
+				<!-- Developer Settings / API Keys -->
+				<div class="md:col-span-2 pt-6 mt-2 border-t border-gray-100">
+					<div class="bg-slate-50/50 border border-slate-200 rounded-xl p-6 shadow-sm">
+						<div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-5 w-5 text-slate-500"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+								/>
+							</svg>
+							<h3 class="text-lg font-semibold text-slate-800">Developer Settings</h3>
+						</div>
+
+						<p class="text-sm text-slate-600 mb-4">
+							Manage API keys to allow external AI agents (like Cursor or Gemini) to connect to your
+							Job Wizard MCP server.
+						</p>
+
+						{#if generatedSecretKey}
+							<div class="mb-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+								<div class="flex gap-2 items-start">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-5 w-5 text-emerald-600 mt-0.5 shrink-0"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+										/>
+									</svg>
+									<div>
+										<h4 class="text-sm font-bold text-emerald-800 mb-1">
+											Store this key securely!
+										</h4>
+										<p class="text-xs text-emerald-700 mb-3">
+											This is the only time the API key will be shown to you. If you lose it, you
+											will need to generate a new one.
+										</p>
+										<div
+											class="flex items-center gap-2 bg-white border border-emerald-100 rounded-md p-1 pl-3 overflow-hidden"
+										>
+											<code class="text-sm font-mono text-slate-800 flex-1 truncate select-all"
+												>{generatedSecretKey}</code
+											>
+											<button
+												type="button"
+												on:click={() => copyToClipboard(generatedSecretKey || '')}
+												class="px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded text-xs font-semibold transition-colors flex items-center gap-1 shrink-0"
+											>
+												<svg
+													xmlns="http://www.w3.org/2000/svg"
+													class="h-3.5 w-3.5"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+													/>
+												</svg>
+												Copy
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						{/if}
+
+						<div class="flex gap-2 mb-6">
+							<input
+								type="text"
+								bind:value={newKeyName}
+								placeholder="e.g. Cursor Agent"
+								class="input flex-1"
+							/>
+							<button
+								type="button"
+								on:click={handleGenerateApiKey}
+								disabled={isGeneratingKey || !newKeyName.trim()}
+								class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-900 transition-colors disabled:opacity-50 flex items-center gap-2"
+							>
+								{#if isGeneratingKey}
+									<svg
+										class="animate-spin h-4 w-4"
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+									>
+										<circle
+											class="opacity-25"
+											cx="12"
+											cy="12"
+											r="10"
+											stroke="currentColor"
+											stroke-width="4"
+										></circle>
+										<path
+											class="opacity-75"
+											fill="currentColor"
+											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+										></path>
+									</svg>
+									Generating...
+								{:else}
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-4 w-4"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M12 4v16m8-8H4"
+										/>
+									</svg>
+									Generate Key
+								{/if}
+							</button>
+						</div>
+
+						{#if isKeysLoading}
+							<div class="text-center py-4 text-sm text-slate-500">Loading API keys...</div>
+						{:else if apiKeysList.length === 0}
+							<div
+								class="text-center py-6 border border-dashed border-slate-200 rounded-lg text-sm text-slate-500"
+							>
+								No API keys generated yet.
+							</div>
+						{:else}
+							<div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+								<table class="w-full text-sm text-left">
+									<thead
+										class="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200"
+									>
+										<tr>
+											<th scope="col" class="px-4 py-3 font-medium">Key Name</th>
+											<th scope="col" class="px-4 py-3 font-medium">Created</th>
+											<th scope="col" class="px-4 py-3 font-medium">Last Used</th>
+											<th scope="col" class="px-4 py-3 font-medium text-right">Action</th>
+										</tr>
+									</thead>
+									<tbody>
+										{#each apiKeysList as key (key.id)}
+											<tr
+												class="border-b border-slate-100 hover:bg-slate-50/50 transition-colors last:border-0"
+												transition:fade={{ duration: 150 }}
+											>
+												<td class="px-4 py-3 font-medium text-slate-800">{key.name}</td>
+												<td class="px-4 py-3 text-slate-500">{formatDate(key.created_at)}</td>
+												<td class="px-4 py-3 text-slate-500">
+													{key.last_used_at ? formatDate(key.last_used_at) : 'Never'}
+												</td>
+												<td class="px-4 py-3 text-right">
+													<button
+														type="button"
+														on:click={() => handleDeleteApiKey(key.id, key.name)}
+														disabled={isDeletingKey === key.id}
+														class="text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50 inline-flex items-center gap-1"
+													>
+														{#if isDeletingKey === key.id}
+															Revoking...
+														{:else}
+															Revoke
+														{/if}
+													</button>
+												</td>
+											</tr>
+										{/each}
+									</tbody>
+								</table>
+							</div>
+						{/if}
 					</div>
 				</div>
 			</div>
