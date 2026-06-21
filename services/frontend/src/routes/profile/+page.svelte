@@ -1201,7 +1201,9 @@
 				<div class="md:col-span-2 pt-8 mt-4 border-t border-slate-100">
 					<div class="relative group">
 						<!-- Subtle gradient glow -->
-						<div class="absolute -inset-0.5 bg-gradient-to-r from-primary-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-500"></div>
+						<div
+							class="absolute -inset-0.5 bg-gradient-to-r from-primary-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-500"
+						></div>
 
 						<div class="relative bg-white border border-slate-200/60 rounded-xl p-6 shadow-sm">
 							<div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-4">
@@ -1222,8 +1224,12 @@
 									</svg>
 								</div>
 								<div>
-									<h3 class="text-lg font-bold text-slate-900 tracking-tight">Developer Settings</h3>
-									<p class="text-xs text-slate-500 mt-0.5">Manage access for external AI assistants</p>
+									<h3 class="text-lg font-bold text-slate-900 tracking-tight">
+										Developer Settings
+									</h3>
+									<p class="text-xs text-slate-500 mt-0.5">
+										Manage access for external AI assistants
+									</p>
 								</div>
 							</div>
 
@@ -1233,10 +1239,23 @@
 							</p>
 
 							{#if generatedSecretKey}
-								<div class="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200/60 shadow-sm relative overflow-hidden">
+								<div
+									class="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200/60 shadow-sm relative overflow-hidden"
+								>
 									<div class="absolute top-0 right-0 p-4 opacity-10">
-										<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											class="h-16 w-16 text-emerald-600"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												stroke-width="2"
+												d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+											/>
 										</svg>
 									</div>
 									<div class="flex gap-3 items-start relative z-10">
@@ -1354,23 +1373,54 @@
 
 							{#if isKeysLoading}
 								<div class="flex justify-center items-center py-8">
-									<svg class="animate-spin h-6 w-6 text-slate-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-										<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-										<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+									<svg
+										class="animate-spin h-6 w-6 text-slate-300"
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+									>
+										<circle
+											class="opacity-25"
+											cx="12"
+											cy="12"
+											r="10"
+											stroke="currentColor"
+											stroke-width="4"
+										></circle>
+										<path
+											class="opacity-75"
+											fill="currentColor"
+											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+										></path>
 									</svg>
 								</div>
 							{:else if apiKeysList.length === 0}
 								<div
 									class="text-center py-10 border border-dashed border-slate-200 bg-slate-50/50 rounded-xl flex flex-col items-center justify-center gap-2"
 								>
-									<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										class="h-8 w-8 text-slate-300"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+										/>
 									</svg>
 									<p class="text-sm font-medium text-slate-500">No API keys generated yet</p>
-									<p class="text-xs text-slate-400">Generate your first key to connect external assistants.</p>
+									<p class="text-xs text-slate-400">
+										Generate your first key to connect external assistants.
+									</p>
 								</div>
 							{:else}
-								<div class="border border-slate-200/80 rounded-xl overflow-hidden bg-white shadow-sm ring-1 ring-slate-900/5">
+								<div
+									class="border border-slate-200/80 rounded-xl overflow-hidden bg-white shadow-sm ring-1 ring-slate-900/5"
+								>
 									<table class="w-full text-sm text-left">
 										<thead
 											class="text-xs text-slate-500 font-semibold uppercase tracking-wider bg-slate-50/80 border-b border-slate-200/80"
@@ -1398,8 +1448,19 @@
 													<td class="px-5 py-3.5 text-slate-500">
 														{#if key.last_used_at}
 															<span class="inline-flex items-center gap-1">
-																<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	class="h-3 w-3 text-slate-400"
+																	fill="none"
+																	viewBox="0 0 24 24"
+																	stroke="currentColor"
+																>
+																	<path
+																		stroke-linecap="round"
+																		stroke-linejoin="round"
+																		stroke-width="2"
+																		d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+																	/>
 																</svg>
 																{formatDate(key.last_used_at)}
 															</span>
@@ -1415,14 +1476,41 @@
 															class="text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors disabled:opacity-50 inline-flex items-center gap-1.5 opacity-0 group-hover:opacity-100 focus:opacity-100"
 														>
 															{#if isDeletingKey === key.id}
-																<svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-																	<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-																	<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+																<svg
+																	class="animate-spin h-3 w-3"
+																	xmlns="http://www.w3.org/2000/svg"
+																	fill="none"
+																	viewBox="0 0 24 24"
+																>
+																	<circle
+																		class="opacity-25"
+																		cx="12"
+																		cy="12"
+																		r="10"
+																		stroke="currentColor"
+																		stroke-width="4"
+																	></circle>
+																	<path
+																		class="opacity-75"
+																		fill="currentColor"
+																		d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+																	></path>
 																</svg>
 																Revoking...
 															{:else}
-																<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-																	<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+																<svg
+																	xmlns="http://www.w3.org/2000/svg"
+																	class="h-3.5 w-3.5"
+																	fill="none"
+																	viewBox="0 0 24 24"
+																	stroke="currentColor"
+																>
+																	<path
+																		stroke-linecap="round"
+																		stroke-linejoin="round"
+																		stroke-width="2"
+																		d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+																	/>
 																</svg>
 																Revoke
 															{/if}
@@ -1433,33 +1521,34 @@
 										</tbody>
 									</table>
 								</div>
-						{/if}
+							{/if}
+						</div>
 					</div>
 				</div>
-			</div>
 
-			<div class="pt-6 border-t border-gray-100 flex flex-col items-end gap-3">
-				<div
-					class="flex items-start sm:items-center gap-2 text-xs text-slate-400 max-w-sm text-right"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="h-4 w-4 mt-0.5 sm:mt-0 shrink-0"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
+				<div class="pt-6 border-t border-gray-100 flex flex-col items-end gap-3">
+					<div
+						class="flex items-start sm:items-center gap-2 text-xs text-slate-400 max-w-sm text-right"
 					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
-					<p>
-						The contact information will be used for the header of the covering letter, and will be
-						used only for this purpose.
-					</p>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							class="h-4 w-4 mt-0.5 sm:mt-0 shrink-0"
+							fill="none"
+							viewBox="0 0 24 24"
+							stroke="currentColor"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+							/>
+						</svg>
+						<p>
+							The contact information will be used for the header of the covering letter, and will
+							be used only for this purpose.
+						</p>
+					</div>
 				</div>
 			</div>
 		</form>
