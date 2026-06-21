@@ -1220,8 +1220,8 @@
 						</div>
 
 						<p class="text-sm text-slate-600 mb-4">
-							Manage API keys to allow external AI agents (like Cursor or Gemini) to connect to your
-							Job Wizard MCP server.
+							Manage API keys to allow external AI assistants (like Claude, Gemini, Cursor) to
+							connect to your Job Wizard MCP server.
 						</p>
 
 						{#if generatedSecretKey}
@@ -1286,7 +1286,7 @@
 							<input
 								type="text"
 								bind:value={newKeyName}
-								placeholder="e.g. Cursor Agent"
+								placeholder="e.g. AI assistant: Claude, Gemini, Cursor"
 								class="input flex-1"
 							/>
 							<button
