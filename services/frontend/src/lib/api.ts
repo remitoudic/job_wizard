@@ -719,3 +719,42 @@ export async function previewCV(data: CVData, template: string): Promise<string>
 	}
 	return response.text();
 }
+
+// ── API Keys Management ──────────────────────────────────────────────────
+
+export interface ApiKeyRead {
+	id: number;
+	name: string;
+	user_id: number;
+	created_at: string;
+	last_used_at: string | null;
+}
+
+export interface ApiKeyWithSecret extends ApiKeyRead {
+	secret_key: string;
+}
+
+export async function getApiKeys(): Promise<ApiKeyRead[]> {
+	const response = await apiFetch(`${API_URL}/api/keys`, {
+		method: 'GET',
+		headers: getHeaders()
+	});
+	return handleResponse<ApiKeyRead[]>(response, 'Failed to fetch API keys');
+}
+
+export async function createApiKey(name: string): Promise<ApiKeyWithSecret> {
+	const response = await apiFetch(`${API_URL}/api/keys`, {
+		method: 'POST',
+		headers: getHeaders(),
+		body: JSON.stringify({ name })
+	});
+	return handleResponse<ApiKeyWithSecret>(response, 'Failed to create API key');
+}
+
+export async function deleteApiKey(keyId: number): Promise<void> {
+	const response = await apiFetch(`${API_URL}/api/keys/${keyId}`, {
+		method: 'DELETE',
+		headers: getHeaders()
+	});
+	await handleResponse<any>(response, 'Failed to revoke API key');
+}

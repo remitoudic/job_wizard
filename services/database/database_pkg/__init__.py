@@ -14,6 +14,7 @@ def init_db():
     from database_pkg.models.user_cv import UserCV  # noqa: F401
     from database_pkg.models.job_status import JobStatus  # noqa: F401
     from database_pkg.models.status_history import ApplicationStatusHistory  # noqa: F401
+    from database_pkg.models.api_key import ApiKey  # noqa: F401
 
     SQLModel.metadata.create_all(engine)
     try:

@@ -19,7 +19,9 @@ from app.api.routes import (
     cv_refresh,
     user_cv,
     debug,
+    api_keys,
 )
+from app.mcp_server import mcp_sse
 from app.core.config import settings
 from database_pkg import init_db
 from app.core.pubsub import pubsub_manager
@@ -78,8 +80,12 @@ app.include_router(cover_letter.router, prefix="/api")
 app.include_router(cv_refresh.router, prefix="/api")
 app.include_router(debug.router, prefix="/api")
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+
+app.mount("/mcp", mcp_sse)
+
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(user_cv.router, prefix="/api/users/me/cvs", tags=["user_cv"])
+app.include_router(api_keys.router, prefix="/api/keys", tags=["api-keys"])
 
 
 @app.get("/")
