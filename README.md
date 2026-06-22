@@ -19,6 +19,8 @@ Transform your job application process from hours of manual writing to seconds o
   - 🇬🇧 **English** (Standard) | 🇩🇪 **German** (DIN 5008) | 🇫🇷 **French** (Lettre de Motivation) | 🇪🇸 **Spanish** (Standard)
 - 🔗 **Intelligent Scraping**: Instant extraction from LinkedIn, We Work Remotely, and Arbeitnow...
 - 🚀 **Hybrid LLM Race Mode**: Sub-second generation using a concurrent race between local (**Ollama**) and remote (**Groq/Nvidia/OpenRouter**) providers.
+- ☁️ **Cloud API Keys**: Developers can generate and manage custom API keys in the dashboard, enabling secure, programmatic access to the generation engine from external applications or MCP clients.
+- 🔌 **MCP Server**: Seamlessly integrate with external AI assistants (like Gemini or Cursor) via the built-in Model Context Protocol server. Allow your AI to autonomously manage your applications, such as automatically updating statuses from email updates.
 
 ---
 
@@ -153,6 +155,8 @@ Detailed guides for developers and operators:
 - [CrewAI Agents Guide](docs/CREWAI_AGENTS.md) - Deep dive into the multi-agent cover letter generation pipeline.
 - [Debugging Guide](docs/DEBUGGING.md) - Troubleshooting common issues.
 - [Monorepo Guide](docs/MONOREPO_GUIDE.md) - Overview of the project structure.
+- [MCP Server Design](docs/mcp-server-design.md) - Architecture and capabilities of the Model Context Protocol server.
+- [MCP E2E Testing](docs/mcp-e2e-testing.md) - Guide for testing the MCP server using the Inspector and real LLM agents.
 
 ---
 
