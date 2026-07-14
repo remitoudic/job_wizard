@@ -140,12 +140,16 @@
 		if (data.ollama?.status !== 'ok' || data.ollama?.inference_status !== 'ok') {
 			failed.push('Ollama LLM');
 		}
-		if (data.providers?.groq?.status === 'ok' && data.providers.groq.inference_status !== 'ok') {
+		if (
+			data.providers?.groq?.status === 'error' ||
+			(data.providers?.groq?.status === 'ok' && data.providers.groq.inference_status !== 'ok')
+		) {
 			failed.push('Groq LLM');
 		}
 		if (
-			data.providers?.openrouter?.status === 'ok' &&
-			data.providers.openrouter.inference_status !== 'ok'
+			data.providers?.openrouter?.status === 'error' ||
+			(data.providers?.openrouter?.status === 'ok' &&
+				data.providers.openrouter.inference_status !== 'ok')
 		) {
 			failed.push('OpenRouter LLM');
 		}
@@ -717,6 +721,12 @@
 													Error: {healthData.providers.groq.inference_error}
 												</div>
 											{/if}
+										{:else if healthData.providers?.groq?.status === 'error'}
+											<div
+												class="text-rose-600 text-[10px] leading-relaxed break-words font-mono mt-0.5"
+											>
+												Error: {healthData.providers.groq.message || 'Connection failed'}
+											</div>
 										{/if}
 									</div>
 
@@ -757,6 +767,12 @@
 													Error: {healthData.providers.openrouter.inference_error}
 												</div>
 											{/if}
+										{:else if healthData.providers?.openrouter?.status === 'error'}
+											<div
+												class="text-rose-600 text-[10px] leading-relaxed break-words font-mono mt-0.5"
+											>
+												Error: {healthData.providers.openrouter.message || 'Connection failed'}
+											</div>
 										{/if}
 									</div>
 
