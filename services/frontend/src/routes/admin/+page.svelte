@@ -47,7 +47,9 @@
 		}
 
 		try {
-			users = await getUsers();
+			// Fetch users list and load health checks in parallel on mount
+			const [usersRes] = await Promise.all([getUsers(), loadHealth()]);
+			users = usersRes;
 		} catch (e) {
 			error = 'Failed to load users';
 			console.error(e);
@@ -123,6 +125,38 @@
 		if (!dateString) return 'Never';
 		return new Date(dateString).toLocaleString();
 	}
+
+	// Derived list of failed services for global visibility
+	$: failedServices = healthData ? getFailedServices(healthData) : [];
+
+	function getFailedServices(data: any): string[] {
+		const failed: string[] = [];
+		if (data.database?.status !== 'ok') {
+			failed.push('Database');
+		}
+		if (data.temporal?.status !== 'ok') {
+			failed.push('Temporal.io');
+		}
+		if (data.ollama?.status !== 'ok' || data.ollama?.inference_status !== 'ok') {
+			failed.push('Ollama LLM');
+		}
+		if (data.providers?.groq?.status === 'ok' && data.providers.groq.inference_status !== 'ok') {
+			failed.push('Groq LLM');
+		}
+		if (
+			data.providers?.openrouter?.status === 'ok' &&
+			data.providers.openrouter.inference_status !== 'ok'
+		) {
+			failed.push('OpenRouter LLM');
+		}
+		if (data.cloudinary?.status === 'error') {
+			failed.push('Cloudinary');
+		}
+		if (data.llamacloud?.status === 'error') {
+			failed.push('LlamaCloud');
+		}
+		return failed;
+	}
 </script>
 
 <div class="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -166,9 +200,51 @@
 					on:click={() => switchTab('health')}
 				>
 					System Health
+					{#if failedServices.length > 0}
+						<span class="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"
+						></span>
+						<span class="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+					{/if}
 				</button>
 			</div>
 		</div>
+
+		<!-- Global Alert Banner for Failed Services -->
+		{#if failedServices.length > 0}
+			<div
+				class="bg-rose-50 border-l-4 border-rose-500 p-4 mb-8 rounded-r-xl shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+			>
+				<div class="flex items-start space-x-3">
+					<div class="flex-shrink-0 mt-0.5">
+						<svg
+							class="h-5 w-5 text-rose-500 animate-pulse"
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 20 20"
+							fill="currentColor"
+						>
+							<path
+								fill-rule="evenodd"
+								d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+								clip-rule="evenodd"
+							/>
+						</svg>
+					</div>
+					<div>
+						<h4 class="text-sm font-bold text-rose-800">System Alert: Critical Service Outage</h4>
+						<p class="text-xs text-rose-600 mt-0.5">
+							The following services failed operational checks:
+							<span class="font-bold underline">{failedServices.join(', ')}</span>.
+						</p>
+					</div>
+				</div>
+				<button
+					on:click={() => switchTab('health')}
+					class="inline-flex items-center px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors self-start sm:self-center"
+				>
+					View Diagnostics
+				</button>
+			</div>
+		{/if}
 
 		{#if error}
 			<div class="bg-rose-50 border-l-4 border-rose-500 p-4 mb-8 rounded-r-xl shadow-sm">

@@ -63,6 +63,11 @@ This feature introduces an **Active Inference Health Check** for Ollama, Groq, a
       - `Skipped` (gray badge) if `inference_status == 'skipped'`.
     - If `Failed`, render a tooltip or text element with the exact error message (e.g. *"Insufficient funds"*, *"Rate limit exceeded"*).
 
+### C. Global Admin Alerts & Tab Switcher Indicator
+- **Initial Fetch**: Trigger the system health check on page mount (`onMount`) rather than waiting for the administrator to click the "System Health" tab. This ensures the frontend knows the system status immediately.
+- **Tab Switcher Alert**: Next to the "System Health" button in the sliding switcher, render a red notification dot/badge (`animate-ping`) if any critical service check fails.
+- **Global Error Banner**: If any model inference check (or database/temporal connection) fails, display a prominent warning banner at the top of the Admin Control Center, showing the list of failed services (e.g. *"System Alert: Ollama LLM, Groq LLM failed inference checks. Please review the System Health tab."*). This banner is visible regardless of the active tab.
+
 ---
 
 ## 3. Validation Criteria
@@ -78,3 +83,4 @@ This feature introduces an **Active Inference Health Check** for Ollama, Groq, a
 2. **Ollama Model Missing**: Set `OLLAMA_MODEL` in `.env` to a non-existent model name, restart the containers, refresh the diagnostics, and verify that the Ollama card shows `Inference Test: Failed` with the error message `model not found`.
 3. **Groq Credit Check**: Set a dummy key for `GROQ_API_KEY` in `.env`, refresh diagnostics, and verify that the Groq provider shows `Inference: Failed` with the parsed message *"Invalid API Key"*.
 4. **OpenRouter Error Check**: Simulate an OpenRouter outage or quota error, and verify that the exact error returned by OpenRouter's API is displayed to the admin.
+5. **Global Visibility Check**: While on the default **Users** tab with a failed model check, verify that a red banner is displayed at the top of the Admin page showing the failed services and a link to switch to the System Health tab. Verify that a red notification dot is pulsing on the "System Health" switcher button.
