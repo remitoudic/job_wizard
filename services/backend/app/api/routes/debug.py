@@ -1,5 +1,6 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from typing import Dict, Any
+import asyncio
 import httpx
 import ollama
 import cloudinary
@@ -8,20 +9,23 @@ import time
 from sqlalchemy import text
 import logfire
 
-from app.api.deps import CurrentUser, SessionDep
+from app.api.deps import SessionDep, get_current_superuser
+from database_pkg.models.user import User
 from app.core.config import settings
 from app.core.pubsub import pubsub_manager
+from app.core.temporal import get_temporal_client
 
 router = APIRouter(prefix="/debug", tags=["debug"])
 
 
 @router.get("/health")
 async def debug_health(
-    current_user: CurrentUser, session: SessionDep
+    session: SessionDep,
+    current_user: User = Depends(get_current_superuser),
 ) -> Dict[str, Any]:
     """
     Diagnostic endpoint to check connectivity with all external services.
-    Only accessible to authenticated users.
+    Only accessible to superusers.
     """
     results = {}
 
@@ -55,7 +59,8 @@ async def debug_health(
         ollama_latency = time.perf_counter() - start_time
 
         # Check if the configured model is pre-pulled
-        available_models = [m["name"] for m in models_resp.get("models", [])]
+        # models_resp is a Pydantic model with a .models attribute (not a dict)
+        available_models = [m.model for m in getattr(models_resp, "models", [])]
         model_ready = (
             settings.OLLAMA_MODEL in available_models
             or f"{settings.OLLAMA_MODEL}:latest" in available_models
@@ -131,8 +136,8 @@ async def debug_health(
     if settings.CLOUDINARY_URL:
         try:
             start_time = time.perf_counter()
-            # cloudinary.api.ping() is a lightweight way to check connectivity
-            cloudinary.api.ping()
+            # cloudinary.api.ping() is sync/blocking — run in threadpool to avoid blocking the event loop
+            await asyncio.to_thread(cloudinary.api.ping)
             cloudinary_latency = time.perf_counter() - start_time
             results["cloudinary"] = {
                 "status": "ok",
@@ -167,6 +172,25 @@ async def debug_health(
         results["llamacloud"] = {
             "status": "skipped",
             "message": "No LlamaCloud API key configured",
+        }
+
+    # 6. Temporal.io Health
+    try:
+        start_time = time.perf_counter()
+        temporal_client = await get_temporal_client()
+        await temporal_client.service_client.check_health()
+        temporal_latency = time.perf_counter() - start_time
+        results["temporal"] = {
+            "status": "ok",
+            "latency_ms": round(temporal_latency * 1000, 2),
+            "host": settings.TEMPORAL_HOST,
+            "namespace": settings.TEMPORAL_NAMESPACE,
+        }
+    except Exception as e:
+        results["temporal"] = {
+            "status": "error",
+            "message": str(e),
+            "host": settings.TEMPORAL_HOST,
         }
 
     logfire.info("Debug health check performed", results=results)

@@ -139,6 +139,25 @@ export async function getUsers(token?: string): Promise<User[]> {
 	return handleResponse<User[]>(response, 'Failed to fetch users');
 }
 
+export async function createUser(userData: any, token?: string): Promise<User> {
+	const response = await apiFetch(`${API_URL}/api/users/`, {
+		method: 'POST',
+		headers: getHeaders(token),
+		body: JSON.stringify(userData)
+	});
+
+	return handleResponse<User>(response, 'Failed to create user');
+}
+
+export async function getDebugHealth(token?: string): Promise<any> {
+	const response = await apiFetch(`${API_URL}/api/debug/health`, {
+		method: 'GET',
+		headers: getHeaders(token)
+	});
+
+	return handleResponse<any>(response, 'Failed to fetch debug health');
+}
+
 export interface CoverLetterResponse {
 	cover_letter: string;
 	job_title: string;

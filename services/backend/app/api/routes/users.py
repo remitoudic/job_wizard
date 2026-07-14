@@ -1,11 +1,10 @@
 from typing import List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlmodel import select
 from app.api.deps import SessionDep, CurrentUser, get_current_superuser
-from database_pkg.models.user import UserRead, UserUpdate, User
+from database_pkg.models.user import UserRead, UserUpdate, User, UserCreate
 from app.services.platform.user import user_service
 from app.services.platform.cloudinary_service import cloudinary_service
-from fastapi import UploadFile, File, HTTPException
 
 router = APIRouter()
 
@@ -23,6 +22,33 @@ def read_users(
     statement = select(User).offset(skip).limit(limit)
     users = session.exec(statement).all()
     return users
+
+
+@router.post("/", response_model=UserRead, status_code=201)
+def create_user(
+    *,
+    session: SessionDep,
+    current_user: User = Depends(get_current_superuser),
+    user_in: UserCreate,
+) -> UserRead:
+    """
+    Create new user.
+    """
+    user = user_service.get_by_email(session, email=user_in.email)
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email already exists in the system.",
+        )
+    if user_in.username:
+        statement = select(User).where(User.username == user_in.username)
+        existing_username = session.exec(statement).first()
+        if existing_username:
+            raise HTTPException(
+                status_code=400,
+                detail="The user with this username already exists in the system.",
+            )
+    return user_service.create(session, user_in)
 
 
 @router.get("/me", response_model=UserRead)
