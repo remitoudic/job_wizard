@@ -66,6 +66,23 @@ async def debug_health(
             or f"{settings.OLLAMA_MODEL}:latest" in available_models
         )
 
+        # Test active model inference
+        inference_status = "error"
+        inference_error = ""
+        if model_ready:
+            try:
+                await client.generate(
+                    model=settings.OLLAMA_MODEL,
+                    prompt="ping",
+                    options={"num_predict": 1},
+                )
+                inference_status = "ok"
+            except Exception as e:
+                inference_status = "error"
+                inference_error = str(e)
+        else:
+            inference_error = f"Model '{settings.OLLAMA_MODEL}' not loaded in Ollama"
+
         results["ollama"] = {
             "status": "ok",
             "latency_ms": round(ollama_latency * 1000, 2),
@@ -73,12 +90,16 @@ async def debug_health(
             "configured_model": settings.OLLAMA_MODEL,
             "model_ready": model_ready,
             "available_models_count": len(available_models),
+            "inference_status": inference_status,
+            "inference_error": inference_error,
         }
     except Exception as e:
         results["ollama"] = {
             "status": "error",
             "message": str(e),
             "host": settings.OLLAMA_HOST,
+            "inference_status": "error",
+            "inference_error": f"Failed to connect: {str(e)}",
         }
 
     # 3. LLM Provider Status (Cloud)
@@ -89,47 +110,100 @@ async def debug_health(
         if settings.GROQ_API_KEY:
             try:
                 start_time = time.perf_counter()
-                resp = await http_client.get(
-                    "https://api.groq.com/openai/v1/models",
+                resp = await http_client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
                     headers={"Authorization": f"Bearer {settings.GROQ_API_KEY}"},
+                    json={
+                        "model": settings.GROQ_MODEL_1,
+                        "messages": [{"role": "user", "content": "ping"}],
+                        "max_tokens": 1,
+                    },
                 )
                 groq_latency = time.perf_counter() - start_time
+
+                inference_status = "error"
+                inference_error = ""
+                if resp.status_code == 200:
+                    inference_status = "ok"
+                else:
+                    try:
+                        err_json = resp.json()
+                        inference_error = err_json.get("error", {}).get(
+                            "message", f"HTTP {resp.status_code}"
+                        )
+                    except Exception:
+                        inference_error = f"HTTP {resp.status_code}: {resp.text}"
+
                 results["providers"]["groq"] = {
                     "status": "ok" if resp.status_code == 200 else "error",
                     "status_code": resp.status_code,
                     "latency_ms": round(groq_latency * 1000, 2),
+                    "inference_status": inference_status,
+                    "inference_error": inference_error,
                 }
             except Exception as e:
-                results["providers"]["groq"] = {"status": "error", "message": str(e)}
+                results["providers"]["groq"] = {
+                    "status": "error",
+                    "message": str(e),
+                    "inference_status": "error",
+                    "inference_error": str(e),
+                }
         else:
             results["providers"]["groq"] = {
                 "status": "skipped",
                 "message": "No API key configured",
+                "inference_status": "skipped",
+                "inference_error": "No API key configured",
             }
 
         # OpenRouter Check
         if settings.OPENROUTER_API_KEY:
             try:
                 start_time = time.perf_counter()
-                resp = await http_client.get(
-                    "https://openrouter.ai/api/v1/models",
+                resp = await http_client.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
                     headers={"Authorization": f"Bearer {settings.OPENROUTER_API_KEY}"},
+                    json={
+                        "model": settings.OPENROUTER_MODEL,
+                        "messages": [{"role": "user", "content": "ping"}],
+                        "max_tokens": 1,
+                    },
                 )
                 or_latency = time.perf_counter() - start_time
+
+                inference_status = "error"
+                inference_error = ""
+                if resp.status_code == 200:
+                    inference_status = "ok"
+                else:
+                    try:
+                        err_json = resp.json()
+                        inference_error = err_json.get("error", {}).get(
+                            "message", f"HTTP {resp.status_code}"
+                        )
+                    except Exception:
+                        inference_error = f"HTTP {resp.status_code}: {resp.text}"
+
                 results["providers"]["openrouter"] = {
                     "status": "ok" if resp.status_code == 200 else "error",
                     "status_code": resp.status_code,
                     "latency_ms": round(or_latency * 1000, 2),
+                    "inference_status": inference_status,
+                    "inference_error": inference_error,
                 }
             except Exception as e:
                 results["providers"]["openrouter"] = {
                     "status": "error",
                     "message": str(e),
+                    "inference_status": "error",
+                    "inference_error": str(e),
                 }
         else:
             results["providers"]["openrouter"] = {
                 "status": "skipped",
                 "message": "No API key configured",
+                "inference_status": "skipped",
+                "inference_error": "No API key configured",
             }
 
     # 4. Cloudinary Connectivity

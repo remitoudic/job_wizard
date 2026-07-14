@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, MagicMock
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine, select
 from sqlmodel.pool import StaticPool
@@ -146,8 +146,15 @@ def test_create_user_conflict(client: TestClient, admin_user):
 
 
 @patch("app.api.routes.debug.get_temporal_client", new_callable=AsyncMock)
+@patch("app.api.routes.debug.ollama.AsyncClient")
+@patch("httpx.AsyncClient.post")
 def test_debug_health_security(
-    mock_get_temporal, client: TestClient, admin_user, regular_user
+    mock_httpx_post,
+    mock_ollama_client_class,
+    mock_get_temporal,
+    client: TestClient,
+    admin_user,
+    regular_user,
 ):
     admin_token, _ = admin_user
     user_token, _ = regular_user
@@ -157,17 +164,50 @@ def test_debug_health_security(
     mock_get_temporal.return_value = mock_client
     mock_client.service_client.check_health = AsyncMock()
 
-    # Regular user should be forbidden (403)
-    response = client.get(
-        "/api/debug/health", headers={"Authorization": f"Bearer {user_token}"}
-    )
-    assert response.status_code == 403
+    # Mock Ollama client
+    mock_ollama_client = AsyncMock()
+    mock_ollama_client_class.return_value = mock_ollama_client
 
-    # Admin user should succeed (200)
-    response = client.get(
-        "/api/debug/health", headers={"Authorization": f"Bearer {admin_token}"}
-    )
-    assert response.status_code == 200
-    data = response.json()
-    assert "temporal" in data
-    assert data["temporal"]["status"] == "ok"
+    # Mock list() to return models
+    mock_models_list = MagicMock()
+    mock_model_obj = MagicMock()
+    mock_model_obj.model = "google/gemma-4-E2B-it"
+    mock_models_list.models = [mock_model_obj]
+    mock_ollama_client.list = AsyncMock(return_value=mock_models_list)
+    mock_ollama_client.generate = AsyncMock()
+
+    # Mock httpx post completions for Groq/OpenRouter
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_httpx_post.return_value = mock_response
+
+    with patch("app.api.routes.debug.settings") as mock_settings:
+        mock_settings.GROQ_API_KEY = "test-groq-key"
+        mock_settings.GROQ_MODEL_1 = "test-groq-model"
+        mock_settings.OPENROUTER_API_KEY = "test-or-key"
+        mock_settings.OPENROUTER_MODEL = "test-or-model"
+        mock_settings.OLLAMA_MODEL = "google/gemma-4-E2B-it"
+        mock_settings.OLLAMA_HOST = "http://ollama:11434"
+        mock_settings.TEMPORAL_HOST = "temporal:7233"
+        mock_settings.TEMPORAL_NAMESPACE = "jobwizard"
+        mock_settings.CLOUDINARY_URL = None
+        mock_settings.LLAMA_CLOUD_API_KEY = None
+
+        # Regular user should be forbidden (403)
+        response = client.get(
+            "/api/debug/health", headers={"Authorization": f"Bearer {user_token}"}
+        )
+        assert response.status_code == 403
+
+        # Admin user should succeed (200)
+        response = client.get(
+            "/api/debug/health", headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "temporal" in data
+        assert data["temporal"]["status"] == "ok"
+        assert "ollama" in data
+        assert data["ollama"]["inference_status"] == "ok"
+        assert data["providers"]["groq"]["inference_status"] == "ok"
+        assert data["providers"]["openrouter"]["inference_status"] == "ok"
