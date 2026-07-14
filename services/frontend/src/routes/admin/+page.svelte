@@ -572,6 +572,19 @@
 												{healthData.ollama.model_ready ? 'Ready' : 'Not Loaded'}
 											</span>
 										</div>
+										<div class="flex justify-between border-t border-slate-200/50 pt-1.5 mt-1.5">
+											<span class="text-slate-400">Inference Test:</span>
+											{#if healthData.ollama.inference_status === 'ok'}
+												<span class="text-emerald-600 font-bold">Passed</span>
+											{:else}
+												<span class="text-rose-600 font-bold">Failed</span>
+											{/if}
+										</div>
+										{#if healthData.ollama.inference_status !== 'ok'}
+											<div class="text-rose-600 text-[10px] leading-relaxed mt-1 break-words">
+												Error: {healthData.ollama.inference_error}
+											</div>
+										{/if}
 									{:else}
 										<div class="text-rose-600 text-xs font-semibold truncate">
 											{healthData.ollama?.message || 'Connection failed'}
@@ -590,46 +603,84 @@
 								<p class="text-xs text-slate-500 mb-4">
 									Status of external cloud inference and image processing vendors.
 								</p>
-								<div class="space-y-2 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100">
+								<div class="space-y-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-100">
 									<!-- Groq -->
-									<div class="flex items-center justify-between">
-										<span class="font-semibold text-slate-700">Groq:</span>
+									<div class="flex flex-col space-y-1 pb-2 border-b border-slate-200/50">
+										<div class="flex items-center justify-between">
+											<span class="font-semibold text-slate-700">Groq:</span>
+											{#if healthData.providers?.groq?.status === 'ok'}
+												<span
+													class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 font-mono"
+													>{healthData.providers.groq.latency_ms} ms</span
+												>
+											{:else if healthData.providers?.groq?.status === 'skipped'}
+												<span
+													class="text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200"
+													>Skipped</span
+												>
+											{:else}
+												<span
+													class="text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-100"
+													>Error</span
+												>
+											{/if}
+										</div>
 										{#if healthData.providers?.groq?.status === 'ok'}
-											<span
-												class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 font-mono"
-												>{healthData.providers.groq.latency_ms} ms</span
-											>
-										{:else if healthData.providers?.groq?.status === 'skipped'}
-											<span
-												class="text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200"
-												>Skipped</span
-											>
-										{:else}
-											<span
-												class="text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-100"
-												>Error</span
-											>
+											<div class="flex items-center justify-between text-[11px]">
+												<span class="text-slate-400">Inference Check:</span>
+												{#if healthData.providers.groq.inference_status === 'ok'}
+													<span class="text-emerald-600 font-semibold">Passed</span>
+												{:else}
+													<span class="text-rose-600 font-semibold">Failed</span>
+												{/if}
+											</div>
+											{#if healthData.providers.groq.inference_status !== 'ok'}
+												<div
+													class="text-rose-600 text-[10px] leading-relaxed break-words font-mono mt-0.5"
+												>
+													Error: {healthData.providers.groq.inference_error}
+												</div>
+											{/if}
 										{/if}
 									</div>
 
 									<!-- OpenRouter -->
-									<div class="flex items-center justify-between">
-										<span class="font-semibold text-slate-700">OpenRouter:</span>
+									<div class="flex flex-col space-y-1 pb-2 border-b border-slate-200/50">
+										<div class="flex items-center justify-between">
+											<span class="font-semibold text-slate-700">OpenRouter:</span>
+											{#if healthData.providers?.openrouter?.status === 'ok'}
+												<span
+													class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 font-mono"
+													>{healthData.providers.openrouter.latency_ms} ms</span
+												>
+											{:else if healthData.providers?.openrouter?.status === 'skipped'}
+												<span
+													class="text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200"
+													>Skipped</span
+												>
+											{:else}
+												<span
+													class="text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-100"
+													>Error</span
+												>
+											{/if}
+										</div>
 										{#if healthData.providers?.openrouter?.status === 'ok'}
-											<span
-												class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 font-mono"
-												>{healthData.providers.openrouter.latency_ms} ms</span
-											>
-										{:else if healthData.providers?.openrouter?.status === 'skipped'}
-											<span
-												class="text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200"
-												>Skipped</span
-											>
-										{:else}
-											<span
-												class="text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-100"
-												>Error</span
-											>
+											<div class="flex items-center justify-between text-[11px]">
+												<span class="text-slate-400">Inference Check:</span>
+												{#if healthData.providers.openrouter.inference_status === 'ok'}
+													<span class="text-emerald-600 font-semibold">Passed</span>
+												{:else}
+													<span class="text-rose-600 font-semibold">Failed</span>
+												{/if}
+											</div>
+											{#if healthData.providers.openrouter.inference_status !== 'ok'}
+												<div
+													class="text-rose-600 text-[10px] leading-relaxed break-words font-mono mt-0.5"
+												>
+													Error: {healthData.providers.openrouter.inference_error}
+												</div>
+											{/if}
 										{/if}
 									</div>
 
