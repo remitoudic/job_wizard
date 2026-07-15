@@ -1078,7 +1078,8 @@
 
 			const link = document.createElement('a');
 			link.href = blobUrl;
-			const company = jobData.company ? jobData.company.replace(/[^a-zA-Z0-9]/g, '_') : 'Company';
+			const companyVal = editableCompany || (jobData ? jobData.company : '') || manualCompany;
+			const company = companyVal ? companyVal.replace(/[^a-zA-Z0-9]/g, '_') : 'Company';
 			const name =
 				firstName || surname
 					? `${firstName}_${surname}`.replace(/[^a-zA-Z0-9_]/g, '_')
