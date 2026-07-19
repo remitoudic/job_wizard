@@ -51,7 +51,7 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://jobwizard:changeme123@postgres:5432/jobwizard}
       OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-google/gemma-4-E2B-it}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       LOGFIRE_TOKEN: ${LOGFIRE_TOKEN}
       BACKEND_HOST: ${BACKEND_HOST:-0.0.0.0}

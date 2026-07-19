@@ -171,7 +171,7 @@ def test_debug_health_security(
     # Mock list() to return models
     mock_models_list = MagicMock()
     mock_model_obj = MagicMock()
-    mock_model_obj.model = "google/gemma-4-E2B-it"
+    mock_model_obj.model = "gemma4:e2b"
     mock_models_list.models = [mock_model_obj]
     mock_ollama_client.list = AsyncMock(return_value=mock_models_list)
     mock_ollama_client.generate = AsyncMock()
@@ -186,7 +186,7 @@ def test_debug_health_security(
         mock_settings.GROQ_MODEL_1 = "test-groq-model"
         mock_settings.OPENROUTER_API_KEY = "test-or-key"
         mock_settings.OPENROUTER_MODEL = "test-or-model"
-        mock_settings.OLLAMA_MODEL = "google/gemma-4-E2B-it"
+        mock_settings.OLLAMA_MODEL = "gemma4:e2b"
         mock_settings.OLLAMA_HOST = "http://ollama:11434"
         mock_settings.TEMPORAL_HOST = "temporal:7233"
         mock_settings.TEMPORAL_NAMESPACE = "jobwizard"

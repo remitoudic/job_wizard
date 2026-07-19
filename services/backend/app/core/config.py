@@ -7,7 +7,7 @@ from pathlib import Path
 class Settings(BaseSettings):
     # LLM Settings
     OLLAMA_HOST: str = "http://ollama:11434"
-    OLLAMA_MODEL: str = "google/gemma-4-E2B-it"
+    OLLAMA_MODEL: str = "qwen2.5:3b"
 
     ENVIRONMENT: str = os.getenv(
         "ENVIRONMENT", "development"
@@ -22,8 +22,8 @@ class Settings(BaseSettings):
 
     # Models Source of Truth
     # Models Source of Truth
-    OPENROUTER_MODEL: str = "arcee-ai/trinity-mini:free"
-    OPENROUTER_MODEL_2: str = "qwen/qwen3-next-80b-a3b-instruct:free"
+    OPENROUTER_MODEL: str = "google/gemma-4-26b-a4b-it:free"
+    OPENROUTER_MODEL_2: str = "openai/gpt-oss-20b:free"
 
     # Groq Settings
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
