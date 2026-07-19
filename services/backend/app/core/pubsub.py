@@ -151,17 +151,19 @@ class PubSubManager:
                 if len(serialized.encode("utf-8")) > 7500:
                     # Strip heavy fields to keep NOTIFY within PG size limits
                     notify_payload = payload.copy()
-                    if "alternatives" in notify_payload:
-                        # Strip full text from alternatives but keep metadata
-                        notify_payload["alternatives"] = [
-                            {k: v for k, v in alt.items() if k != "text"}
-                            for alt in notify_payload["alternatives"]
-                        ]
-                    if "text" in notify_payload:
-                        # Drop text
-                        notify_payload["text"] = (
-                            "Payload too large for real-time notification. Please fetch via API."
-                        )
+                    if notify_payload.get("status") == "alternative_ready":
+                        # For alternative_ready, we only need job_id, status, text, and source.
+                        # We can safely drop the full alternatives list.
+                        notify_payload.pop("alternatives", None)
+                    else:
+                        # For other statuses, strip full text from alternatives but keep metadata
+                        if "alternatives" in notify_payload:
+                            notify_payload["alternatives"] = [
+                                {k: v for k, v in alt.items() if k != "text"}
+                                for alt in notify_payload["alternatives"]
+                            ]
+                        if "text" in notify_payload:
+                            notify_payload.pop("text", None)
                     serialized = json.dumps(notify_payload)
 
                 async with await self._get_conn() as conn:
