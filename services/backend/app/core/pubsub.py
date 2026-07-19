@@ -145,11 +145,30 @@ class PubSubManager:
 
             # 2. Send Real-time Notification
             try:
+                # Prepare payload for Postgres NOTIFY (limited to 8000 bytes hard limit in PG)
+                notify_payload = payload
+                serialized = json.dumps(notify_payload)
+                if len(serialized.encode("utf-8")) > 7500:
+                    # Strip heavy fields to keep NOTIFY within PG size limits
+                    notify_payload = payload.copy()
+                    if "alternatives" in notify_payload:
+                        # Strip full text from alternatives but keep metadata
+                        notify_payload["alternatives"] = [
+                            {k: v for k, v in alt.items() if k != "text"}
+                            for alt in notify_payload["alternatives"]
+                        ]
+                    if "text" in notify_payload:
+                        # Drop text
+                        notify_payload["text"] = (
+                            "Payload too large for real-time notification. Please fetch via API."
+                        )
+                    serialized = json.dumps(notify_payload)
+
                 async with await self._get_conn() as conn:
                     await conn.execute(
                         sql.SQL("NOTIFY {channel}, {payload}").format(
                             channel=sql.Identifier(self.channel),
-                            payload=sql.Literal(json.dumps(payload)),
+                            payload=sql.Literal(serialized),
                         )
                     )
 

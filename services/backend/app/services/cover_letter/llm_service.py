@@ -659,10 +659,7 @@ CUSTOM USER GUIDANCE:
                             }
                         )
 
-                self.alternatives_store[alt_id] = {
-                    "status": "pending" if pending else "completed",
-                    "alternatives": current_alts,
-                }
+                self._save_alternative(alt_id, bool(pending), current_alts)
 
                 if pending:
                     # Notify: Primary ready, processing alternatives
@@ -815,10 +812,7 @@ CUSTOM USER GUIDANCE:
                         )
 
                 # Update store incrementally
-                self.alternatives_store[alt_id] = {
-                    "status": "pending" if pending else "completed",
-                    "alternatives": current_alternatives,
-                }
+                self._save_alternative(alt_id, bool(pending), current_alternatives)
 
                 # Continue with remaining
                 tasks = list(pending)
@@ -838,10 +832,62 @@ CUSTOM USER GUIDANCE:
             logfire.error("Error processing alternatives", error=str(e))
             logger.error(f"Error processing alternatives: {e}")
             # Ensure we mark as completed even on error, or failed?
-            state = self.alternatives_store.get(alt_id)
+            state = self.get_alternative(alt_id)
             if state:
-                state["status"] = "completed"
-                self.alternatives_store[alt_id] = state
+                self._save_alternative(alt_id, False, state.get("alternatives", []))
+
+    def _save_alternative(self, alt_id: str, pending: bool, alternatives: list):
+        """Persist alternatives state to both in-memory store and database."""
+        state = {
+            "status": "pending" if pending else "completed",
+            "alternatives": alternatives,
+        }
+        self.alternatives_store[alt_id] = state
+
+        # Also write to JobStatus database table so other processes/containers can read it
+        try:
+            from sqlmodel import Session
+            from app.core.db import engine
+            from database_pkg.models.job_status import JobStatus
+            from datetime import datetime
+
+            with Session(engine) as session:
+                job_status = session.get(JobStatus, alt_id)
+                if not job_status:
+                    job_status = JobStatus(
+                        job_id=alt_id,
+                        status="pending" if pending else "completed",
+                        payload=state,
+                    )
+                else:
+                    job_status.status = "pending" if pending else "completed"
+                    job_status.payload = state
+                    job_status.updated_at = datetime.utcnow()
+
+                session.add(job_status)
+                session.commit()
+        except Exception as e:
+            logging.getLogger("app.services.cover_letter.llm_service").error(
+                f"Failed to persist alternative store to DB: {e}"
+            )
 
     def get_alternative(self, alt_id: str) -> Optional[Dict]:
-        return self.alternatives_store.get(alt_id)
+        local_res = self.alternatives_store.get(alt_id)
+        if local_res:
+            return local_res
+
+        # Fallback to Database
+        try:
+            from sqlmodel import Session
+            from app.core.db import engine
+            from database_pkg.models.job_status import JobStatus
+
+            with Session(engine) as session:
+                job_status = session.get(JobStatus, alt_id)
+                if job_status:
+                    return job_status.payload
+        except Exception as e:
+            logging.getLogger("app.services.cover_letter.llm_service").error(
+                f"Error retrieving alternative from DB: {e}"
+            )
+        return None

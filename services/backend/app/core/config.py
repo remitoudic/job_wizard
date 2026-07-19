@@ -32,10 +32,10 @@ class Settings(BaseSettings):
 
     # NVIDIA NIM Settings
     NVIDIA_API_KEY: str = os.getenv("NVIDIA_API_KEY", "")
-    NVIDIA_MODEL_1: str = os.getenv(
-        "NVIDIA_MODEL_1", "meta/llama-4-maverick-17b-128e-instruct"
+    NVIDIA_MODEL_1: str = os.getenv("NVIDIA_MODEL_1", "deepseek-ai/deepseek-v4-pro")
+    NVIDIA_MODEL_2: str = os.getenv(
+        "NVIDIA_MODEL_2", "qwen/qwen3-next-80b-a3b-instruct"
     )
-    NVIDIA_MODEL_2: str = os.getenv("NVIDIA_MODEL_2", "qwen/qwen2.5-coder-32b-instruct")
     NVIDIA_MODEL_3: str = os.getenv("NVIDIA_MODEL_3", "z-ai/glm-5.2")
 
     # LlamaCloud Settings (CV Parsing)

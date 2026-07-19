@@ -42,6 +42,8 @@ def test_valid_nvidia_model_configured():
         "meta/llama-4-maverick-17b-128e-instruct",
         "qwen/qwen2.5-coder-32b-instruct",
         "z-ai/glm-5.2",
+        "deepseek-ai/deepseek-v4-pro",
+        "qwen/qwen3-next-80b-a3b-instruct",
     ]
 
     assert settings.NVIDIA_MODEL_1 in verified_models, (
