@@ -20,14 +20,26 @@ async def test_race_alternatives_with_failure():
     """
     Test that alternatives are still processed even if one model fails during the race.
     """
-    # We need to patch create_writing_agent because LLMService creates remote agents dynamically
-    with patch(
-        "app.services.cover_letter.llm_service.create_writing_agent"
-    ) as mock_create_agent:
-        service = LLMService()
+    import sys
+    import types
 
-        # Configure service
-        service.ollama_model_name = "local-model"
+    mock_crewai_module = types.ModuleType("app.services.cover_letter.crewai_workflow")
+
+    def mock_run_crewai_generation(*args, **kwargs):
+        raise Exception("CrewAI Mock Failed")
+
+    mock_crewai_module.run_crewai_generation = mock_run_crewai_generation
+
+    with patch.dict(
+        sys.modules, {"app.services.cover_letter.crewai_workflow": mock_crewai_module}
+    ):
+        with patch(
+            "app.services.cover_letter.llm_service.create_writing_agent"
+        ) as mock_create_agent:
+            service = LLMService()
+
+            # Configure service
+            service.ollama_model_name = "local-model"
         service.openrouter_model_name = "remote-1"
         service.openrouter_model_name_2 = "remote-2"
 
@@ -75,7 +87,8 @@ async def test_race_alternatives_with_failure():
         # Mock semaphore to be free
         service.ollama_semaphore = MagicMock()
         service.ollama_semaphore.locked.return_value = False
-        service.ollama_semaphore.__aenter__.return_value = None
+        service.ollama_semaphore.__aenter__ = AsyncMock(return_value=None)
+        service.ollama_semaphore.__aexit__ = AsyncMock(return_value=None)
 
         # Mock provider service config
         service.provider_service = MagicMock()
@@ -117,10 +130,23 @@ async def test_race_alternatives_with_failure():
 @pytest.mark.asyncio
 async def test_race_all_fail():
     """Test behavior when all models fail"""
-    with patch(
-        "app.services.cover_letter.llm_service.create_writing_agent"
-    ) as mock_create_agent:
-        service = LLMService()
+    import sys
+    import types
+
+    mock_crewai_module = types.ModuleType("app.services.cover_letter.crewai_workflow")
+
+    def mock_run_crewai_generation(*args, **kwargs):
+        raise Exception("CrewAI Mock Failed")
+
+    mock_crewai_module.run_crewai_generation = mock_run_crewai_generation
+
+    with patch.dict(
+        sys.modules, {"app.services.cover_letter.crewai_workflow": mock_crewai_module}
+    ):
+        with patch(
+            "app.services.cover_letter.llm_service.create_writing_agent"
+        ) as mock_create_agent:
+            service = LLMService()
 
         # Local fails
         service.local_writer = MagicMock()

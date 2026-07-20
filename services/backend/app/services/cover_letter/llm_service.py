@@ -733,105 +733,100 @@ CUSTOM USER GUIDANCE:
     async def _process_alternatives(
         self, pending_tasks, alt_id: str, job_id: str, task_start_times: dict
     ):
-        """Handle the slower tasks incrementally"""
+        """Handle the slower tasks concurrently and fully independently."""
         logger = logging.getLogger("app.services.cover_letter.llm_service")
 
-        # Initialize tasks set
         tasks = list(pending_tasks)
+        total_tasks = len(tasks)
+        if total_tasks == 0:
+            return
+
+        completed_count = 0
+        lock = asyncio.Lock()
+
+        async def run_single_alternative(task):
+            nonlocal completed_count
+            source_name = task.get_name()
+
+            try:
+                # Set a strict timeout of 120 seconds for each individual alternative task
+                result = await asyncio.wait_for(task, timeout=120.0)
+                task_duration = time.perf_counter() - task_start_times.get(id(task), 0)
+                alt = {
+                    "text": result["output"],
+                    "source": result["source"],
+                    "status": "completed",
+                    "usage": result.get("usage"),
+                }
+                logfire.info(
+                    "Alternative completed",
+                    id=alt_id,
+                    source=result["source"],
+                    duration_seconds=round(task_duration, 2),
+                    usage=result.get("usage"),
+                )
+                logger.info(
+                    f"Alternative completed: {result['source']} in {task_duration:.2f}s"
+                )
+            except asyncio.TimeoutError:
+                task.cancel()
+                task_duration = time.perf_counter() - task_start_times.get(id(task), 0)
+                alt = {
+                    "text": "Generation failed: Timeout (120s exceeded)",
+                    "source": source_name,
+                    "status": "failed",
+                }
+                logger.warning(f"Alternative timed out: {source_name}")
+            except Exception as e:
+                task_duration = time.perf_counter() - task_start_times.get(id(task), 0)
+                alt = {
+                    "text": f"Generation failed: {str(e)}",
+                    "source": source_name,
+                    "status": "failed",
+                }
+                logger.error(f"Alternative failed: {source_name} - {e}")
+
+            async with lock:
+                completed_count += 1
+                is_last = completed_count == total_tasks
+
+                # Retrieve current state from DB/store
+                state = self.get_alternative(alt_id) or {
+                    "status": "pending",
+                    "alternatives": [],
+                }
+                current_alternatives = state.get("alternatives", [])
+                current_alternatives.append(alt)
+
+                pending_status = not is_last
+                self._save_alternative(alt_id, pending_status, current_alternatives)
+
+                # Notify frontend
+                notification_payload = {
+                    "job_id": job_id,
+                    "text": alt["text"],
+                    "source": alt["source"],
+                    "alternatives": current_alternatives,
+                }
+                if pending_status:
+                    notification_payload["status"] = "alternative_ready"
+                else:
+                    notification_payload["status"] = "completed"
+                    notification_payload["message"] = "All alternatives generated."
+
+                await pubsub_manager.notify(notification_payload)
+
+                if is_last:
+                    logger.info(f"All alternatives processed for alt_id {alt_id}")
 
         try:
-            while tasks:
-                # Wait for the next one to complete
-                done, pending = await asyncio.wait(
-                    tasks, return_when=asyncio.FIRST_COMPLETED
-                )
-
-                # Get current state
-                state = self.alternatives_store.get(
-                    alt_id, {"status": "pending", "alternatives": []}
-                )
-                current_alternatives = state.get("alternatives", [])
-
-                for task in done:
-                    try:
-                        result = await task
-                        # result is dict because of run_agent wrapper
-                        task_duration = time.perf_counter() - task_start_times.get(
-                            id(task), 0
-                        )
-
-                        alt = {
-                            "text": result["output"],
-                            "source": result["source"],
-                            "status": "completed",
-                            "usage": result.get("usage"),
-                        }
-                        current_alternatives.append(alt)
-                        logfire.info(
-                            "Alternative completed",
-                            id=alt_id,
-                            source=result["source"],
-                            duration_seconds=round(task_duration, 2),
-                            usage=result.get("usage"),
-                        )
-                        logger.info(
-                            f"Alternative completed: {result['source']} in {task_duration:.2f}s"
-                        )
-
-                        # Notify frontend that an alternative is ready
-                        await pubsub_manager.notify(
-                            {
-                                "job_id": job_id,
-                                "status": "alternative_ready",
-                                "text": alt["text"],
-                                "source": alt["source"],
-                                "alternatives": current_alternatives,
-                            }
-                        )
-                    except Exception as e:
-                        task_duration = time.perf_counter() - task_start_times.get(
-                            id(task), 0
-                        )
-                        alt = {
-                            "text": f"Generation failed: {str(e)}",
-                            "source": task.get_name(),
-                            "status": "failed",
-                        }
-                        current_alternatives.append(alt)
-                        logger.error(f"Alternative failed: {task.get_name()} - {e}")
-
-                        # Notify frontend of failure
-                        await pubsub_manager.notify(
-                            {
-                                "job_id": job_id,
-                                "status": "alternative_ready",
-                                "text": alt["text"],
-                                "source": alt["source"],
-                                "alternatives": current_alternatives,
-                            }
-                        )
-
-                # Update store incrementally
-                self._save_alternative(alt_id, bool(pending), current_alternatives)
-
-                # Continue with remaining
-                tasks = list(pending)
-
-            if not tasks:
-                # Final Notify
-                await pubsub_manager.notify(
-                    {
-                        "job_id": job_id,
-                        "status": "completed",
-                        "message": "All alternatives generated.",
-                        "alternatives": current_alternatives,
-                    }
-                )
-
+            # Run all single alternatives concurrently in background
+            await asyncio.gather(
+                *(run_single_alternative(t) for t in tasks), return_exceptions=True
+            )
         except Exception as e:
-            logfire.error("Error processing alternatives", error=str(e))
-            logger.error(f"Error processing alternatives: {e}")
-            # Ensure we mark as completed even on error, or failed?
+            logfire.error("Error processing alternatives gather", error=str(e))
+            logger.error(f"Error processing alternatives gather: {e}")
             state = self.get_alternative(alt_id)
             if state:
                 self._save_alternative(alt_id, False, state.get("alternatives", []))

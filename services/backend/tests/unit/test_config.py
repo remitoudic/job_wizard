@@ -44,6 +44,10 @@ def test_valid_nvidia_model_configured():
         "z-ai/glm-5.2",
         "deepseek-ai/deepseek-v4-pro",
         "qwen/qwen3-next-80b-a3b-instruct",
+        "poolside/laguna-xs-2.1",
+        "mistralai/mistral-medium-3.5-128b",
+        "meta/llama-3.1-8b-instruct",
+        "google/gemma-2-2b-it",
     ]
 
     assert settings.NVIDIA_MODEL_1 in verified_models, (
