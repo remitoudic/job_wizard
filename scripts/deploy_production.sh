@@ -106,6 +106,12 @@ echo ""
 echo "🚀 Deploying stack to Docker Swarm..."
 docker stack deploy -c docker-compose.prod.yml jobwizard
 
+echo "🔄 Updating Swarm tasks to latest images..."
+docker service update --force jobwizard_backend 2>/dev/null || true
+docker service update --force jobwizard_frontend 2>/dev/null || true
+docker service update --force jobwizard_nginx 2>/dev/null || true
+docker service update --force jobwizard_worker 2>/dev/null || true
+
 echo ""
 echo "🌱 Seeding initial data..."
 # Wait for backend task container to spin up
