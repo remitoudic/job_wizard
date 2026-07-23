@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { registerUser, loginUser, API_URL } from '$lib/api';
+	import { registerUser, loginUser, getProfile } from '$lib/api';
 	import { auth } from '../../stores/auth';
 	import { goto } from '$app/navigation';
 	import { _ } from 'svelte-i18n';
@@ -35,21 +35,7 @@
 			const loginData = await loginUser(formData);
 
 			// 3. Fetch Profile
-			const profileResponse = await fetch(`${API_URL}/api/users/me`, {
-				headers: {
-					Authorization: `Bearer ${loginData.access_token}`
-				}
-			});
-
-			if (!profileResponse.ok) {
-				// If profile fetch fails, we still consider registration and login somewhat successful,
-				// but for safety let's just redirect to login to be safe or try to proceed.
-				// However, without user object auth.login might fail or be incomplete.
-				// Let's throw to be safe and let user manually login if this edge case happens.
-				throw new Error('Failed to fetch user profile after registration');
-			}
-
-			const user = await profileResponse.json();
+			const user = await getProfile(loginData.access_token);
 
 			// 4. Update Auth Store
 			auth.login(loginData.access_token, user);
@@ -59,9 +45,6 @@
 		} catch (e: any) {
 			console.error(e);
 			error = e.message || 'Registration failed';
-			// If registration succeeded but login failed, the user exists now.
-			// We could check error message and redirect to login if it says "Email already registered" etc.
-			// But for now keeping it simple.
 		} finally {
 			isLoading = false;
 		}
@@ -124,15 +107,25 @@
 				{$_('login.password', { default: 'Password' })}
 			</label>
 			<div class="relative">
-				<input
-					id="password"
-					type={showPassword ? 'text' : 'password'}
-					value={password}
-					on:input={(e) => (password = e.currentTarget.value)}
-					required
-					class="input"
-					placeholder="••••••••"
-				/>
+				{#if showPassword}
+					<input
+						id="password"
+						type="text"
+						bind:value={password}
+						required
+						class="input"
+						placeholder="••••••••"
+					/>
+				{:else}
+					<input
+						id="password"
+						type="password"
+						bind:value={password}
+						required
+						class="input"
+						placeholder="••••••••"
+					/>
+				{/if}
 				<button
 					type="button"
 					on:click={() => (showPassword = !showPassword)}
@@ -185,15 +178,25 @@
 				{$_('register.confirm_password', { default: 'Confirm Password' })}
 			</label>
 			<div class="relative">
-				<input
-					id="confirm-password"
-					type={showConfirmPassword ? 'text' : 'password'}
-					value={confirmPassword}
-					on:input={(e) => (confirmPassword = e.currentTarget.value)}
-					required
-					class="input"
-					placeholder="••••••••"
-				/>
+				{#if showConfirmPassword}
+					<input
+						id="confirm-password"
+						type="text"
+						bind:value={confirmPassword}
+						required
+						class="input"
+						placeholder="••••••••"
+					/>
+				{:else}
+					<input
+						id="confirm-password"
+						type="password"
+						bind:value={confirmPassword}
+						required
+						class="input"
+						placeholder="••••••••"
+					/>
+				{/if}
 				<button
 					type="button"
 					on:click={() => (showConfirmPassword = !showConfirmPassword)}

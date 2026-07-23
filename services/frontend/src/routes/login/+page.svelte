@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { loginUser, getProfile, API_URL } from '$lib/api';
+	import { loginUser, getProfile } from '$lib/api';
 	import { auth } from '../../stores/auth';
 	import { goto } from '$app/navigation';
 	import { _ } from 'svelte-i18n';
@@ -21,18 +21,8 @@
 
 			const data = await loginUser(formData);
 
-			// Fetch complete user profile to get is_superuser and other fields
-			const profileResponse = await fetch(`${API_URL}/api/users/me`, {
-				headers: {
-					Authorization: `Bearer ${data.access_token}`
-				}
-			});
-
-			if (!profileResponse.ok) {
-				throw new Error('Failed to fetch user profile');
-			}
-
-			const user = await profileResponse.json();
+			// Fetch complete user profile using getProfile helper
+			const user = await getProfile(data.access_token);
 			auth.login(data.access_token, user);
 
 			// Redirect to home
@@ -97,15 +87,25 @@
 				>{$_('login.password', { default: 'Password' })}</label
 			>
 			<div class="relative">
-				<input
-					id="password"
-					type={showPassword ? 'text' : 'password'}
-					value={password}
-					on:input={(e) => (password = e.currentTarget.value)}
-					required
-					class="input"
-					placeholder="••••••••"
-				/>
+				{#if showPassword}
+					<input
+						id="password"
+						type="text"
+						bind:value={password}
+						required
+						class="input"
+						placeholder="••••••••"
+					/>
+				{:else}
+					<input
+						id="password"
+						type="password"
+						bind:value={password}
+						required
+						class="input"
+						placeholder="••••••••"
+					/>
+				{/if}
 				<button
 					type="button"
 					on:click={() => (showPassword = !showPassword)}

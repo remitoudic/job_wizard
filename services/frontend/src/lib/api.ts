@@ -1,7 +1,9 @@
 import { auth } from '../stores/auth';
 import { get } from 'svelte/store';
 
-export const API_URL = import.meta.env.VITE_API_URL || '';
+export const API_URL = (import.meta.env.VITE_API_URL || '')
+	.replace(/\/+$/, '')
+	.replace(/\/api$/, '');
 
 function getAuthHeaders(tokenOverride?: string) {
 	const headers: Record<string, string> = {};
@@ -66,10 +68,10 @@ export async function registerUser(userData: any) {
 	return handleResponse<any>(response, 'Registration failed');
 }
 
-export async function getProfile() {
+export async function getProfile(tokenOverride?: string) {
 	const response = await apiFetch(`${API_URL}/api/users/me`, {
 		method: 'GET',
-		headers: getHeaders()
+		headers: getHeaders(tokenOverride)
 	});
 	return handleResponse<any>(response, 'Failed to fetch profile');
 }

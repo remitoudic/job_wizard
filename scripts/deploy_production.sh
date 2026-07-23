@@ -16,14 +16,26 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
+# Determine location of environment files
+ENV_FILE=".env/.env.production"
+ENV_EXAMPLE=".env/.env.production.example"
+
+if [ ! -f "$ENV_FILE" ] && [ -f .env.production ]; then
+    ENV_FILE=".env.production"
+fi
+
+if [ ! -f "$ENV_EXAMPLE" ] && [ -f .env.production.example ]; then
+    ENV_EXAMPLE=".env.production.example"
+fi
+
 # Check if .env.production exists
-if [ ! -f .env.production ]; then
-    if [ -f .env.production.example ]; then
-        echo "⚠️  No .env.production file found!"
+if [ ! -f "$ENV_FILE" ]; then
+    if [ -f "$ENV_EXAMPLE" ]; then
+        echo "⚠️  No $ENV_FILE file found!"
         echo ""
-        echo "Please create .env.production from .env.production.example:"
-        echo "  1. cp .env.production.example .env.production"
-        echo "  2. Edit .env.production and set:"
+        echo "Please create $ENV_FILE from $ENV_EXAMPLE:"
+        echo "  1. cp $ENV_EXAMPLE $ENV_FILE"
+        echo "  2. Edit $ENV_FILE and set:"
         echo "     - POSTGRES_PASSWORD (strong password)"
         echo "     - ORIGIN (your server IP or domain)"
         echo "     - VITE_API_URL (your server IP/domain + /api)"
@@ -32,7 +44,7 @@ if [ ! -f .env.production ]; then
         echo ""
         exit 1
     else
-        echo "❌ Error: No .env.production.example file found!"
+        echo "❌ Error: No $ENV_EXAMPLE file found!"
         exit 1
     fi
 fi
@@ -50,10 +62,10 @@ if [ "$confirm" != "yes" ]; then
 fi
 
 echo ""
-echo "📝 Loading environment variables from .env.production..."
-# Export all variables from .env.production so docker-compose can use them
+echo "📝 Loading environment variables from $ENV_FILE..."
+# Export all variables from environment file so docker-compose can use them
 set -a  # automatically export all variables
-source .env.production
+source "$ENV_FILE"
 set +a  # disable automatic export
 
 echo ""
@@ -85,11 +97,11 @@ echo "🌱 Seeding initial data..."
 # Wait for backend to be ready (naive sleep)
 sleep 10
 if command -v docker-compose > /dev/null 2>&1; then
-    docker-compose -f docker-compose.prod.yml exec -T backend python scripts/seed_user.py || echo "⚠️ Seeding failed or user already exists"
+    docker-compose -f docker-compose.prod.yml exec -T backend uv run python scripts/seed_user.py || echo "⚠️ Seeding failed or user already exists"
 else
     # Try to copy script just in case getting 502/not found
     docker cp backend/scripts/seed_user.py jobwizard-backend-prod:/app/scripts/seed_user.py >/dev/null 2>&1 || true
-    docker compose -f docker-compose.prod.yml exec -T backend python scripts/seed_user.py || echo "⚠️ Seeding failed or user already exists"
+    docker compose -f docker-compose.prod.yml exec -T backend uv run python scripts/seed_user.py || echo "⚠️ Seeding failed or user already exists"
 fi
 
 echo ""
