@@ -3,6 +3,7 @@
 
 services:
   postgres:
+    image: jobwizard-postgres:latest
     build:
       context: ./services/database
     container_name: jobwizard-postgres-prod
@@ -52,6 +53,7 @@ services:
       start_period: 30s
 
   backend:
+    image: jobwizard-backend:latest
     build:
       context: .
       dockerfile: services/backend/Dockerfile
@@ -69,15 +71,31 @@ services:
     networks:
       - jobwizard-network
     depends_on:
-      postgres:
-        condition: service_healthy
-      ollama:
-        condition: service_healthy
-      temporal:
-        condition: service_started
+      - postgres
+      - ollama
+      - temporal
     command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    healthcheck:
+      test: [ "CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\"" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        order: stop-first
 
   frontend:
+    image: jobwizard-frontend:latest
     build:
       context: ./services/frontend
       dockerfile: Dockerfile
@@ -99,8 +117,21 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 5s
+        order: start-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        order: stop-first
 
   nginx:
+    image: jobwizard-nginx:latest
     build:
       context: ./services/nginx
       dockerfile: Dockerfile
@@ -128,8 +159,12 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   worker:
+    image: jobwizard-worker:latest
     build:
       context: .
       dockerfile: services/backend/Dockerfile
@@ -144,11 +179,12 @@ services:
     networks:
       - jobwizard-network
     depends_on:
-      temporal:
-        condition: service_started
-      postgres:
-        condition: service_healthy
+      - temporal
+      - postgres
     command: uv run python -m app.worker
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   temporal:
     image: temporalio/auto-setup:latest
@@ -166,10 +202,12 @@ services:
       - VISIBILITY_DBNAME=temporal_visibility
       - SKIP_SCHEMA_SETUP=false
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     networks:
       - jobwizard-network
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   temporal-ui:
     image: temporalio/ui:latest
@@ -183,23 +221,29 @@ services:
       - temporal
     networks:
       - jobwizard-network
+    deploy:
+      restart_policy:
+        condition: on-failure
 
   certbot:
     image: certbot/certbot
     container_name: jobwizard-certbot
-    profiles:
-      - certbot
-      - tools
     volumes:
       - ./services/certbot/conf:/etc/letsencrypt
       - ./services/certbot/www:/var/www/certbot
     # No network needed usually, but good to have if it needs to talk to others
     # command: certonly --webroot -w /var/www/certbot --force-renewal --email YOUR_EMAIL -d job-vite.com -d www.job-vite.com --agree-tos
     # We will run the command manually first
+    deploy:
+      mode: replicated
+      replicas: 0
+      restart_policy:
+        condition: none
 
 networks:
   jobwizard-network:
-    driver: bridge
+    driver: overlay
+    attachable: true
 
 volumes:
   postgres_data:

@@ -31,9 +31,11 @@ echo "   Database: $POSTGRES_DB"
 echo "   File: $BACKUP_FILE"
 echo ""
 
-# Determine container name (check both prod and dev)
+# Determine container name (check Swarm, prod Compose, and dev Compose)
 if docker ps --format '{{.Names}}' | grep -q "^jobwizard-postgres-prod$"; then
     CONTAINER_NAME="jobwizard-postgres-prod"
+elif docker ps --format '{{.Names}}' | grep -q "^jobwizard_postgres"; then
+    CONTAINER_NAME=$(docker ps --format '{{.Names}}' | grep "^jobwizard_postgres" | head -n 1)
 elif docker ps --format '{{.Names}}' | grep -q "^jobwizard-postgres$"; then
     CONTAINER_NAME="jobwizard-postgres"
 else

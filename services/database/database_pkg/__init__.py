@@ -16,7 +16,11 @@ def init_db():
     from database_pkg.models.status_history import ApplicationStatusHistory  # noqa: F401
     from database_pkg.models.api_key import ApiKey  # noqa: F401
 
-    SQLModel.metadata.create_all(engine)
+    try:
+        SQLModel.metadata.create_all(engine)
+    except Exception as e:
+        if "already exists" not in str(e):
+            raise e
     try:
         with engine.begin() as conn:
             conn.execute(
