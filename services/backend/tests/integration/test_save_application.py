@@ -241,3 +241,54 @@ def test_save_application_with_empty_generated_letters(
         "/api/save-application", json=request_data, headers=auth_headers
     )
     assert response.status_code == 500  # Internal server error due to IndexError
+
+
+def test_save_application_updates_edited_job_description(
+    client: TestClient, test_session: Session, auth_headers: dict, test_user: User
+):
+    """Test that saving application with an edited job description updates full_description in database."""
+    job_url = "https://www.linkedin.com/jobs/view/777888999"
+    original_desc = "Original job description text"
+    updated_desc = "Edited job description with additional requirements and details"
+
+    request_data = {
+        "job_url": job_url,
+        "job_title": "Software Engineer",
+        "job_company": "Tech Corp",
+        "job_description": original_desc,
+        "job_requirements": ["Python"],
+        "job_source": "LinkedIn",
+        "generated_letters": [
+            {
+                "model": "gpt-4o",
+                "letter": "Draft 1",
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        ],
+        "selected_letter_index": 0,
+        "header": {"name": "Test User"},
+        "cover_letter_body": "Draft 1",
+    }
+
+    # Save original application
+    resp1 = client.post(
+        "/api/save-application", json=request_data, headers=auth_headers
+    )
+    assert resp1.status_code == 200
+    job_desc_id = resp1.json()["job_description_id"]
+
+    # Verify original description saved
+    job_desc = test_session.get(JobDescription, job_desc_id)
+    assert job_desc is not None
+    assert job_desc.full_description == original_desc
+
+    # Save application again with updated job description
+    request_data["job_description"] = updated_desc
+    resp2 = client.post(
+        "/api/save-application", json=request_data, headers=auth_headers
+    )
+    assert resp2.status_code == 200
+
+    # Verify updated description in database
+    test_session.refresh(job_desc)
+    assert job_desc.full_description == updated_desc

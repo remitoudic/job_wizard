@@ -90,6 +90,14 @@ async def save_application(
         if existing_job:
             job_description = existing_job
             assert job_description.id is not None
+            if (
+                request.job_description
+                and existing_job.full_description != request.job_description
+            ):
+                existing_job.full_description = request.job_description
+                session.add(existing_job)
+                session.commit()
+                session.refresh(existing_job)
         else:
             job_description = DBJobDescription(
                 url=request.job_url,

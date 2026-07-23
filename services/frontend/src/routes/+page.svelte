@@ -184,6 +184,15 @@
 	let editableSubject = '';
 	let editableJobTitle = '';
 	let editableCompany = '';
+	let editableJobDescription = '';
+	let lastGeneratedJobDescription = '';
+
+	$: isJobDescEdited = Boolean(
+		coverLetter &&
+		editableJobDescription &&
+		lastGeneratedJobDescription &&
+		editableJobDescription.trim() !== lastGeneratedJobDescription.trim()
+	);
 
 	let isDateManuallyEdited = false;
 	let isSubjectManuallyEdited = false;
@@ -449,6 +458,8 @@
 			jobData = await parseJobUrl(jobUrl);
 			editableJobTitle = jobData?.title || '';
 			editableCompany = jobData?.company || '';
+			editableJobDescription = jobData?.full_description || jobData?.description || '';
+			lastGeneratedJobDescription = '';
 
 			// Step 2: Check for duplicates using the resolved canonical URL
 			if ($auth.isAuthenticated && jobData?.url) {
@@ -519,6 +530,11 @@
 
 	async function handleGenerateCoverLetter() {
 		if (!jobData) return;
+
+		if (editableJobDescription) {
+			jobData.description = editableJobDescription;
+			jobData.full_description = editableJobDescription;
+		}
 
 		isGenerating = true;
 		error = '';
@@ -755,6 +771,9 @@
 					}
 
 					isGenerating = false;
+					lastGeneratedJobDescription =
+						editableJobDescription ||
+						(jobData ? jobData.full_description || jobData.description : '');
 					eventSource.close();
 				}
 
@@ -950,6 +969,8 @@
 		};
 		editableJobTitle = manualTitle;
 		editableCompany = manualCompany;
+		editableJobDescription = manualDescription;
+		lastGeneratedJobDescription = '';
 		step.set(2);
 	}
 
@@ -1158,6 +1179,8 @@
 		editableSubject = '';
 		editableJobTitle = '';
 		editableCompany = '';
+		editableJobDescription = '';
+		lastGeneratedJobDescription = '';
 		isDateManuallyEdited = false;
 		isSubjectManuallyEdited = false;
 	}
@@ -1881,10 +1904,20 @@
 								/>
 							</svg>
 						</summary>
-						<div
-							class="p-6 border-t border-[#E2E8F0] text-sm text-[#334155] leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto bg-white"
-						>
-							{jobData.description}
+						<div class="p-4 border-t border-[#E2E8F0] bg-white">
+							<textarea
+								id="edit-job-description"
+								bind:value={editableJobDescription}
+								on:input={() => {
+									if (jobData) {
+										jobData.description = editableJobDescription;
+										jobData.full_description = editableJobDescription;
+									}
+								}}
+								rows="10"
+								class="w-full p-3 border border-[#CBD5E1] rounded-md text-sm text-[#334155] leading-relaxed focus:ring-2 focus:ring-[#0284C7] focus:border-transparent outline-none resize-y"
+								placeholder="Edit job description here..."
+							></textarea>
 						</div>
 					</details>
 
@@ -1949,7 +1982,8 @@
 						{$_('main.back', { default: 'Back' })}
 					</button>
 					<button
-						on:click={() => (coverLetter ? step.set(3) : handleGenerateCoverLetter())}
+						on:click={() =>
+							coverLetter && !isJobDescEdited ? step.set(3) : handleGenerateCoverLetter()}
 						disabled={isGenerating}
 						class="btn btn-primary sm:flex-[2] py-4 flex items-center justify-center gap-3"
 					>
@@ -1975,6 +2009,22 @@
 								></path>
 							</svg>
 							Crafting Your Letter...
+						{:else if coverLetter && isJobDescEdited}
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								class="h-5 w-5"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+								/>
+							</svg>
+							Regenerate Cover Letter
 						{:else if coverLetter}
 							Review Draft
 						{:else}
