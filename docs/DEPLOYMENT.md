@@ -1,45 +1,50 @@
 # Vite a Job! - Production Deployment Guide
 
-This guide explains how to deploy Vite a Job! to a production environment.
+This guide explains how to deploy Vite a Job! to a production environment using **Single-Node Docker Swarm**.
 
 ## 🎯 Production Architecture
 
-In production, Nginx acts as the primary reverse proxy and SSL terminator. It is the **only service exposed to the internet**.
+In production, Nginx acts as the primary reverse proxy and SSL terminator inside a single-node **Docker Swarm** stack. It is the **only service exposed to the internet**.
 
 ```mermaid
 graph TD
     User((User))
-    subgraph "Production Server"
+    subgraph "Single-Node Docker Swarm Cluster"
         Nginx[Nginx Proxy - Port 80/443]
-        Frontend[Frontend Service - Port 3000]
-        Backend[Backend API - Port 8000]
-        Postgres[(PostgreSQL)]
-        Ollama[Ollama LLM]
+        Frontend[Frontend Task Replicas - Port 3000]
+        Backend[Backend Task Replicas - Port 8000]
+        Postgres[(PostgreSQL Volume)]
+        Ollama[Ollama LLM Service]
+        Temporal[Temporal Workflow Engine]
+        Worker[Temporal Worker Service]
         Certbot[Certbot SSL]
     end
 
     User -->|HTTPS| Nginx
-    Nginx -->|Proxy| Frontend
-    Nginx -->|Proxy| Backend
+    Nginx -->|Overlay Net| Frontend
+    Nginx -->|Overlay Net| Backend
     Backend -->|SQL| Postgres
     Backend -->|REST| Ollama
+    Backend -->|gRPC| Temporal
+    Worker -->|gRPC| Temporal
     Certbot <-->|Challenge| Nginx
 ```
 
-**Security Benefits:**
+**Key Advantages of Single-Node Docker Swarm:**
 
-- ✅ **Encapsulation**: Internal services (DB, LLM) are isolated from the internet.
-- ✅ **SSL Termination**: Nginx manages HTTPS certificates centrally.
-- ✅ **Simplified Access**: Users connect via standard ports (80/443).
+- ✅ **Zero-Downtime Rolling Updates**: Swarm launches updated container replicas (`order: start-first`) and checks container health (`/health`) before stopping older instances.
+- ✅ **Self-Healing Infrastructure**: Automatically reschedules crashed or unhealthy container tasks.
+- ✅ **Encapsulation & Security**: Internal microservices operate inside an attachable `overlay` network (`jobwizard-network`) isolated from direct public internet access.
+- ✅ **Centralized SSL Termination**: Nginx manages HTTPS certificates with Let's Encrypt / Certbot.
 
 ---
 
 ## 📋 Prerequisites
 
 1. **Linux Server** (Ubuntu 22.04+ recommended)
-2. **Docker & Docker Compose** installed
+2. **Docker** (with Swarm support enabled)
 3. **Domain Name** (e.g., `job-vite.com`) pointing to your server IP
-4. **Hardware**: At least 4GB RAM (8GB recommended for local Ollama)
+4. **Hardware**: At least 4GB RAM (8GB+ recommended for local LLM workload)
 
 ---
 
@@ -54,18 +59,18 @@ cd /root/job_wizard
 
 ### 2. Configure Environment Variables
 
-Create and edit `.env.production`:
+Create and edit `.env/.env.production`:
 
 ```bash
-cp .env.production.example .env.production
-nano .env.production
+cp .env/.env.production.example .env/.env.production
+nano .env/.env.production
 ```
 
 #### Critical Backend Variables
 
 | Variable             | Description             | Recommended Value                                    |
-| :------------------- | :---------------------- | :--------------------------------------------------- | ------------------ | ---------- | ---------- |
-| `POSTGRES_PASSWORD`  | Strong password for DB  | `cat /dev/urandom                                    | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1` |
+| :------------------- | :---------------------- | :--------------------------------------------------- |
+| `POSTGRES_PASSWORD`  | Strong password for DB  | Generated strong secret                              |
 | `OPENROUTER_API_KEY` | API key for cloud LLM   | Optional but recommended for performance             |
 | `LOGFIRE_TOKEN`      | Token for observability | [logfire.pydantic.dev](https://logfire.pydantic.dev) |
 
@@ -77,13 +82,20 @@ nano .env.production
 | `VITE_API_URL` | Public API endpoint    | `https://yourdomain.com/api` |
 | `CORS_ORIGINS` | Allowed origins        | `https://yourdomain.com`     |
 
-### 3. Deploy Stack
+### 3. Deploy Stack to Docker Swarm
+
+Run the interactive production deployment script:
 
 ```bash
 ./scripts/deploy_production.sh
 ```
 
-_Note: This script will ask to initialize the database and seed an initial user._
+This script automatically:
+1. 💾 Generates a pre-flight database backup in `services/backups/`.
+2. 🐝 Verifies/initializes single-node Docker Swarm mode (`docker swarm init`).
+3. 🏗️ Builds production service images (`backend`, `frontend`, `nginx`, `postgres`, `worker`).
+4. 🚀 Deploys the stack via `docker stack deploy -c docker-compose.prod.yml jobwizard`.
+5. 🌱 Seeds default initial administrative user credentials.
 
 ---
 
@@ -93,82 +105,85 @@ The production configuration includes a `certbot` service for automated SSL mana
 
 ### 1. Generate Certificates
 
-Run this once to generate early certificates:
+Run this once to generate certificates:
 
 ```bash
-docker compose -f docker-compose.prod.yml run --rm certbot certonly --webroot -w /var/www/certbot -d yourdomain.com -d www.yourdomain.com --email your@email.com --agree-tos --no-eff-email
+docker run --rm -v $(pwd)/services/certbot/conf:/etc/letsencrypt -v $(pwd)/services/certbot/www:/var/www/certbot certbot/certbot certonly --webroot -w /var/www/certbot -d yourdomain.com -d www.yourdomain.com --email your@email.com --agree-tos --no-eff-email
 ```
 
-### 2. Restart Nginx
+### 2. Reload Nginx
 
-Once certificates are in `certbot/conf`, restart Nginx to pick them up:
-
-```bash
-docker compose -f docker-compose.prod.yml restart nginx
-```
-
-### 3. Automated Renewal
-
-Add a crontab entry to renew certificates weekly:
+Once certificates are stored in `services/certbot/conf`, reload Nginx:
 
 ```bash
-0 0 * * 0 docker compose -f /root/job_wizard/docker-compose.prod.yml run --rm certbot renew && docker compose -f /root/job_wizard/docker-compose.prod.yml restart nginx
+docker service update --force jobwizard_nginx
 ```
 
 ---
 
 ## 🔄 Routine Updates
 
-To deploy the latest code from GitHub:
+To deploy code updates safely with automated pre-flight backups, zero downtime, and automatic rollback on failure:
 
 ```bash
-# Recommended: Automatic update with backup and rollback
+# Recommended: Automatic update with backup, health checks, and Swarm rolling updates
 ./scripts/update-production.sh
 
-# Manual:
-git pull
-docker compose -f docker-compose.prod.yml up -d --build
+# Or manual deployment script:
+./scripts/deploy_production.sh
 ```
 
 ---
 
-## 💾 Maintenance & Backups
+## 💾 Maintenance, Backups & Credentials
 
 ### Database Backups
 
-A backup script is provided that creates timestamped SQL dumps in `./backups/`.
+A dedicated backup script creates timestamped SQL dumps in `./services/backups/`.
 
 ```bash
 ./scripts/backup-db.sh
 ```
 
-_Tip: Schedule this via Cron for daily backups._
+### Admin Password Reset
 
-### Log Management
+To reset or update a user's password directly in the production container:
 
 ```bash
-# Follow all logs
-docker compose -f docker-compose.prod.yml logs -f
+./scripts/reset-password.sh "remitoudic@gmail.com" "YOUR_NEW_PASSWORD"
+```
 
-# Follow specific service (e.g., backend)
-docker compose -f docker-compose.prod.yml logs -f backend
+### Swarm Stack Management & Logs
+
+```bash
+# View all Swarm services and replica counts
+docker stack services jobwizard
+
+# View all active container tasks and states
+docker stack ps jobwizard
+
+# Follow logs of a specific service
+docker service logs -f jobwizard_backend
+docker service logs -f jobwizard_frontend
+docker service logs -f jobwizard_nginx
 ```
 
 ---
 
 ## 🐛 Troubleshooting
 
-| Issue                    | Solution                                                                                                                   |
-| :----------------------- | :------------------------------------------------------------------------------------------------------------------------- |
-| **502 Bad Gateway**      | Check if the `backend` container is healthy: `docker ps`. If it crashed, check logs: `docker logs jobwizard-backend-prod`. |
-| **Connection Refused**   | Ensure ports 80/443 are open in your server firewall (`ufw allow 80/tcp`, `ufw allow 443/tcp`).                            |
-| **Ollama Model Missing** | Ollama might still be downloading the model. Check `docker logs jobwizard-ollama-prod`.                                    |
-| **CSS/JS 404s**          | Ensure `ORIGIN` and `VITE_API_URL` exactly match the domain you are using.                                                 |
+| Issue                    | Solution                                                                                                                        |
+| :----------------------- | :------------------------------------------------------------------------------------------------------------------------------ |
+| **502 Bad Gateway**      | Check if `jobwizard_backend` task is healthy: `docker stack services jobwizard`. View logs: `docker service logs jobwizard_backend`. |
+| **Connection Refused**   | Ensure ports 80/443 are open in server firewall (`ufw allow 80/tcp`, `ufw allow 443/tcp`).                                     |
+| **Ollama Model Missing** | Check model downloading state: `docker service logs jobwizard_ollama`.                                                          |
+| **CSS/JS 404s**          | Ensure `ORIGIN` and `VITE_API_URL` in `.env/.env.production` match your actual public domain.                                  |
 
 ---
 
 ## 📊 Monitoring
 
-- **Internal Health**: `curl http://localhost/health`
+- **Internal Health Check**: `curl http://localhost/health`
+- **Swarm Stack Status**: `docker stack services jobwizard`
 - **Resource Usage**: `docker stats`
-- **External Traces**: Check your Logfire dashboard at [logfire.pydantic.dev](https://logfire.pydantic.dev).
+- **External Observability**: Check Logfire dashboard at [logfire.pydantic.dev](https://logfire.pydantic.dev).

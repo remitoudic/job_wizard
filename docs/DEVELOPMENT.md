@@ -39,12 +39,12 @@ open http://localhost:5173
 ### For Production Updates (Server 147.93.111.113)
 
 ```bash
-# Safe update with automatic backup and rollback
+# Safe update with automatic backup, Swarm rolling updates, and rollback
 ./scripts/update-production.sh
 ```
 
 > [!TIP]
-> See [DEPLOYMENT.md](DEPLOYMENT.md) for complete production deployment instructions.
+> See [DEPLOYMENT.md](DEPLOYMENT.md) for complete single-node Docker Swarm deployment instructions.
 
 ## 🏗 Architecture Overview
 
@@ -768,24 +768,22 @@ docker system prune -a --volumes
 ./scripts/backup-db.sh
 
 # List backups
-ls -lh backups/
+ls -lh services/backups/
 
-# Connect to database
-docker exec -it jobwizard-postgres psql -U jobwizard -d jobwizard
+# Reset user password in container
+./scripts/reset-password.sh "remitoudic@gmail.com" "YOUR_NEW_PASSWORD"
+
+# Connect to database (Swarm task or Compose container)
+docker exec -it $(docker ps -q -f name=jobwizard_postgres) psql -U jobwizard -d jobwizard
 
 # Useful SQL commands (once connected)
 \dt              # List all tables
-\d+ jobs         # Describe jobs table
-\du              # List users
-\l               # List databases
-SELECT * FROM jobs LIMIT 5;
+SELECT count(*) FROM "user";
+SELECT count(*) FROM applications;
 \q               # Quit
 
-# Reset database
-docker exec jobwizard-backend python backend/scripts/reset_db.py
-
 # Restore from backup
-docker exec -i jobwizard-postgres psql -U jobwizard -d jobwizard < backups/jobwizard_YYYYMMDD_HHMMSS.sql
+docker exec -i $(docker ps -q -f name=jobwizard_postgres) psql -U jobwizard -d jobwizard < services/backups/jobwizard_YYYYMMDD_HHMMSS.sql
 ```
 
 ### Git Commands
