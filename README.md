@@ -1,7 +1,7 @@
 # Vite a Job! 🚀
 
 **The ultimate AI-powered career assistt.**
-Transform your job application process from hours of manual writing to seconds of AI-orchestrated precision. Job Wizard generates high-fidelity, personalized cover letters and revitalizes old CVs into professional, modern PDFs!
+Transform your job application process from hours of manual writing to seconds of AI-orchestrated precision. Job Wizard generates high-fidelity, personalized cover letters and revitalizes old CVs into professional, modern PDFs
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
