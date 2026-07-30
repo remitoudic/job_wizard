@@ -201,6 +201,8 @@ services:
       - DBNAME=temporal
       - VISIBILITY_DBNAME=temporal_visibility
       - SKIP_SCHEMA_SETUP=false
+      - DEFAULT_NAMESPACE=jobwizard
+      - DEFAULT_NAMESPACE_RETENTION=7
     depends_on:
       - postgres
     networks:
