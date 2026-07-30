@@ -81,3 +81,24 @@ jobs:
         run: |
           cd services/frontend
           bun run test
+
+  deploy:
+    name: Deploy Production
+    needs: [lint, backend-tests, frontend-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy to production via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: 22
+          script_stop: true
+          command_timeout: 30m
+          script: |
+            set -euo pipefail
+            cd /root/job_wizard
+            ./scripts/update-production.sh -y

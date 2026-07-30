@@ -80,3 +80,4 @@ backups/
 USER_TESTING_GUIDE.md
 backend/proxies.json
 certbot/
+.local/

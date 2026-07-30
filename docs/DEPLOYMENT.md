@@ -123,13 +123,36 @@ docker service update --force jobwizard_nginx
 
 ## 🔄 Routine Updates
 
+### Automatic deploy (CI/CD)
+
+Merges to `main` run the full CI suite (lint, backend unit tests, frontend tests). When CI passes, the **Deploy Production** job SSHs into the server and runs:
+
+```bash
+./scripts/update-production.sh -y
+```
+
+**Required GitHub Actions secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+| :----- | :---- |
+| `DEPLOY_HOST` | Production server IP (e.g. `147.93.111.113`) |
+| `DEPLOY_USER` | SSH user (e.g. `root`) |
+| `DEPLOY_SSH_KEY` | Private key whose public key is in the server's `~/.ssh/authorized_keys` |
+
+Also create a GitHub **Environment** named `production` (Settings → Environments) so the deploy job can run. Optional: add required reviewers for an approval gate before deploy.
+
+### Manual updates
+
 To deploy code updates safely with automated pre-flight backups, zero downtime, and automatic rollback on failure:
 
 ```bash
 # Recommended: Automatic update with backup, health checks, and Swarm rolling updates
 ./scripts/update-production.sh
 
-# Or manual deployment script:
+# Non-interactive (same path CI uses)
+./scripts/update-production.sh -y
+
+# Or full initial/redeploy script:
 ./scripts/deploy_production.sh
 ```
 

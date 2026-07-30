@@ -513,6 +513,11 @@ git push origin main
 ```
 
 **3. Update production:**
+
+Merges to `main` deploy automatically via GitHub Actions after CI passes (see [DEPLOYMENT.md](DEPLOYMENT.md)).
+
+For a manual update:
+
 ```bash
 # SSH to server
 ssh user@147.93.111.113

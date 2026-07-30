@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 # Safe production update script with automatic backup and rollback
-# Use this to deploy new code from GitHub to production
+# Use this to deploy new code from GitHub to production (Single-Node Docker Swarm)
+#
+# Usage:
+#   ./scripts/update-production.sh            # interactive
+#   ./scripts/update-production.sh -y         # non-interactive (CI/CD)
+#   ./scripts/update-production.sh -y -f      # force rebuild even if already up to date
 
 set -euo pipefail
 
-# Default values
 FORCE_YES=false
 FORCE_REBUILD=false
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 
-# Parse arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -y|--yes) FORCE_YES=true ;;
@@ -23,7 +27,6 @@ echo "🚀 Production Update - Job Wizard"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-# Verify we're on the production server
 PUBLIC_IP=$(curl -s --max-time 5 https://ifconfig.me 2>/dev/null || echo "unknown")
 EXPECTED_IP="147.93.111.113"
 
@@ -44,11 +47,30 @@ if [ "$PUBLIC_IP" != "$EXPECTED_IP" ]; then
     fi
 fi
 
-# Save current git commit for rollback
+if ! docker info > /dev/null 2>&1; then
+    echo "❌ Error: Docker is not running!"
+    exit 1
+fi
+
+SWARM_STATE=$(docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null || echo "inactive")
+if [ "$SWARM_STATE" != "active" ]; then
+    echo "❌ Error: Docker Swarm is not active. Run ./scripts/deploy_production.sh first."
+    exit 1
+fi
+
+ENV_FILE=".env/.env.production"
+if [ ! -f "$ENV_FILE" ] && [ -f .env.production ]; then
+    ENV_FILE=".env.production"
+fi
+if [ ! -f "$ENV_FILE" ]; then
+    echo "❌ Error: Missing $ENV_FILE"
+    exit 1
+fi
+
+COMPOSE_FILE="docker-compose.prod.yml"
 CURRENT_COMMIT=$(git rev-parse HEAD)
-CURRENT_BRANCH=$(git branch --show-current)
 echo "📍 Current state:"
-echo "   Branch: $CURRENT_BRANCH"
+echo "   Branch target: $DEPLOY_BRANCH"
 echo "   Commit: ${CURRENT_COMMIT:0:8}"
 echo ""
 
@@ -59,8 +81,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 if [ -f scripts/backup-db.sh ]; then
-    # Pass -y to backup script if it supports it, or assume it's safe
-    ./scripts/backup-db.sh
+    ./scripts/backup-db.sh || echo "⚠️  Pre-flight backup skipped or failed"
 else
     echo "⚠️  Warning: backup-db.sh not found, skipping database backup"
 fi
@@ -76,15 +97,16 @@ echo ""
 echo "📥 Fetching from GitHub..."
 git fetch origin
 
-echo "🔄 Pulling latest changes..."
-if ! git pull origin "$CURRENT_BRANCH"; then
+echo "🔄 Checking out $DEPLOY_BRANCH..."
+git checkout "$DEPLOY_BRANCH"
+if ! git pull --ff-only origin "$DEPLOY_BRANCH"; then
     echo "❌ Git pull failed! Manual intervention required."
     exit 1
 fi
 
 NEW_COMMIT=$(git rev-parse HEAD)
 if [ "$CURRENT_COMMIT" = "$NEW_COMMIT" ]; then
-    echo "ℹ️  Already up to date. No changes to deploy."
+    echo "ℹ️  Already up to date at ${NEW_COMMIT:0:8}."
 
     if [ "$FORCE_REBUILD" = true ]; then
         echo "⚠️  Forcing rebuild due to --force flag..."
@@ -98,33 +120,38 @@ fi
 echo "✅ Updated to commit: ${NEW_COMMIT:0:8}"
 echo ""
 
-# Phase 3: Rebuild and restart services
+# Phase 3: Rebuild and rolling update via Swarm
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Phase 3: Rebuild and restart services"
+echo "Phase 3: Rebuild and Swarm rolling update"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-echo "🐳 Rebuilding Docker containers..."
-COMPOSE_FILE="docker-compose.prod.yml"
+echo "📝 Loading environment from $ENV_FILE..."
+set -a
+# shellcheck disable=SC1090
+source "$ENV_FILE"
+set +a
 
-# Ensure backup directory exists on host with correct permissions
-# 1000:1000 is often the default non-root user in many containers (like python:slim or node)
-# Adjust if your container uses a specific UID/GID
 if [ ! -d "./services/backups" ]; then
     echo "📂 Creating backups directory..."
     mkdir -p ./services/backups
-    chmod 777 ./services/backups # Permissive for now to avoid permission issues with bind mounts
+    chmod 777 ./services/backups
 fi
 
-if command -v docker-compose > /dev/null 2>&1; then
-    docker-compose --env-file .env/.env -f "$COMPOSE_FILE" up -d --build
-else
-    docker compose --env-file .env/.env -f "$COMPOSE_FILE" up -d --build
-fi
+echo "🏗️  Building production images..."
+docker compose -f "$COMPOSE_FILE" build
+
+echo "🚀 Deploying stack (jobwizard)..."
+docker stack deploy -c "$COMPOSE_FILE" jobwizard
+
+echo "🔄 Forcing service updates to pick up new images..."
+for svc in jobwizard_backend jobwizard_frontend jobwizard_nginx jobwizard_worker; do
+    docker service update --force "$svc" 2>/dev/null || echo "   ⚠️  Could not force-update $svc (may not exist yet)"
+done
 
 echo ""
-echo "⏳ Waiting for services to start (10 seconds)..."
-sleep 10
+echo "⏳ Waiting for services to stabilize (20 seconds)..."
+sleep 20
 
 # Phase 4: Health checks
 echo ""
@@ -135,32 +162,32 @@ echo ""
 
 HEALTH_CHECKS_PASSED=true
 
-# Check if containers are running
-echo "🔍 Checking containers..."
-# Updated container names to match docker-compose.prod.yml
-CONTAINERS=("jobwizard-postgres-prod" "jobwizard-ollama-prod" "jobwizard-backend-prod" "jobwizard-frontend-prod")
+echo "🔍 Checking Swarm services..."
+SERVICES=("jobwizard_postgres" "jobwizard_backend" "jobwizard_frontend" "jobwizard_nginx" "jobwizard_worker" "jobwizard_temporal")
 
-for container in "${CONTAINERS[@]}"; do
-    if docker ps --filter "name=$container" --filter "status=running" | grep -q "$container"; then
-        echo "   ✅ $container is running"
+for service in "${SERVICES[@]}"; do
+    REPLICAS=$(docker service ls --filter "name=${service}" --format '{{.Replicas}}' 2>/dev/null || true)
+    if [[ "$REPLICAS" =~ ^([0-9]+)/([0-9]+)$ ]] && [ "${BASH_REMATCH[1]}" -ge 1 ] && [ "${BASH_REMATCH[1]}" -eq "${BASH_REMATCH[2]}" ]; then
+        echo "   ✅ $service ($REPLICAS)"
     else
-        echo "   ❌ $container is NOT running"
+        echo "   ❌ $service is NOT healthy (replicas: ${REPLICAS:-none})"
         HEALTH_CHECKS_PASSED=false
     fi
 done
 
-# Check backend API
 echo ""
-echo "🔍 Checking backend API..."
-# Production uses port 80 via nginx usually, but backend is internal 8000.
-# Nginx exposes 80. Checks should attack localhost:80.
-if curl -s --max-time 5 http://localhost/health > /dev/null 2>&1 || \
-   curl -s --max-time 5 http://localhost/ > /dev/null 2>&1; then
-    echo "   ✅ Application is responding (Nginx/Backend)"
+echo "🔍 Checking application HTTP health..."
+if curl -sf --max-time 10 http://localhost/health > /dev/null 2>&1 || \
+   curl -sf --max-time 10 http://127.0.0.1:8000/health > /dev/null 2>&1; then
+    echo "   ✅ Application is responding"
 else
-    echo "   ❌ Application is not responding at http://localhost"
-    # Try internal backend port if exposed or just fail
-    HEALTH_CHECKS_PASSED=false
+    # Fallback: frontend health via nginx root
+    if curl -sf --max-time 10 http://localhost/ > /dev/null 2>&1; then
+        echo "   ✅ Application root is responding"
+    else
+        echo "   ❌ Application is not responding"
+        HEALTH_CHECKS_PASSED=false
+    fi
 fi
 
 echo ""
@@ -175,8 +202,7 @@ if [ "$HEALTH_CHECKS_PASSED" = true ]; then
     echo "   From: ${CURRENT_COMMIT:0:8}"
     echo "   To:   ${NEW_COMMIT:0:8}"
     echo ""
-    echo "🌐 Access your application at:"
-    echo "   Frontend: http://${EXPECTED_IP}" # Default usage of port 80
+    docker stack services jobwizard
     echo ""
 else
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -185,21 +211,24 @@ else
     echo ""
     echo "⏮️  Rolling back to previous version..."
 
-    # Rollback code
     git reset --hard "$CURRENT_COMMIT"
 
-    # Restart services
-    if command -v docker-compose > /dev/null 2>&1; then
-        docker-compose --env-file .env/.env -f "$COMPOSE_FILE" up -d --build
-    else
-        docker compose --env-file .env/.env -f "$COMPOSE_FILE" up -d --build
-    fi
+    set -a
+    # shellcheck disable=SC1090
+    source "$ENV_FILE"
+    set +a
+
+    docker compose -f "$COMPOSE_FILE" build
+    docker stack deploy -c "$COMPOSE_FILE" jobwizard
+    for svc in jobwizard_backend jobwizard_frontend jobwizard_nginx jobwizard_worker; do
+        docker service update --force "$svc" 2>/dev/null || true
+    done
 
     echo ""
     echo "✅ Rolled back to commit: ${CURRENT_COMMIT:0:8}"
     echo ""
     echo "⚠️  Please check the logs to diagnose the issue:"
-    echo "   docker compose -f $COMPOSE_FILE logs backend"
-    echo "   docker compose -f $COMPOSE_FILE logs nginx"
+    echo "   docker service logs -f jobwizard_backend"
+    echo "   docker service logs -f jobwizard_nginx"
     exit 1
 fi
