@@ -67,8 +67,8 @@ async def test_benchmark_generation_race():
         "name": "groq",
         "base_url": "https://api.groq.com/openai/v1",
         "api_key": "fake-key",
-        "model_1": "llama-3.3-70b-versatile",
-        "model_2": "openai/gpt-oss-120b",
+        "model_1": "openai/gpt-oss-120b",
+        "model_2": "qwen/qwen3.8-27b",
     }
     nvidia_config = {
         "name": "nvidia",

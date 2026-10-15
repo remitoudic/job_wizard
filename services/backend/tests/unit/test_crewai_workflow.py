@@ -94,3 +94,51 @@ def test_run_crewai_generation_success():
         assert 0.1 in temperatures
         assert 0.7 in temperatures
         assert 0.3 in temperatures
+
+
+def test_run_crewai_generation_failover_success():
+    """
+    Test that if the first candidate fails (e.g. Rate Limit / 404),
+    CrewAI catches it and falls back to the next candidate successfully.
+    """
+    with (
+        patch(
+            "app.services.cover_letter.crewai_workflow.get_candidate_configs"
+        ) as mock_candidates,
+        patch("app.services.cover_letter.crewai_workflow.Crew") as mock_crew_class,
+        patch(
+            "app.services.cover_letter.crewai_workflow.get_llm_for_agent"
+        ) as mock_get_llm,
+    ):
+        mock_candidates.return_value = [
+            {"name": "openrouter", "model_1": "gemma", "api_key": "k1"},
+            {"name": "groq", "model_1": "gpt-oss", "api_key": "k2"},
+        ]
+
+        mock_llm_instance = MagicMock()
+        mock_get_llm.return_value = mock_llm_instance
+
+        # First crew kickoff fails, second succeeds
+        mock_crew_instance_1 = MagicMock()
+        mock_crew_instance_1.kickoff.side_effect = Exception("Rate limit 429 upstream")
+
+        mock_crew_instance_2 = MagicMock()
+        mock_result = MagicMock()
+        mock_result.__str__.return_value = (
+            "Recovered cover letter from fallback candidate."
+        )
+        mock_crew_instance_2.kickoff.return_value = mock_result
+
+        mock_crew_class.side_effect = [mock_crew_instance_1, mock_crew_instance_2]
+
+        result = run_crewai_generation(
+            job_description="Need senior dev",
+            job_title="Senior Dev",
+            company="Acme Corp",
+            requirements=["Python"],
+        )
+
+        assert result == "Recovered cover letter from fallback candidate."
+        assert mock_crew_class.call_count == 2
+        mock_crew_instance_1.kickoff.assert_called_once()
+        mock_crew_instance_2.kickoff.assert_called_once()

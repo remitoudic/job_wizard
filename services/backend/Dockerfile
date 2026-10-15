@@ -6,7 +6,7 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Copy dependency files
-COPY services/backend/pyproject.toml ./
+COPY services/backend/pyproject.toml services/backend/uv.lock* ./
 
 # Copy database package
 COPY services/database /database_pkg

@@ -25,6 +25,6 @@ async def test_groq_integration_connectivity():
     assert "api.groq.com" in active_config["base_url"]
 
     # 2. Verify Models are correct
-    assert active_config["model_1"] == "llama-3.3-70b-versatile"
+    assert active_config["model_1"] == "openai/gpt-oss-120b"
 
     print("\n✅ Groq Configuration Verified")

@@ -440,9 +440,11 @@ CUSTOM USER GUIDANCE:
                             user_skills,
                             context_text,
                             language,
+                            custom_instructions,
                         )
+                        clean_text = LLMService.clean_model_output(text)
                         return {
-                            "output": text,
+                            "output": clean_text,
                             "source": "CrewAI Agency",
                             "usage": None,
                         }

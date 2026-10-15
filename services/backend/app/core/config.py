@@ -22,21 +22,25 @@ class Settings(BaseSettings):
 
     # Models Source of Truth
     # Models Source of Truth
-    OPENROUTER_MODEL: str = "google/gemma-4-26b-a4b-it:free"
-    OPENROUTER_MODEL_2: str = "openai/gpt-oss-20b:free"
+    OPENROUTER_MODEL: str = os.getenv(
+        "OPENROUTER_MODEL", "nvidia/nemotron-3.5-lightning:free"
+    )
+    OPENROUTER_MODEL_2: str = os.getenv(
+        "OPENROUTER_MODEL_2", "nvidia/nemotron-3-super-120b-a12b:free"
+    )
 
     # Groq Settings
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-    GROQ_MODEL_1: str = "llama-3.3-70b-versatile"
-    GROQ_MODEL_2: str = "openai/gpt-oss-120b"
+    GROQ_MODEL_1: str = os.getenv("GROQ_MODEL_1", "openai/gpt-oss-120b")
+    GROQ_MODEL_2: str = os.getenv("GROQ_MODEL_2", "qwen/qwen3.8-27b")
 
     # NVIDIA NIM Settings
     NVIDIA_API_KEY: str = os.getenv("NVIDIA_API_KEY", "")
-    NVIDIA_MODEL_1: str = os.getenv("NVIDIA_MODEL_1", "deepseek-ai/deepseek-v4-pro")
+    NVIDIA_MODEL_1: str = os.getenv("NVIDIA_MODEL_1", "poolside/laguna-xs-2.1")
     NVIDIA_MODEL_2: str = os.getenv(
-        "NVIDIA_MODEL_2", "qwen/qwen3-next-80b-a3b-instruct"
+        "NVIDIA_MODEL_2", "nvidia/nemotron-3.5-lightning-30b-a3b"
     )
-    NVIDIA_MODEL_3: str = os.getenv("NVIDIA_MODEL_3", "z-ai/glm-5.2")
+    NVIDIA_MODEL_3: str = os.getenv("NVIDIA_MODEL_3", "openai/gpt-oss-20b")
 
     # LlamaCloud Settings (CV Parsing)
     LLAMA_CLOUD_API_KEY: str = ""

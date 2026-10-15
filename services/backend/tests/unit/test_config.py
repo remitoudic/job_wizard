@@ -45,6 +45,8 @@ def test_valid_nvidia_model_configured():
         "deepseek-ai/deepseek-v4-pro",
         "qwen/qwen3-next-80b-a3b-instruct",
         "poolside/laguna-xs-2.1",
+        "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "openai/gpt-oss-20b",
         "mistralai/mistral-medium-3.5-128b",
         "meta/llama-3.1-8b-instruct",
         "google/gemma-2-2b-it",

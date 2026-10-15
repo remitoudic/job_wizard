@@ -8,7 +8,7 @@ from pydantic_ai import Agent
 
 # Hardcoded for standalone verification (using env var now)
 API_KEY = os.getenv("GROQ_API_KEY", "")
-MODEL_NAME = "llama-3.3-70b-versatile"
+MODEL_NAME = "openai/gpt-oss-120b"
 BASE_URL = "https://api.groq.com/openai/v1"
 
 SYSTEM_PROMPT = (
