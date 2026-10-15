@@ -50,6 +50,7 @@ build/
 .env.local
 .env.*.local
 .env.production
+.local/
 
 # Docker
 *.log

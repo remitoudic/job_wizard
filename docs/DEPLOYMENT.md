@@ -117,6 +117,16 @@ Once certificates are stored in `services/certbot/conf`, reload Nginx:
 
 ```bash
 docker service update --force jobwizard_nginx
+# Or reload in-place without restart:
+docker exec $(docker ps -q -f name=jobwizard_nginx) nginx -s reload
+```
+
+### 3. Automated Renewal
+
+Certificates are renewed and Nginx is automatically reloaded weekly via cron using:
+
+```bash
+./scripts/renew-ssl.sh
 ```
 
 ---

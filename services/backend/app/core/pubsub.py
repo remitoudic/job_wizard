@@ -9,6 +9,11 @@ import logfire
 
 logger = logging.getLogger(__name__)
 
+# Wake the LISTEN loop periodically so dead connections are detected/reconnected.
+LISTEN_TIMEOUT_SECONDS = 30.0
+# How often SSE generators poll DB when no live NOTIFY arrives.
+SSE_POLL_SECONDS = 5.0
+
 
 class PubSubManager:
     """
@@ -48,7 +53,7 @@ class PubSubManager:
         logger.info("PubSubManager stopped")
 
     async def _get_conn(self) -> psycopg.AsyncConnection:
-        """Create a new async connection."""
+        """Create a new async connection with TCP keepalives."""
         # Convert DATABASE_URL if it has the +psycopg or +psycopg2 prefix
         # psycopg.connect prefers standard postgresql://
         url = settings.DATABASE_URL
@@ -61,10 +66,14 @@ class PubSubManager:
             url,
             autocommit=True,
             prepare_threshold=None,  # Recommended for persistent connections
+            keepalives=1,
+            keepalives_idle=30,
+            keepalives_interval=10,
+            keepalives_count=3,
         )
 
     async def _listen_loop(self):
-        """Infinite loop to handle incoming NOTIFY events."""
+        """Infinite loop to handle incoming NOTIFY events with keepalive."""
         while self._running:
             try:
                 self._conn = await self._get_conn()
@@ -77,21 +86,37 @@ class PubSubManager:
 
                     logger.info(f"Postgres LISTEN established on {self.channel}")
 
-                    async for notify in self._conn.notifies():
+                    while self._running:
+                        # Timeout forces us to wake up and verify the connection
+                        # is still alive; otherwise a silently-dead TCP session
+                        # would leave SSE clients hung forever.
                         try:
-                            payload = json.loads(notify.payload)
-                            # Fan out to all queues
-                            for queue in list(
-                                self._listeners
-                            ):  # Use list to avoid mutation during iteration
-                                await queue.put(payload)
-                        except json.JSONDecodeError:
-                            logger.error(
-                                f"Failed to decode NOTIFY payload: {notify.payload}"
-                            )
-                        except Exception as e:
-                            logger.error(f"Error distributing notification: {e}")
+                            async for notify in self._conn.notifies(
+                                timeout=LISTEN_TIMEOUT_SECONDS
+                            ):
+                                try:
+                                    payload = json.loads(notify.payload)
+                                    for queue in list(self._listeners):
+                                        await queue.put(payload)
+                                except json.JSONDecodeError:
+                                    logger.error(
+                                        f"Failed to decode NOTIFY payload: {notify.payload}"
+                                    )
+                                except Exception as e:
+                                    logger.error(
+                                        f"Error distributing notification: {e}"
+                                    )
+                        except TimeoutError:
+                            # No notifications within the window — keepalive probe.
+                            await cur.execute("SELECT 1")
+                            continue
 
+                        # notifies() iterator ended (timeout without raising in
+                        # some psycopg versions) — probe and resume listening.
+                        await cur.execute("SELECT 1")
+
+            except asyncio.CancelledError:
+                raise
             except (psycopg.OperationalError, Exception) as e:
                 logger.error(f"PubSub connection error: {e}. Retrying in 5s...")
                 if self._conn:
@@ -99,18 +124,117 @@ class PubSubManager:
                         await self._conn.close()
                     except Exception:
                         pass
+                    self._conn = None
                 await asyncio.sleep(5)
 
     async def subscribe(self) -> AsyncGenerator[Dict[str, Any], None]:
         """Subscribe to the event stream."""
-        queue = asyncio.Queue()
+        queue: asyncio.Queue = asyncio.Queue()
         self._listeners.add(queue)
         try:
             while True:
-                # Yield messages as they arrive
                 yield await queue.get()
         finally:
-            self._listeners.remove(queue)
+            self._listeners.discard(queue)
+
+    async def subscribe_with_poll(
+        self, job_id: str, poll_seconds: float = SSE_POLL_SECONDS
+    ) -> AsyncGenerator[Dict[str, Any], None]:
+        """
+        Subscribe to live NOTIFY events, falling back to DB polling when
+        the LISTEN connection is stale or NOTIFY was missed.
+        """
+        queue: asyncio.Queue = asyncio.Queue()
+        self._listeners.add(queue)
+        last_status: Optional[str] = None
+        try:
+            while True:
+                try:
+                    msg = await asyncio.wait_for(queue.get(), timeout=poll_seconds)
+                    status = msg.get("status")
+                    # Enrich truncated / text-stripped NOTIFY payloads from DB
+                    if status in ("partial", "completed") and (
+                        msg.get("truncated") or not msg.get("text")
+                    ):
+                        db_status = await self.get_job_status(job_id)
+                        if db_status and db_status.get("payload"):
+                            enriched = dict(db_status["payload"])
+                            enriched.setdefault("status", db_status.get("status"))
+                            enriched.setdefault("job_id", job_id)
+                            msg = enriched
+                            status = msg.get("status")
+                    if status:
+                        last_status = status
+                    yield msg
+                    if status in ("completed", "error"):
+                        return
+                except asyncio.TimeoutError:
+                    db_status = await self.get_job_status(job_id)
+                    if not db_status:
+                        continue
+                    status = db_status.get("status")
+                    payload = db_status.get("payload") or {}
+                    # Only emit when status advanced (or first poll with a known state)
+                    if status and status != last_status:
+                        last_status = status
+                        # Ensure payload carries status/job_id for the frontend
+                        if "status" not in payload:
+                            payload = {**payload, "status": status}
+                        if "job_id" not in payload:
+                            payload = {**payload, "job_id": job_id}
+                        yield payload
+                        if status in ("completed", "error"):
+                            return
+        finally:
+            self._listeners.discard(queue)
+
+    def _serialize_notify_payload(self, payload: Dict[str, Any]) -> str:
+        """Shrink payload to fit Postgres NOTIFY's ~8KB limit."""
+        serialized = json.dumps(payload)
+        if len(serialized.encode("utf-8")) <= 7500:
+            return serialized
+
+        notify_payload = payload.copy()
+        if notify_payload.get("status") == "alternative_ready":
+            # Keep the single alternative text; drop the growing list.
+            notify_payload.pop("alternatives", None)
+        else:
+            if "alternatives" in notify_payload:
+                notify_payload["alternatives"] = [
+                    {k: v for k, v in alt.items() if k != "text"}
+                    for alt in notify_payload["alternatives"]
+                ]
+            if "text" in notify_payload:
+                # Keep a short preview so the UI can still advance; full text
+                # remains in JobStatus for SSE replay / DB poll fallback.
+                text = notify_payload["text"]
+                if isinstance(text, str) and len(text) > 500:
+                    notify_payload["text"] = text
+                    # Prefer dropping alternatives metadata before truncating text
+                    notify_payload.pop("alternatives", None)
+                    serialized = json.dumps(notify_payload)
+                    if len(serialized.encode("utf-8")) > 7500:
+                        notify_payload["text_preview"] = text[:1500]
+                        notify_payload.pop("text", None)
+
+        serialized = json.dumps(notify_payload)
+        if len(serialized.encode("utf-8")) > 7500:
+            # Last resort: status skeleton only
+            skeleton = {
+                "job_id": payload.get("job_id"),
+                "status": payload.get("status"),
+                "message": payload.get("message"),
+                "source": payload.get("source"),
+                "alternative_id": payload.get("alternative_id"),
+                "truncated": True,
+            }
+            serialized = json.dumps(skeleton)
+            logger.warning(
+                "NOTIFY payload truncated to skeleton for job %s status=%s",
+                payload.get("job_id"),
+                payload.get("status"),
+            )
+        return serialized
 
     async def notify(self, payload: Dict[str, Any]):
         """Helper to send a NOTIFY event. Also persists the status to the database."""
@@ -145,26 +269,7 @@ class PubSubManager:
 
             # 2. Send Real-time Notification
             try:
-                # Prepare payload for Postgres NOTIFY (limited to 8000 bytes hard limit in PG)
-                notify_payload = payload
-                serialized = json.dumps(notify_payload)
-                if len(serialized.encode("utf-8")) > 7500:
-                    # Strip heavy fields to keep NOTIFY within PG size limits
-                    notify_payload = payload.copy()
-                    if notify_payload.get("status") == "alternative_ready":
-                        # For alternative_ready, we only need job_id, status, text, and source.
-                        # We can safely drop the full alternatives list.
-                        notify_payload.pop("alternatives", None)
-                    else:
-                        # For other statuses, strip full text from alternatives but keep metadata
-                        if "alternatives" in notify_payload:
-                            notify_payload["alternatives"] = [
-                                {k: v for k, v in alt.items() if k != "text"}
-                                for alt in notify_payload["alternatives"]
-                            ]
-                        if "text" in notify_payload:
-                            notify_payload.pop("text", None)
-                    serialized = json.dumps(notify_payload)
+                serialized = self._serialize_notify_payload(payload)
 
                 async with await self._get_conn() as conn:
                     await conn.execute(
@@ -174,8 +279,8 @@ class PubSubManager:
                         )
                     )
 
-                # 3. Also notify ephemeral listeners
-                for queue in self._listeners:
+                # 3. Also notify ephemeral listeners in this process
+                for queue in list(self._listeners):
                     await queue.put(payload)
             except Exception as e:
                 logger.error(f"Notification error for {job_id}: {e}")

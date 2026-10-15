@@ -126,9 +126,8 @@ async def cover_letter_events(job_id: str):
                 if last_status["status"] in ("completed", "error"):
                     return
 
-            # 2. Regular Subscription
-            async for msg in pubsub_manager.subscribe():
-                # Filter by job_id
+            # 2. Live subscription with DB poll fallback (survives dead LISTEN)
+            async for msg in pubsub_manager.subscribe_with_poll(job_id):
                 if msg.get("job_id") == job_id:
                     yield {
                         "event": "message",
@@ -136,7 +135,6 @@ async def cover_letter_events(job_id: str):
                         "data": json.dumps(msg),
                     }
 
-                    # Terminate stream on completion or error
                     if msg.get("status") in ("completed", "error"):
                         break
         except asyncio.CancelledError:
