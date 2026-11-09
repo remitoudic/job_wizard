@@ -352,6 +352,7 @@
 				(l) =>
 					l.source.toLowerCase().includes('crewai') &&
 					l.status !== 'failed' &&
+					Boolean(l.text) &&
 					!l.text.startsWith('Generation failed')
 			);
 
@@ -370,6 +371,7 @@
 						(l.source.toLowerCase().includes('mistral') ||
 							l.source.toLowerCase().includes('qwen')) &&
 						l.status !== 'failed' &&
+						Boolean(l.text) &&
 						!l.text.startsWith('Generation failed')
 				);
 
@@ -386,6 +388,7 @@
 						(l) =>
 							l.source.toLowerCase().includes('nvidia') &&
 							l.status !== 'failed' &&
+							Boolean(l.text) &&
 							!l.text.startsWith('Generation failed')
 					);
 
@@ -606,6 +609,7 @@
 
 				// Handle Step: Partial (Primary Ready)
 				if (data.status === 'partial') {
+					isLoadingAlternatives = true;
 					const primaryVersion = {
 						text: data.text,
 						rawText: data.text,
@@ -635,6 +639,11 @@
 					if ($step !== 3) {
 						step.set(3);
 					}
+
+					if (data.alternative_id) {
+						alternativeId = data.alternative_id;
+						setTimeout(() => loadAlternatives(), 2000);
+					}
 				}
 
 				// If backend provided pre-finished alternatives, add them now
@@ -643,7 +652,8 @@
 						if (!allCoverLetters.some((l) => l.source === alt.source)) {
 							if (
 								alt.status === 'failed' ||
-								(alt.text && alt.text.startsWith('Generation failed'))
+								!alt.text ||
+								alt.text.startsWith('Generation failed')
 							) {
 								console.log(`Model generation failed for: ${alt.source}`, alt.text);
 								return;
@@ -685,7 +695,8 @@
 							if (!allCoverLetters.some((l) => l.source === alt.source)) {
 								if (
 									alt.status === 'failed' ||
-									(alt.text && alt.text.startsWith('Generation failed'))
+									!alt.text ||
+									alt.text.startsWith('Generation failed')
 								) {
 									console.log(`Model generation failed for: ${alt.source}`, alt.text);
 									return;
@@ -706,43 +717,39 @@
 
 				// Handle Step: Completed
 				if (data.status === 'completed') {
-					// Update final result if we don't have it yet (e.g. race was instant)
-					if (data.text && currentVersionIndex === 0) {
-						const isUpdateNeeded = !coverLetter || source !== data.source;
-
-						if (allCoverLetters.length === 0) {
-							allCoverLetters = [
-								{
-									text: data.text,
-									rawText: data.text,
-									source: data.source
-								}
-							];
-						} else {
-							allCoverLetters[0] = {
+					// If no primary version existed yet (instant completion without 'partial'), set index 0
+					if (allCoverLetters.length === 0 && data.text) {
+						allCoverLetters = [
+							{
 								text: data.text,
 								rawText: data.text,
 								source: data.source
-							};
-							allCoverLetters = [...allCoverLetters];
-						}
+							}
+						];
+						coverLetter = data.text;
+						originalCoverLetter = data.text;
+						source = data.source;
+						if (data.alternative_id) alternativeId = data.alternative_id;
 
-						if (
-							isUpdateNeeded &&
-							!hasAutoSelectedCrewAI &&
-							!hasAutoSelectedNvidia &&
-							!hasAutoSelectedMistral &&
-							!hasAutoSelectedQwen
-						) {
-							coverLetter = data.text;
-							originalCoverLetter = data.text;
-							source = data.source;
-							alternativeId = data.alternative_id;
-						}
-
-						// As soon as the first letter is produced, go to step 3
 						if ($step !== 3) {
 							step.set(3);
+						}
+					} else if (
+						data.text &&
+						data.source &&
+						!allCoverLetters.some((l) => l.source === data.source)
+					) {
+						// 'completed' was emitted when the final background alternative finished
+						if (!data.text.startsWith('Generation failed')) {
+							allCoverLetters = [
+								...allCoverLetters,
+								{
+									text: data.text,
+									rawText: data.text,
+									source: data.source,
+									status: 'completed'
+								}
+							];
 						}
 					}
 
@@ -752,7 +759,8 @@
 							if (!allCoverLetters.some((l) => l.source === alt.source)) {
 								if (
 									alt.status === 'failed' ||
-									(alt.text && alt.text.startsWith('Generation failed'))
+									!alt.text ||
+									alt.text.startsWith('Generation failed')
 								) {
 									console.log(`Model generation failed for: ${alt.source}`, alt.text);
 									return;
@@ -770,7 +778,11 @@
 						});
 					}
 
+					if (alternativeId) {
+						loadAlternatives();
+					}
 					isGenerating = false;
+					isLoadingAlternatives = false;
 					lastGeneratedJobDescription =
 						editableJobDescription ||
 						(jobData ? jobData.full_description || jobData.description : '');
@@ -781,6 +793,7 @@
 				if (data.status === 'error') {
 					error = data.message;
 					isGenerating = false;
+					isLoadingAlternatives = false;
 					eventSource.close();
 				}
 			};
@@ -798,15 +811,12 @@
 		} catch (e: any) {
 			error = e.message || 'Failed to start generation';
 			isGenerating = false;
+			isLoadingAlternatives = false;
 		}
 	}
 
 	async function loadAlternatives() {
 		if (!alternativeId) return;
-
-		// Don't set isLoadingAlternatives globally if we want silent updates
-		// But for first load we might want it.
-		// Let's keep it simple.
 
 		try {
 			const altResult = await getAlternativeCoverLetter(alternativeId);
@@ -831,43 +841,22 @@
 					isComplete = true;
 				}
 
-				// Process alternatives
-				// Clear existing and replace, or generic update.
-				// Replacing is safest for now to ensure we have latest status of each.
-				// We want to preserve the selection if possible potentially, or just rebuild.
-
-				// We need to map them to the UI structure
-				const mapped: any[] = [];
-
-				// Keep the winner (first one in allCoverLetters) if it's there
-				if (allCoverLetters.length > 0) {
-					mapped.push(allCoverLetters[0]);
-				}
+				const mapped: any[] = [...allCoverLetters];
 
 				newAlternatives.forEach((alt: any) => {
-					// Check if it's already the winner?
-					// The backend alternatives list MIGHT contain the winner if logic changed,
-					// but typically it contains "finished alternatives".
-					// LLMService now puts all non-winner results into alternatives.
-
-					// Add if not duplicate (checks source)
 					if (!mapped.some((m) => m.source === alt.source)) {
-						if (alt.status === 'failed' || (alt.text && alt.text.startsWith('Generation failed'))) {
+						if (alt.status === 'failed' || !alt.text || alt.text.startsWith('Generation failed')) {
 							console.log(`Model generation failed for: ${alt.source}`, alt.text);
 							return;
 						}
 						mapped.push({
 							text: alt.text,
-							rawText: alt.text, // Assume incoming is raw
+							rawText: alt.text,
 							source: alt.source,
 							status: alt.status || 'completed'
 						});
 					}
 				});
-
-				// Re-apply current name if we have loaded new ones
-				// But we need to be careful not to overwrite user edits if we were editing?
-				// For now, let's assume rawText is source of truth.
 
 				// Update list
 				allCoverLetters = mapped;
@@ -883,6 +872,7 @@
 						(l) =>
 							l.source.toLowerCase().includes('crewai') &&
 							l.status !== 'failed' &&
+							Boolean(l.text) &&
 							!l.text.startsWith('Generation failed')
 					);
 					if (crewAiIndex !== -1) {
@@ -905,6 +895,7 @@
 								l.source.toLowerCase().includes('mistral') ||
 								l.source.toLowerCase().includes('qwen')) &&
 							l.status !== 'failed' &&
+							Boolean(l.text) &&
 							!l.text.startsWith('Generation failed')
 					);
 					if (nvidiaIndex !== -1) {
@@ -923,12 +914,14 @@
 					setTimeout(() => loadAlternatives(), 2000);
 				} else {
 					isLoadingAlternatives = false;
+					isGenerating = false;
 				}
 			}
 		} catch (e) {
 			console.log('Error loading alternatives or not ready:', e);
-			// Retry on error too (maybe 404 not ready yet)
-			setTimeout(() => loadAlternatives(), 3000);
+			if (isLoadingAlternatives || isGenerating) {
+				setTimeout(() => loadAlternatives(), 3000);
+			}
 		}
 	}
 
@@ -2847,11 +2840,64 @@
 					class="mb-8 p-6 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm"
 				>
 					<div class="space-y-1">
-						<span class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]"
-							>Active Model</span
-						>
+						<div class="flex items-center gap-2">
+							<span class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]"
+								>Active Model</span
+							>
+							{#if isLoadingAlternatives || isGenerating}
+								<span
+									class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 text-[#0369A1] border border-sky-200"
+									title="Other AI models are still generating alternatives in the background"
+								>
+									<svg
+										class="animate-spin h-3 w-3 text-[#0369A1]"
+										xmlns="http://www.w3.org/2000/svg"
+										fill="none"
+										viewBox="0 0 24 24"
+									>
+										<circle
+											class="opacity-25"
+											cx="12"
+											cy="12"
+											r="10"
+											stroke="currentColor"
+											stroke-width="4"
+										></circle>
+										<path
+											class="opacity-75"
+											fill="currentColor"
+											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+										></path>
+									</svg>
+									Generating alternatives...
+								</span>
+							{/if}
+						</div>
 						<div class="flex flex-wrap items-center gap-2">
 							<span class="text-base font-bold text-[#0F172A]">{source || 'AI Engine'}</span>
+							{#if isLoadingAlternatives || isGenerating}
+								<svg
+									class="animate-spin h-4 w-4 text-[#0369A1]"
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									aria-label="Generation in progress"
+								>
+									<circle
+										class="opacity-25"
+										cx="12"
+										cy="12"
+										r="10"
+										stroke="currentColor"
+										stroke-width="4"
+									></circle>
+									<path
+										class="opacity-75"
+										fill="currentColor"
+										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+									></path>
+								</svg>
+							{/if}
 							{#if source && source.toLowerCase().includes('crew')}
 								<span
 									class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100"
@@ -2863,7 +2909,7 @@
 					</div>
 
 					<div class="flex items-center gap-4">
-						{#if isLoadingAlternatives}
+						{#if isLoadingAlternatives || isGenerating}
 							<div
 								class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#0369A1] animate-pulse"
 							>
