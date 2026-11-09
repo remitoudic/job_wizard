@@ -210,7 +210,7 @@ def create_writing_agent(
     # Optimized system prompt - more concise and direct
     model_settings = {
         "temperature": 0.7,
-        "max_tokens": 500,
+        "max_tokens": 1200,
         "top_p": 0.9,
     }
 

@@ -229,14 +229,30 @@ def run_crewai_generation(
     lang_lower = (language or "english").lower()
     if lang_lower == "german":
         salutation_hint = "Sehr geehrte Damen und Herren,"
+        lang_style_guide = (
+            "Write in natural, idiomatic formal German (Sie-Form) following modern German "
+            "Bewerbungsschreiben standards: confident, concrete, and free of stiff translations from English. "
+            "End the final body paragraph with a natural German call to action (e.g. 'Über die Gelegenheit, "
+            "mich in einem persönlichen Gespräch vorzustellen, freue ich mich sehr.')."
+        )
     elif lang_lower == "french":
         salutation_hint = "Madame, Monsieur,"
+        lang_style_guide = (
+            "Write in natural, idiomatic formal French (vouvoiement) following the classic 'Vous, Moi, Nous' "
+            "Lettre de Motivation flow: connect the company's challenges, the candidate's concrete achievements, "
+            "and the shared value of collaborating, ending with a polite, confident French closing sentence."
+        )
     elif lang_lower == "spanish":
         salutation_hint = "Estimado/a Responsable de Selección,"
+        lang_style_guide = (
+            "Write in natural, idiomatic formal Spanish (Carta de Presentación standard), "
+            "using fluent professional prose and ending with a courteous invitation for an interview."
+        )
     else:
         salutation_hint = (
             f"Dear Hiring Manager at {company}," if company else "Dear Hiring Manager,"
         )
+        lang_style_guide = "Write in crisp, natural British English with an authentic, executive human voice."
 
     for candidate_config in candidates:
         provider_name = candidate_config.get("name", "unknown")
@@ -249,12 +265,21 @@ def run_crewai_generation(
             # ---------------------------------------------------------
             # AGENT 1: The Profile Analyst
             # Temperature: 0.1 (Very low creativity, high precision)
-            # Goal: Extract raw facts. Prevents the final letter from making things up.
+            # Goal: Extract verifiable career proof with exact employer names & metrics.
             # ---------------------------------------------------------
             analyst = Agent(
-                role="Profile Analyst",
-                goal="Cross-reference the candidate's profile with the Job Description to find the 3 strongest overlaps.",
-                backstory="A ruthless tech recruiter who knows exactly what hiring managers look for. You only care about cold, hard facts and perfect alignment between a candidate's history and the job's needs.",
+                role="Principal Executive Talent Strategist",
+                goal=(
+                    "Build a high-signal Evidence & Narrative Dossier mapping the candidate's "
+                    "real career achievements (with exact employer names, systems, and metrics) "
+                    "to the core challenges of the target role."
+                ),
+                backstory=(
+                    "An elite executive recruiter and technical talent strategist. You despise generic "
+                    "claims and anonymized summaries. You mine a candidate's CV for specific company names, "
+                    "architectural decisions, quantified outcomes, and domain impact, then organize them into "
+                    "two cohesive narrative themes that prove the candidate can solve the hiring team's hardest problems."
+                ),
                 verbose=True,
                 allow_delegation=False,
                 llm=get_llm_for_agent(temperature=0.1, config=candidate_config),
@@ -262,13 +287,22 @@ def run_crewai_generation(
 
             # ---------------------------------------------------------
             # AGENT 2: The Copywriter
-            # Temperature: 0.7 (High creativity, persuasive)
-            # Goal: Take the Analyst's dry facts and turn them into a compelling story.
+            # Temperature: 0.7 (High creativity, persuasive storytelling)
+            # Goal: Write a cohesive, human-sounding 4-paragraph executive cover letter.
             # ---------------------------------------------------------
             copywriter = Agent(
-                role="Expert Career Coach & Copywriter",
-                goal="Turn the Analyst's brief into a cohesive, persuasive cover letter narrative.",
-                backstory="An expert career coach and persuasive storyteller who writes engaging, human copy. You focus on enthusiasm and showing how the candidate's past results will solve the hiring company's future problems.",
+                role="Senior Executive Narrative Copywriter",
+                goal=(
+                    "Craft a compelling, smoothly flowing 4-paragraph cover letter that weaves "
+                    "concrete career proof into a persuasive story tailored to the company."
+                ),
+                backstory=(
+                    "A former editorial writer and executive career coach known for cover letters that "
+                    "sound unmistakably human, grounded, and authoritative. You never write choppy, "
+                    "bullet-like mini-paragraphs or repetitive 'I did X, which mirrors Y' formulas. "
+                    "Instead, you connect real past roles, named companies, and measurable impact into "
+                    "a natural, engaging narrative arc."
+                ),
                 verbose=True,
                 allow_delegation=False,
                 llm=get_llm_for_agent(temperature=0.7, config=candidate_config),
@@ -276,13 +310,22 @@ def run_crewai_generation(
 
             # ---------------------------------------------------------
             # AGENT 3: The Editor
-            # Temperature: 0.3 (Low creativity, strict formatting)
-            # Goal: Final polish, remove AI cliches, enforce word counts.
+            # Temperature: 0.3 (Low creativity, high editorial rigor)
+            # Goal: Polish flow, preserve concrete names/metrics, remove AI tells.
             # ---------------------------------------------------------
             editor = Agent(
-                role="Strict Copy Editor",
-                goal="Refine the cover letter, cut fluff, and ensure perfect formatting.",
-                backstory="A strict copy editor who hates fluff, buzzwords, and overly formal corporate speak. You cut common AI clichés ('In today's fast-paced world', 'delve', 'testament to'), tighten prose, and format perfectly.",
+                role="Managing Editorial Director",
+                goal=(
+                    "Elevate prose flow, sentence rhythm, and transitions while strictly preserving "
+                    "all specific employer names, metrics, and technical substance."
+                ),
+                backstory=(
+                    "A seasoned literary and business editor with a sharp ear for rhythm and authenticity. "
+                    "You eliminate robotic transitions ('Separately,', 'Furthermore,', 'In addition,'), "
+                    "repetitive paragraph endings, defensive hedging ('I can adapt to...'), and AI clichés "
+                    "('delve', 'testament to', 'thrilled', 'fast-paced environment'). You ensure the letter "
+                    "reads like it was thoughtfully written by a top-tier professional."
+                ),
                 verbose=True,
                 allow_delegation=False,
                 llm=get_llm_for_agent(temperature=0.3, config=candidate_config),
@@ -295,11 +338,18 @@ def run_crewai_generation(
             # Task 1: Strategy (Handled by Analyst)
             strategy_task = Task(
                 description=f"""
-                Analyze the candidate's history and the job requirements. DO NOT write a letter.
+                Analyze the candidate's CV/background and the target job posting to create an Evidence & Narrative Dossier.
+                DO NOT write the cover letter yet.
+
                 Output a structured brief containing:
-                1. The candidate's 3 most relevant achievements for this specific role.
-                2. A suggested 'hook' or opening angle based on their background.
-                3. Any missing skills the copywriter should downplay or pivot away from.
+                1. CORE COMPANY CHALLENGE: In 1-2 sentences, what is {company} actually building or solving with this {job_title} role?
+                2. NARRATIVE THEME 1 (Primary Technical / Domain Proof): Select the 1-2 strongest achievements from the candidate's history that directly match the core role requirements. You MUST preserve exact employer/company names (e.g., "At [Company Name]..."), project contexts, technologies, and exact metrics/numbers from the candidate's background.
+                3. NARRATIVE THEME 2 (Scale, Ownership & Reliability Proof): Select 1-2 complementary achievements showing system ownership, scale, collaboration, or end-to-end delivery, again preserving exact employer names and concrete outcomes.
+                4. OPENING HOOK IDEA: A natural, grounded opening angle that connects the candidate's core identity and years of experience to {company}'s mission.
+
+                STRICT RULES FOR THE ANALYST:
+                - NEVER invent facts, employers, or metrics not present in the Candidate Background.
+                - NEVER include a "missing skills" or "weaknesses" section. Focus 100% on what the candidate HAS achieved and how their existing mastery transfers directly to {company}'s needs.
 
                 Job Title: {job_title}
                 Company: {company}
@@ -309,43 +359,62 @@ def run_crewai_generation(
                 Candidate Background: {context_text or "No detailed background provided."}
                 Custom Guidance: {custom_instructions if custom_instructions else "None provided."}
                 """,
-                expected_output="A structured brief detailing the 3 strongest overlaps, a hook, and skills to downplay.",
+                expected_output=(
+                    "A structured Evidence & Narrative Dossier with exact employer names, "
+                    "quantified achievements grouped into 2 narrative themes, and an opening hook."
+                ),
                 agent=analyst,
             )
 
             # Task 2: Drafting (Handled by Copywriter)
             drafting_task = Task(
                 description=f"""
-                Write the first draft of the cover letter based ONLY on the points provided in the Analyst's brief.
-                CRITICAL INSTRUCTIONS:
-                1. OUTPUT BODY ONLY. Do NOT include a header, date, applicant contact info, or recipient address block at the top.
-                2. Start directly with the salutation: {salutation_hint}
-                3. Do NOT include a signature or sign-off (e.g. 'Sincerely, [Name]'). The template engine handles this.
-                4. Do NOT include placeholders like '[Your Name]' or '[Date]'.
-                5. Keep between 200 and 350 words in a confident, professional, yet approachable tone.
-                6. The letter MUST be written in {language}.
-                7. Adhere to any Custom Guidance: {custom_instructions if custom_instructions else "None"}
+                Using the Analyst's Evidence & Narrative Dossier and the Candidate Background below, write a standout cover letter for the {job_title} role at {company}.
 
-                Target Company: {company}
-                Target Role: {job_title}
+                REQUIRED 4-PARAGRAPH STRUCTURE (after the salutation):
+                - Salutation: Start directly with `{salutation_hint}` followed by a blank line.
+                - Paragraph 1 (The Hook & Value Proposition, ~50-70 words): State the role ({job_title}) and company ({company}) naturally while leading with a strong, grounded thesis about the candidate's core expertise and why {company}'s product/engineering challenges resonate with their work.
+                - Paragraph 2 (Primary Career Proof, ~85-115 words): Develop Narrative Theme 1 into a cohesive paragraph. Cite real employer names, systems built, technical stack, and measurable results from the dossier/background, weaving in naturally how this experience applies to {company}.
+                - Paragraph 3 (Complementary Proof & Execution Mindset, ~75-100 words): Develop Narrative Theme 2 (e.g., large-scale pipelines, operational reliability, architecture, or cross-functional leadership) with smooth narrative flow from Paragraph 2. Show how the candidate thinks and delivers in production.
+                - Paragraph 4 (Confident Call to Action, ~35-50 words): Close warmly and confidently, welcoming the opportunity to discuss how their background can support {company}'s roadmap.
+
+                CRITICAL WRITING & FORMATTING RULES:
+                1. OUTPUT BODY ONLY: Start with `{salutation_hint}` and end with Paragraph 4. Do NOT include any header, addresses, date, or closing signature ('Sincerely, [Name]')—the template system appends the signature automatically.
+                2. NO CHOPPY LIST PARAGRAPHS: Write exactly 4 well-crafted body paragraphs. Never write 5-6 short, disconnected mini-paragraphs.
+                3. NO REPETITIVE FORMULA: Do NOT end every paragraph with a mechanical sentence like "This mirrors {company}'s stack and shows my ability to..." or "This prepares me for {company}'s challenges." Let the achievements speak for themselves and vary how you connect them to {company}.
+                4. NO DEFENSIVE / APOLOGETIC LINES: Never mention skills the candidate lacks or write defensive sentences like "My primary experience is X, though I can adapt to Y."
+                5. PRESERVE REAL CONTEXT: Use the candidate's real company/employer names and concrete metrics from their background instead of vague phrases like "In a previous role" or "Separately, I built".
+                6. LANGUAGE & TONE: {lang_style_guide} Total length: 240 to 340 words.
+                7. CUSTOM GUIDANCE: {custom_instructions if custom_instructions else "None"}
+
+                Candidate Background Reference:
+                {context_text[:2000] if context_text else "See Analyst Dossier."}
                 """,
-                expected_output="A clean body draft of the cover letter starting with the salutation.",
+                expected_output="A cohesive 4-paragraph cover letter body starting with the salutation and ending with a call-to-action paragraph.",
                 agent=copywriter,
             )
 
             # Task 3: Polish (Handled by Editor)
             polish_task = Task(
                 description=f"""
-                Review the draft cover letter from the copywriter.
-                1. Strip out any hallucinated skills not in the original brief.
-                2. Remove sycophantic language or obvious AI tells ('delve', 'testament to', 'thrilled to apply').
-                3. Ensure the letter is under 350 words.
-                4. STRICTLY OUTPUT BODY ONLY: Ensure it starts directly with '{salutation_hint}' and ends with the concluding sentence of the body.
-                5. Remove ANY address block, date, header, 'Sincerely, ...', closing sign-off, or candidate name.
-                6. Ensure the final language is {language}.
-                7. Do NOT output anything other than the final cover letter body text.
+                Review and elevate the Copywriter's cover letter draft for {job_title} at {company}.
+
+                EDITORIAL CHECKLIST:
+                1. FLOW & COHESION: Ensure the letter consists of 3 to 4 rich, smoothly transitioning paragraphs after `{salutation_hint}`. If the draft has 5+ short or choppy paragraphs, merge related ideas into cohesive paragraphs with natural transitions.
+                2. ELIMINATE ROBOTIC PATTERNS:
+                   - Remove awkward transition words at the start of paragraphs ("Separately,", "Furthermore,", "Additionally,", "Moreover,").
+                   - Remove repetitive tail sentences that mechanically repeat "This aligns with {company}..." or "This mirrors {company}'s stack..." at the end of multiple paragraphs.
+                   - Remove any defensive or hedging statements ("I can adapt to...", "While my primary framework is...").
+                   - Remove AI clichés ("delve", "testament to", "thrilled", "fast-paced environment", "hit the ground running") and replace spaced hyphens (" - ") with proper commas or periods.
+                3. PRESERVE SUBSTANCE: Keep all real employer names, technologies, and concrete metrics/numbers intact. Do NOT strip out specific achievements into generic statements.
+                4. STRICT BODY-ONLY FORMAT:
+                   - Must begin directly with `{salutation_hint}`
+                   - Must end with the final call-to-action sentence inviting a conversation/interview.
+                   - Must NOT contain any header, date, address block, or sign-off ('Sincerely,', 'Best regards,', candidate name, or placeholders).
+                5. LANGUAGE & WORD COUNT: Ensure fluent, idiomatic {language} ({lang_style_guide}) between 240 and 340 words.
+                6. Output ONLY the final polished cover letter body text—no commentary, no markdown fences, no notes.
                 """,
-                expected_output="The final, polished cover letter body text starting with the salutation.",
+                expected_output="The final, publication-ready cover letter body text starting with the salutation.",
                 agent=editor,
             )
 

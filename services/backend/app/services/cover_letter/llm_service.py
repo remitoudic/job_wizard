@@ -443,8 +443,16 @@ CUSTOM USER GUIDANCE:
                             custom_instructions,
                         )
                         clean_text = LLMService.clean_model_output(text)
+                        final_text = f"{clean_text}{STANDARD_SIGNATURE}"
+                        display_name = user_name if user_name else "[Your Name]"
+                        final_text = (
+                            final_text.replace("[Your Name]", display_name)
+                            .replace("[Ihr Name]", display_name)
+                            .replace("[Votre Nom]", display_name)
+                            .replace("[Su nombre]", display_name)
+                        )
                         return {
-                            "output": clean_text,
+                            "output": final_text,
                             "source": "CrewAI Agency",
                             "usage": None,
                         }
