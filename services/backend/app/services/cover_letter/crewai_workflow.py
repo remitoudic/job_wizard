@@ -70,14 +70,43 @@ def get_candidate_configs() -> list[dict]:
     """
     Returns an ordered list of candidate provider configs for CrewAI.
     Priority:
-    1. OpenRouter primary (nvidia/nemotron-3.5-lightning:free)
-    2. OpenRouter fallback (nvidia/nemotron-3-super-120b-a12b:free)
-    3. Groq (qwen/qwen3.8-27b - fast, high TPM limits)
-    4. Groq secondary (openai/gpt-oss-120b)
+    1. Groq primary (openai/gpt-oss-120b - fastest 3-agent sequential execution ~8s)
+    2. Groq secondary (qwen/qwen3.8-27b - fast, high TPM limits)
+    3. Active provider from service
+    4. OpenRouter primary (nvidia/nemotron-3-ultra-550b-a55b:free)
+    5. OpenRouter fallback (nvidia/nemotron-3.5-lightning:free)
     """
     candidates = []
 
-    # 1. OpenRouter (preferred primary for CrewAI)
+    # 1. Groq primary & secondary (Fastest inference for 3-agent sequential CrewAI chain)
+    if settings.GROQ_API_KEY:
+        candidates.append(
+            {
+                "name": "groq",
+                "base_url": "https://api.groq.com/openai/v1",
+                "api_key": settings.GROQ_API_KEY,
+                "model_1": settings.GROQ_MODEL_1,
+            }
+        )
+        if settings.GROQ_MODEL_2 and settings.GROQ_MODEL_2 != settings.GROQ_MODEL_1:
+            candidates.append(
+                {
+                    "name": "groq",
+                    "base_url": "https://api.groq.com/openai/v1",
+                    "api_key": settings.GROQ_API_KEY,
+                    "model_1": settings.GROQ_MODEL_2,
+                }
+            )
+
+    # 2. Active provider from service
+    try:
+        active_cfg = llm_provider_service.get_provider_config()
+        if active_cfg:
+            candidates.append(active_cfg)
+    except Exception as e:
+        logger.warning(f"Failed to fetch active provider config: {e}")
+
+    # 3. OpenRouter fallbacks
     if settings.OPENROUTER_API_KEY:
         candidates.append(
             {
@@ -99,33 +128,6 @@ def get_candidate_configs() -> list[dict]:
                     "model_1": settings.OPENROUTER_MODEL_2,
                 }
             )
-
-    # 2. Active provider from service
-    try:
-        active_cfg = llm_provider_service.get_provider_config()
-        if active_cfg:
-            candidates.append(active_cfg)
-    except Exception as e:
-        logger.warning(f"Failed to fetch active provider config: {e}")
-
-    # 3. Groq fallbacks with verified models (Prioritize Qwen for speed and high TPM)
-    if settings.GROQ_API_KEY:
-        candidates.append(
-            {
-                "name": "groq",
-                "base_url": "https://api.groq.com/openai/v1",
-                "api_key": settings.GROQ_API_KEY,
-                "model_1": settings.GROQ_MODEL_2,
-            }
-        )
-        candidates.append(
-            {
-                "name": "groq",
-                "base_url": "https://api.groq.com/openai/v1",
-                "api_key": settings.GROQ_API_KEY,
-                "model_1": settings.GROQ_MODEL_1,
-            }
-        )
 
     # Deduplicate while preserving order based on (name, model_1)
     unique_candidates = []

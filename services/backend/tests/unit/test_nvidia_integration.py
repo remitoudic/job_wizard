@@ -259,3 +259,5 @@ async def test_nvidia_failure_doesnt_break_race(base_provider_config, nvidia_con
         # Race still produces a winner from non-NVIDIA participants
         assert result_text is not None
         assert "Nvidia" not in source  # NVIDIA failed, shouldn't be winner
+        # NVIDIA failure must NOT falsely report Groq rate limit
+        service.provider_service.report_rate_limit.assert_not_called()

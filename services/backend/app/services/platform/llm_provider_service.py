@@ -14,6 +14,7 @@ class LLMProviderService:
 
     def __init__(self):
         self._groq_rate_limit_until = 0.0
+        self._nvidia_disabled_until = 0.0
         self._active_provider: ProviderType = "groq"
 
         # Rate limit cooldown in seconds
@@ -91,13 +92,26 @@ class LLMProviderService:
                 "model_2": settings.OPENROUTER_MODEL_2,
             }
 
+    def report_nvidia_failure(self, cooldown: float = None):
+        """Disable NVIDIA NIM temporarily when auth/quota errors occur."""
+        current_time = time.time()
+        self._nvidia_disabled_until = current_time + (
+            cooldown if cooldown is not None else self._default_cooldown
+        )
+        logfire.warning(
+            "NVIDIA NIM disabled due to auth/quota error",
+            downtime_seconds=self._nvidia_disabled_until - current_time,
+        )
+
     def get_nvidia_config(self) -> Dict[str, Any] | None:
         """
         Get NVIDIA NIM config if API key is present.
         NVIDIA is an independent race participant, not a failover target.
-        Returns None if NVIDIA is not configured.
+        Returns None if NVIDIA is not configured or temporarily disabled.
         """
         if not settings.NVIDIA_API_KEY:
+            return None
+        if time.time() < self._nvidia_disabled_until:
             return None
         return {
             "name": "nvidia",

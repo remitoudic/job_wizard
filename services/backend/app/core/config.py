@@ -23,10 +23,10 @@ class Settings(BaseSettings):
     # Models Source of Truth
     # Models Source of Truth
     OPENROUTER_MODEL: str = os.getenv(
-        "OPENROUTER_MODEL", "nvidia/nemotron-3.5-lightning:free"
+        "OPENROUTER_MODEL", "nvidia/nemotron-3-ultra-550b-a55b:free"
     )
     OPENROUTER_MODEL_2: str = os.getenv(
-        "OPENROUTER_MODEL_2", "nvidia/nemotron-3-super-120b-a12b:free"
+        "OPENROUTER_MODEL_2", "nvidia/nemotron-3.5-lightning:free"
     )
 
     # Groq Settings

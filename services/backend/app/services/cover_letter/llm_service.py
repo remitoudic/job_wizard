@@ -621,7 +621,12 @@ CUSTOM USER GUIDANCE:
                         # Only trigger provider failover for rate limits or server-wide outages.
                         # Model-specific errors (deprecated, not found) should NOT poison the
                         # entire provider — other models on the same provider may still work.
-                        if is_rate_limit or is_server_error or is_auth_error:
+                        if failed_source.lower().startswith("nvidia"):
+                            if (is_auth_error or is_rate_limit) and hasattr(
+                                self.provider_service, "report_nvidia_failure"
+                            ):
+                                self.provider_service.report_nvidia_failure()
+                        elif is_rate_limit or is_server_error or is_auth_error:
                             if self.current_provider_name == "groq":
                                 logfire.warning(
                                     f"Groq provider issue ({e}), failover to OpenRouter"
@@ -751,8 +756,8 @@ CUSTOM USER GUIDANCE:
             source_name = task.get_name()
 
             try:
-                # Set a strict timeout of 120 seconds for each individual alternative task
-                result = await asyncio.wait_for(task, timeout=120.0)
+                # Set a strict timeout of 180 seconds for each individual alternative task
+                result = await asyncio.wait_for(task, timeout=180.0)
                 task_duration = time.perf_counter() - task_start_times.get(id(task), 0)
                 alt = {
                     "text": result["output"],
@@ -774,7 +779,7 @@ CUSTOM USER GUIDANCE:
                 task.cancel()
                 task_duration = time.perf_counter() - task_start_times.get(id(task), 0)
                 alt = {
-                    "text": "Generation failed: Timeout (120s exceeded)",
+                    "text": "Generation failed: Timeout (180s exceeded)",
                     "source": source_name,
                     "status": "failed",
                 }
