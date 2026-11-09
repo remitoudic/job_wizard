@@ -36,11 +36,12 @@ class Settings(BaseSettings):
 
     # NVIDIA NIM Settings
     NVIDIA_API_KEY: str = os.getenv("NVIDIA_API_KEY", "")
-    NVIDIA_MODEL_1: str = os.getenv("NVIDIA_MODEL_1", "poolside/laguna-xs-2.1")
-    NVIDIA_MODEL_2: str = os.getenv(
-        "NVIDIA_MODEL_2", "nvidia/nemotron-3.5-lightning-30b-a3b"
+    NVIDIA_MODEL_1: str = os.getenv("NVIDIA_MODEL_1", "deepseek-ai/deepseek-v4.1-flash")
+    NVIDIA_MODEL_2: str = os.getenv("NVIDIA_MODEL_2", "poolside/laguna-xs-2.1")
+    NVIDIA_MODEL_3: str = os.getenv(
+        "NVIDIA_MODEL_3", "nvidia/nemotron-3.5-lightning-30b-a3b"
     )
-    NVIDIA_MODEL_3: str = os.getenv("NVIDIA_MODEL_3", "openai/gpt-oss-20b")
+    NVIDIA_MODEL_4: str = os.getenv("NVIDIA_MODEL_4", "openai/gpt-oss-20b")
 
     # LlamaCloud Settings (CV Parsing)
     LLAMA_CLOUD_API_KEY: str = ""

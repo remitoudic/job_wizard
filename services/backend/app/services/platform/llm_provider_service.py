@@ -120,6 +120,7 @@ class LLMProviderService:
             "model_1": settings.NVIDIA_MODEL_1,
             "model_2": settings.NVIDIA_MODEL_2,
             "model_3": settings.NVIDIA_MODEL_3,
+            "model_4": settings.NVIDIA_MODEL_4,
         }
 
 

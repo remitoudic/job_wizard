@@ -106,7 +106,22 @@ def get_candidate_configs() -> list[dict]:
     except Exception as e:
         logger.warning(f"Failed to fetch active provider config: {e}")
 
-    # 3. OpenRouter fallbacks
+    # 3. NVIDIA NIM candidate (if API key configured and not disabled)
+    try:
+        nvidia_cfg = llm_provider_service.get_nvidia_config()
+        if nvidia_cfg and nvidia_cfg.get("model_1"):
+            candidates.append(
+                {
+                    "name": "nvidia",
+                    "base_url": nvidia_cfg["base_url"],
+                    "api_key": nvidia_cfg["api_key"],
+                    "model_1": nvidia_cfg["model_1"],
+                }
+            )
+    except Exception as e:
+        logger.warning(f"Failed to fetch NVIDIA provider config: {e}")
+
+    # 4. OpenRouter fallbacks
     if settings.OPENROUTER_API_KEY:
         candidates.append(
             {

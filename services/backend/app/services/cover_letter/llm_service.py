@@ -520,6 +520,26 @@ CUSTOM USER GUIDANCE:
                         logger.info(
                             f"NVIDIA participant 3 added: {nvidia_config['model_3']}"
                         )
+
+                    if nvidia_config.get("model_4"):
+                        nvidia_writer_4 = create_writing_agent(
+                            model_name=nvidia_config["model_4"],
+                            is_remote=True,
+                            provider_config=nvidia_config,
+                        )
+                        nvidia_task_4 = asyncio.create_task(
+                            run_agent(
+                                nvidia_writer_4,
+                                prompt,
+                                f"Nvidia ({nvidia_config['model_4']})",
+                            ),
+                            name=f"Nvidia ({nvidia_config['model_4']})",
+                        )
+                        task_start_times[id(nvidia_task_4)] = time.perf_counter()
+                        tasks.append(nvidia_task_4)
+                        logger.info(
+                            f"NVIDIA participant 4 added: {nvidia_config['model_4']}"
+                        )
             except Exception as e:
                 logger.error(f"Failed to create NVIDIA agent: {e}")
 

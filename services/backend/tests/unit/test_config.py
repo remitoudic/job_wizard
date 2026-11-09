@@ -43,6 +43,7 @@ def test_valid_nvidia_model_configured():
         "qwen/qwen2.5-coder-32b-instruct",
         "z-ai/glm-5.2",
         "deepseek-ai/deepseek-v4-pro",
+        "deepseek-ai/deepseek-v4.1-flash",
         "qwen/qwen3-next-80b-a3b-instruct",
         "poolside/laguna-xs-2.1",
         "nvidia/nemotron-3.5-lightning-30b-a3b",
@@ -66,5 +67,11 @@ def test_valid_nvidia_model_configured():
     if settings.NVIDIA_MODEL_3:
         assert settings.NVIDIA_MODEL_3 in verified_models, (
             f"Configured NVIDIA model '{settings.NVIDIA_MODEL_3}' is not in the verified list! "
+            "If you are changing the model, please verify it exists on Nvidia NIM and update this test."
+        )
+
+    if settings.NVIDIA_MODEL_4:
+        assert settings.NVIDIA_MODEL_4 in verified_models, (
+            f"Configured NVIDIA model '{settings.NVIDIA_MODEL_4}' is not in the verified list! "
             "If you are changing the model, please verify it exists on Nvidia NIM and update this test."
         )
