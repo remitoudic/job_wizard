@@ -2840,64 +2840,11 @@
 					class="mb-8 p-6 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm"
 				>
 					<div class="space-y-1">
-						<div class="flex items-center gap-2">
-							<span class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]"
-								>Active Model</span
-							>
-							{#if isLoadingAlternatives || isGenerating}
-								<span
-									class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-50 text-[#0369A1] border border-sky-200"
-									title="Other AI models are still generating alternatives in the background"
-								>
-									<svg
-										class="animate-spin h-3 w-3 text-[#0369A1]"
-										xmlns="http://www.w3.org/2000/svg"
-										fill="none"
-										viewBox="0 0 24 24"
-									>
-										<circle
-											class="opacity-25"
-											cx="12"
-											cy="12"
-											r="10"
-											stroke="currentColor"
-											stroke-width="4"
-										></circle>
-										<path
-											class="opacity-75"
-											fill="currentColor"
-											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-										></path>
-									</svg>
-									Generating alternatives...
-								</span>
-							{/if}
-						</div>
+						<span class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]"
+							>Active Model</span
+						>
 						<div class="flex flex-wrap items-center gap-2">
 							<span class="text-base font-bold text-[#0F172A]">{source || 'AI Engine'}</span>
-							{#if isLoadingAlternatives || isGenerating}
-								<svg
-									class="animate-spin h-4 w-4 text-[#0369A1]"
-									xmlns="http://www.w3.org/2000/svg"
-									fill="none"
-									viewBox="0 0 24 24"
-									aria-label="Generation in progress"
-								>
-									<circle
-										class="opacity-25"
-										cx="12"
-										cy="12"
-										r="10"
-										stroke="currentColor"
-										stroke-width="4"
-									></circle>
-									<path
-										class="opacity-75"
-										fill="currentColor"
-										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-									></path>
-								</svg>
-							{/if}
 							{#if source && source.toLowerCase().includes('crew')}
 								<span
 									class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100"
@@ -2911,7 +2858,8 @@
 					<div class="flex items-center gap-4">
 						{#if isLoadingAlternatives || isGenerating}
 							<div
-								class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#0369A1] animate-pulse"
+								class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-50 border border-sky-200 text-xs font-semibold text-[#0369A1]"
+								title="Other AI models are still generating in the background"
 							>
 								<svg
 									class="animate-spin h-3.5 w-3.5 text-[#0369A1]"
@@ -2933,7 +2881,7 @@
 										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 									></path>
 								</svg>
-								Running Race...
+								<span>Generating other models...</span>
 							</div>
 						{/if}
 
